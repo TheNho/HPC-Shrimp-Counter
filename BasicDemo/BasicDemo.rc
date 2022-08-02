@@ -1,0 +1,486 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#ifndef APSTUDIO_INVOKED
+#include "targetver.h"
+#endif
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// Chinese (Simplified, PRC) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHS)
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
+#pragma code_page(936)
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#ifndef APSTUDIO_INVOKED\r\n"
+    "#include ""targetver.h""\r\n"
+    "#endif\r\n"
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "#define _AFX_NO_SPLITTER_RESOURCES\r\n"
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHS)\r\n"
+    "LANGUAGE 4, 2\r\n"
+    "#pragma code_page(936)\r\n"
+    "#include ""res\\BasicDemo.rc2""  // ?????¡ì????¡ì?? Microsoft Visual C++ ?????¨¬????¡§???¡§?????¡§??????¡ì????¡ì??-|????¨¬????????¨¬????¡§?|????¡§??o???\r\n"
+    "#include ""l.CHS\\afxres.rc""      // ?????¨¬????¡§???¡§?????¡§??o?????¨¬????¡§?|??????¨¬????¡§?|????¡§??|?t\r\n"
+    "#endif\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE
+BEGIN
+    IDS_ABOUTBOX            "¹ØÓÚ BasicDemo(&A)..."
+END
+
+#endif    // Chinese (Simplified, PRC) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// English resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+LANGUAGE LANG_ENGLISH, SUBLANG_NEUTRAL
+#pragma code_page(1252)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDR_MAINFRAME           ICON                    "res\\BasicDemo.ico"
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_BasicDemo_DIALOG DIALOGEX 0, 0, 526, 434
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_MINIMIZEBOX | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_APPWINDOW
+CAPTION "HAO PHUONG SHRIMP COUNTING"
+FONT 9, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    GROUPBOX        "Initialization",IDC_INIT_STATIC,388,29,123,50
+    PUSHBUTTON      "Search Device",IDC_ENUM_BUTTON,393,38,114,14
+    PUSHBUTTON      "Open Device",IDC_OPEN_BUTTON,392,59,57,14
+    PUSHBUTTON      "Close Device",IDC_CLOSE_BUTTON,452,59,56,14
+    GROUPBOX        "Image Acquisition",IDC_IMAGE_GRABBING_STATIC,387,81,124,68
+    GROUPBOX        "Picture Storage",IDC_SAVE_IMAGE_STATIC,388,154,123,46
+    CONTROL         "",IDC_DISPLAY_STATIC,"Static",SS_BLACKFRAME,14,33,364,252
+    GROUPBOX        "Camera Parameters",IDC_PARAMETER_STATIC,388,202,122,82
+    CONTROL         "Continuous",IDC_CONTINUS_MODE_RADIO,"Button",BS_AUTORADIOBUTTON | WS_GROUP,393,93,55,10
+    CONTROL         "Trigger Mode",IDC_TRIGGER_MODE_RADIO,"Button",BS_AUTORADIOBUTTON | WS_GROUP,453,94,54,10
+    PUSHBUTTON      "Start",IDC_START_GRABBING_BUTTON,392,108,57,14
+    PUSHBUTTON      "Stop",IDC_STOP_GRABBING_BUTTON,452,108,56,14
+    PUSHBUTTON      "Trigger Once",IDC_SOFTWARE_ONCE_BUTTON,465,129,45,14
+    CONTROL         "Trigger by Software",IDC_SOFTWARE_TRIGGER_CHECK,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,389,131,75,10
+    PUSHBUTTON      "Save as BMP",IDC_SAVE_BMP_BUTTON,393,166,56,14
+    PUSHBUTTON      "Save as JPG",IDC_SAVE_JPG_BUTTON,453,166,55,14
+    EDITTEXT        IDC_EXPOSURE_EDIT,450,215,52,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_GAIN_EDIT,451,233,52,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_FRAME_RATE_EDIT,450,250,52,14,ES_AUTOHSCROLL
+    LTEXT           "Exposure Time",IDC_EXPOSURE_STATIC,395,216,46,8
+    LTEXT           "Gain",IDC_GAIN_STATIC,394,232,48,8
+    LTEXT           "Frame Rate",IDC_FRAME_RATE_STATIC,394,249,46,8
+    PUSHBUTTON      "Get Parameter",IDC_GET_PARAMETER_BUTTON,392,266,53,14
+    PUSHBUTTON      "Set Parameter",IDC_SET_PARAMETER_BUTTON,448,267,56,14
+    COMBOBOX        IDC_DEVICE_COMBO,15,15,364,77,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Save as TIFF",IDC_SAVE_TIFF_BUTTON,393,186,56,14
+    PUSHBUTTON      "Save as PNG",IDC_SAVE_PNG_BUTTON,453,187,55,14
+    PUSHBUTTON      "Advanced Setting",IDC_SETTING_BUTTON,428,409,81,14
+    CTEXT           "Shrimp Number",IDC_SHIRMP_NUMBER_STATIC,290,301,135,104,SS_CENTERIMAGE | WS_BORDER,WS_EX_CLIENTEDGE
+    GROUPBOX        "Result",IDC_STATIC,273,289,237,136
+    PUSHBUTTON      "STOP COUNT",IDC_STOP_COUNT_BUTTON,435,337,63,27
+    EDITTEXT        IDC_F1_EDIT,194,301,50,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_F2_EDIT,194,330,49,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_F3_EDIT,195,363,49,14,ES_AUTOHSCROLL
+    LTEXT           "F1",IDC_STATIC,172,304,8,8
+    LTEXT           "F2",IDC_STATIC,172,334,8,8
+    LTEXT           "F3",IDC_STATIC,173,365,8,8
+    EDITTEXT        IDC_AVG_SIZE_EDIT,82,301,51,14,ES_AUTOHSCROLL
+    LTEXT           "Avg Size",IDC_STATIC,26,304,27,8
+    EDITTEXT        IDC_FRAME_COUNT_EDIT,82,331,51,14,ES_AUTOHSCROLL
+    LTEXT           "Frame count",IDC_STATIC,25,334,40,8
+    EDITTEXT        IDC_ROI_IN_FRAME_EDIT,83,362,50,14,ES_AUTOHSCROLL
+    LTEXT           "ROI in frame",IDC_STATIC,26,365,40,8
+    EDITTEXT        IDC_SHRIMP_IN_FRAME_EDIT,83,395,50,14,ES_AUTOHSCROLL
+    LTEXT           "Shrimp in frame",IDC_STATIC,24,397,50,8
+    PUSHBUTTON      "Log",IDC_LOG_BUTTON,274,409,48,14
+    PUSHBUTTON      "START COUNT",IDC_START_COUNT_BUTTON,434,302,63,27
+    PUSHBUTTON      "RESET NUMBER",IDC_RESET_NUMBER_BUTTON,434,373,63,27
+    EDITTEXT        IDC_F4_EDIT,195,396,49,14,ES_AUTOHSCROLL
+    LTEXT           "F4",IDC_STATIC,173,398,8,8
+    GROUPBOX        "Details",IDC_STATIC,14,289,253,136
+END
+
+IDD_ABOUTBOX DIALOGEX 0, 0, 170, 62
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "About BasicDemo"
+FONT 9, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    ICON            IDR_MAINFRAME,IDC_STATIC,14,14,20,20
+    LTEXT           "BasicDemo,V1.0",IDC_STATIC,42,14,114,8,SS_NOPREFIX
+    LTEXT           "Copyright (C) 2016",IDC_STATIC,42,26,114,8
+    DEFPUSHBUTTON   "OK",IDOK,113,41,50,14,WS_GROUP
+END
+
+IDD_Setting_DIALOG DIALOGEX 0, 0, 473, 323
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION " SETTING"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",ID_OK,358,302,50,14
+    PUSHBUTTON      "Cancel",ID_CANCEL,416,302,50,14
+    DEFPUSHBUTTON   "Save Setting",ID_SAVE,10,302,60,14
+    GROUPBOX        "Image Processing Parameters",IDC_STATIC,20,18,246,186
+    GROUPBOX        "",IDC_STATIC,25,216,236,35
+    GROUPBOX        "Counting Parameters",IDC_STATIC,274,18,182,60
+    GROUPBOX        "Detection Parameters",IDC_STATIC,274,80,181,98
+    LTEXT           "Blur Kernel",IDC_STATIC,156,35,35,8
+    COMBOBOX        ID_BLUR_KERNEL,204,34,48,30,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+    EDITTEXT        ID_AVG_AREA,314,103,47,14,ES_AUTOHSCROLL
+    LTEXT           "Min Area",IDC_STATIC,372,105,29,8
+    GROUPBOX        "",IDC_STATIC,26,81,234,72
+    LTEXT           "History",IDC_STATIC,161,132,24,8
+    EDITTEXT        ID_BSG_HISTORY,203,131,47,14,ES_AUTOHSCROLL
+    LTEXT           "Threshold",IDC_STATIC,159,104,32,8
+    EDITTEXT        ID_BSG_THRESHOLD,203,102,47,14,ES_AUTOHSCROLL
+    LTEXT           "Shadow",IDC_STATIC,37,132,26,8
+    COMBOBOX        ID_BSG_SHADOW,83,131,48,30,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Morpho Method",IDC_STATIC,28,60,51,8
+    COMBOBOX        ID_MORPHO_METHOD,83,58,48,30,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Morpho Kernel",IDC_STATIC,154,59,47,8
+    COMBOBOX        ID_MORPHO_KERNEL,203,58,48,30,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "IoU Threshold",IDC_STATIC,29,231,46,8
+    LTEXT           "Min Hits",IDC_STATIC,132,231,26,8
+    LTEXT           "Max Age",IDC_STATIC,196,232,29,8
+    EDITTEXT        ID_IOU_THRESHOLD,77,228,47,14,ES_AUTOHSCROLL
+    EDITTEXT        ID_MIN_HITS,159,228,32,14,ES_AUTOHSCROLL
+    EDITTEXT        ID_MAX_AGE,227,229,31,14,ES_AUTOHSCROLL
+    EDITTEXT        ID_LINE_POSITION,373,33,54,14,ES_AUTOHSCROLL
+    LTEXT           "Line Position",IDC_STATIC,318,36,40,8
+    EDITTEXT        ID_MAX_DISTANCE,374,57,53,14,ES_AUTOHSCROLL
+    LTEXT           "Max Square Distance",IDC_STATIC,291,59,68,8
+    EDITTEXT        ID_MIN_AREA,404,102,47,14,ES_AUTOHSCROLL
+    LTEXT           "Avg Area",IDC_STATIC,281,105,31,8
+    EDITTEXT        ID_MIN_WIDTH,314,131,47,14,ES_AUTOHSCROLL
+    LTEXT           "Min Height",IDC_STATIC,369,133,34,8
+    EDITTEXT        ID_MIN_HEIGHT,405,131,46,14,ES_AUTOHSCROLL
+    LTEXT           "Min Width",IDC_STATIC,279,133,32,8
+    LTEXT           "Method",IDC_STATIC,39,106,25,8
+    COMBOBOX        ID_BSG_METHOD,83,103,48,30,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Blur Method",IDC_STATIC,28,35,39,8
+    COMBOBOX        ID_BLUR_MEDTHOD,83,34,48,30,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+    DEFPUSHBUTTON   "Load Setting",ID_LOAD,80,302,60,14
+    GROUPBOX        "",IDC_STATIC,27,155,233,45
+    LTEXT           "Method",IDC_STATIC,32,178,25,8
+    COMBOBOX        ID_ADAPTIVETHRESHOLD_METHOD,63,176,62,30,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "KSize",IDC_STATIC,137,178,18,8
+    EDITTEXT        ID_ADAPTIVETHRESHOLD_KSIZE,160,175,35,14,ES_AUTOHSCROLL
+    LTEXT           "C",IDC_STATIC,206,178,8,8
+    EDITTEXT        ID_ADAPTIVETHRESHOLD_C,217,175,35,14,ES_AUTOHSCROLL
+    CONTROL         "Background Subtraction",IDC_RADIO_BACKGROUNDSUBTRACTION,
+                    "Button",BS_AUTORADIOBUTTON,34,82,92,10
+    CONTROL         "Adaptive Threshold",IDC_RADIO_ADAPTIVETHRESHOLD,"Button",BS_AUTORADIOBUTTON,37,155,78,10
+    EDITTEXT        IDC_TOLERANCE_X,74,270,40,14,ES_AUTOHSCROLL
+    LTEXT           "Tolerance X",IDC_STATIC,28,274,38,8
+    LTEXT           "Max Area",IDC_STATIC,370,159,32,8
+    EDITTEXT        ID_MAX_AREA,404,156,47,14,ES_AUTOHSCROLL
+    GROUPBOX        "",IDC_STATIC,25,255,100,36
+    CONTROL         "Distance Tracking",IDC_RADIO_My_Tracking,"Button",BS_AUTORADIOBUTTON,32,255,72,10
+    CONTROL         "SORT Tracking",IDC_RADIO_SORT_TRACKING,"Button",BS_AUTORADIOBUTTON,30,214,63,10
+    GROUPBOX        "Tracking Method",IDC_STATIC,20,204,247,90
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,1
+ PRODUCTVERSION 1,0,0,1
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "080403a8"
+        BEGIN
+            VALUE "CompanyName", "TODO: "
+            VALUE "FileDescription", "TODO: "
+            VALUE "FileVersion", "1.0.0.1"
+            VALUE "InternalName", "BasicDemo.exe"
+            VALUE "LegalCopyright", "TODO: (C) "
+            VALUE "OriginalFilename", "BasicDemo.exe"
+            VALUE "ProductName", "TODO: "
+            VALUE "ProductVersion", "1.0.0.1"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x804, 936
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_BasicDemo_DIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 519
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 427
+    END
+
+    IDD_ABOUTBOX, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 163
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 55
+    END
+
+    IDD_Setting_DIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 466
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 316
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_BasicDemo_DIALOG AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_Setting_DIALOG AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog Info
+//
+
+IDD_Setting_DIALOG DLGINIT
+BEGIN
+    ID_BLUR_KERNEL, 0x403, 2, 0
+0x0033, 
+    ID_BLUR_KERNEL, 0x403, 2, 0
+0x0035, 
+    ID_BLUR_KERNEL, 0x403, 2, 0
+0x0037, 
+    ID_BLUR_KERNEL, 0x403, 2, 0
+0x0039, 
+    ID_BSG_SHADOW, 0x403, 5, 0
+0x7254, 0x6575, "\000" 
+    ID_BSG_SHADOW, 0x403, 6, 0
+0x6146, 0x736c, 0x0065, 
+    ID_MORPHO_METHOD, 0x403, 7, 0
+0x6944, 0x616c, 0x6574, "\000" 
+    ID_MORPHO_METHOD, 0x403, 6, 0
+0x7245, 0x646f, 0x0065, 
+    ID_MORPHO_METHOD, 0x403, 5, 0
+0x704f, 0x6e65, "\000" 
+    ID_MORPHO_METHOD, 0x403, 6, 0
+0x6c43, 0x736f, 0x0065, 
+    ID_MORPHO_KERNEL, 0x403, 2, 0
+0x0033, 
+    ID_MORPHO_KERNEL, 0x403, 2, 0
+0x0035, 
+    ID_MORPHO_KERNEL, 0x403, 2, 0
+0x0037, 
+    ID_MORPHO_KERNEL, 0x403, 2, 0
+0x0039, 
+    ID_BSG_METHOD, 0x403, 5, 0
+0x4f4d, 0x3247, "\000" 
+    ID_BSG_METHOD, 0x403, 4, 0
+0x4f4d, 0x0047, 
+    ID_BLUR_MEDTHOD, 0x403, 7, 0
+0x454d, 0x4944, 0x4e41, "\000" 
+    ID_BLUR_MEDTHOD, 0x403, 4, 0
+0x5641, 0x0047, 
+    ID_BLUR_MEDTHOD, 0x403, 6, 0
+0x4147, 0x5355, 0x0053, 
+    ID_ADAPTIVETHRESHOLD_METHOD, 0x403, 7, 0
+0x454d, 0x4e41, 0x435f, "\000" 
+    ID_ADAPTIVETHRESHOLD_METHOD, 0x403, 11, 0
+0x4147, 0x5355, 0x4953, 0x4e41, 0x435f, "\000" 
+    0
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE
+BEGIN
+    IDS_ABOUTBOX            "About BasicDemo(&A)..."
+END
+
+#endif    // English resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// English (United States) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_HPC_ICON            ICON                    "res\\HPCl_logo.ico"
+
+IDI_SETTING_ICON        ICON                    "res\\settings2.ico"
+
+IDI_LOG_HISTORY_ICON    ICON                    "res\\log_history.ico"
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_LOG_VIEW_DIALOG DIALOGEX 0, 0, 419, 265
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "HISTORY"
+FONT 8, "Microsoft Sans Serif", 400, 0, 0x0
+BEGIN
+    DEFPUSHBUTTON   "OK",ID_LOG_OK,360,243,50,14
+    PUSHBUTTON      "Clear Data",ID_LOG_CLEAR_DATA,10,243,50,14
+    CONTROL         "",IDC_LOG_HISTORY_LIST,"SysListView32",LVS_REPORT | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,20,10,375,231
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_LOG_VIEW_DIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 412
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 258
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_LOG_VIEW_DIALOG AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+#endif    // English (United States) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#define _AFX_NO_SPLITTER_RESOURCES
+#define _AFX_NO_OLE_RESOURCES
+#define _AFX_NO_TRACKER_RESOURCES
+#define _AFX_NO_PROPERTY_RESOURCES
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHS)
+LANGUAGE 4, 2
+#pragma code_page(936)
+#include "res\BasicDemo.rc2"  // ????¨???¨?? Microsoft Visual C++ ????§????ì??ì????ì????¨???¨??-|???§???????§????ì|????ì?o???
+#include "l.CHS\afxres.rc"      // ????§????ì??ì????ì?o????§????ì|?????§????ì|????ì?|?t
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+
