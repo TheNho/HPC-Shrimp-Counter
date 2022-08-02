@@ -70,22 +70,28 @@ BOOL LogHistory::OnInitDialog() {
 	CString lineText;
 	// open the source file for reading and save as vector
 	if (!Log_StdFile.Open(global_filename, CFile::modeNoTruncate | CFile::modeRead, &Log_ex)) {
-		AfxMessageBox(L"Cannot open file Result!");
+		AfxMessageBox(L"Cannot open file Result.txt!");
+		int message = AfxMessageBox(L"Create new file Result.txt?", MB_YESNO);
+		if (message == IDYES) {
+			Log_StdFile.Open(global_filename, CFile::modeCreate, &Log_ex);
+			Log_StdFile.Close();
+		}
 		// close window
 		this->SendMessage(WM_CLOSE);
 		return FALSE;
+
 	}
 	else {
-		int iLineCount = 0;
+		//int iLineCount = 0;
 		vectorResult_line_data.clear();
 		while (Log_StdFile.ReadString(lineText)) {
-			// delete the only \n in file
+			// delete the only \n data in file
 			if (lineText == L"") {
 				continue;
 			}
 			else {
 				vectorResult_line_data.push_back(lineText);
-				iLineCount++;
+				//iLineCount++;
 			}
 		}
 		Log_StdFile.Close();
@@ -99,8 +105,8 @@ BOOL LogHistory::OnInitDialog() {
 		nItem = m_listCtrl.InsertItem(0, rid); // column 0 -> index
 		CString sToken; // content
 		int icols = 0; // substring index to extract
-		int ncols = 3;// max columns
-		while (AfxExtractSubString(sToken, data_, icols, ' ') && icols < ncols) {
+		int max_cols = 3;// max columns
+		while (AfxExtractSubString(sToken, data_, icols, ' ') && icols < max_cols) {
 			m_listCtrl.SetItemText(nItem, // row
 								   icols+1, // column
 								   sToken); //data
@@ -114,18 +120,16 @@ BOOL LogHistory::OnInitDialog() {
 // LogHistory message handlers
 
 
-void LogHistory::OnBnClickedLogOk()
-{
+void LogHistory::OnBnClickedLogOk() {
 	// close window
 	this->SendMessage(WM_CLOSE);
 	return;
 }
 
 
-void LogHistory::OnBnClickedLogClearData()
-{
-	int message_box = AfxMessageBox(L"Clear all Data!!!!!", MB_OKCANCEL);
-	if (message_box == IDOK) {
+void LogHistory::OnBnClickedLogClearData() {
+	int message_box = AfxMessageBox(L"Clear All Data!!!!!!!!!", MB_YESNO);
+	if (message_box == IDYES) {
 		CStdioFile Log_StdFile;
 		CFileException Log_ex;
 		if (!Log_StdFile.Open(global_filename, CFile::modeCreate , &Log_ex)) {

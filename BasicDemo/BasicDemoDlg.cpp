@@ -5,9 +5,10 @@
 // Pass line counting
 // BasicDemoDlg.cpp : implementation file
 #include "stdafx.h"
+//#include <string>
 #include "BasicDemo.h"
 #include "BasicDemoDlg.h"
-#include <string>
+
 
 
 #ifdef _DEBUG
@@ -30,12 +31,10 @@ protected:
 	DECLARE_MESSAGE_MAP()
 };
 
-CAboutDlg::CAboutDlg() : CDialog(CAboutDlg::IDD)
-{
+CAboutDlg::CAboutDlg() : CDialog(CAboutDlg::IDD) {
 }
 
-void CAboutDlg::DoDataExchange(CDataExchange* pDX)
-{
+void CAboutDlg::DoDataExchange(CDataExchange* pDX) {
 	CDialog::DoDataExchange(pDX);
 }
 
@@ -61,13 +60,13 @@ CBasicDemoDlg::CBasicDemoDlg(CWnd* pParent /*=NULL*/)
     , m_nSaveImageBufSize(0)
     , Shrimp_number(_T("0"))
 {
+    // Load icon
 	//m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
     m_hIcon = AfxGetApp()->LoadIcon(IDI_HPC_ICON);
     memset(&m_stImageInfo, 0, sizeof(MV_FRAME_OUT_INFO_EX));
 }
 
-void CBasicDemoDlg::DoDataExchange(CDataExchange* pDX)
-{
+void CBasicDemoDlg::DoDataExchange(CDataExchange* pDX) {
     CDialog::DoDataExchange(pDX);
     DDX_Control(pDX, IDC_DEVICE_COMBO, m_ctrlDeviceCombo);
     DDX_CBIndex(pDX, IDC_DEVICE_COMBO, m_nDeviceCombo);
@@ -107,10 +106,8 @@ BEGIN_MESSAGE_MAP(CBasicDemoDlg, CDialog)
 END_MESSAGE_MAP()
 
 //en:Grabbing thread
-unsigned int __stdcall GrabThread(void* pUser)
-{
-    if (pUser)
-    {
+unsigned int __stdcall GrabThread(void* pUser) {
+    if (pUser) {
         CBasicDemoDlg* pCam = (CBasicDemoDlg*)pUser;
 
         pCam->GrabThreadProcess();
@@ -130,14 +127,12 @@ BOOL CBasicDemoDlg::OnInitDialog() {
 	ASSERT(IDM_ABOUTBOX < 0xF000);
 
 	CMenu* pSysMenu = GetSystemMenu(FALSE);
-	if (pSysMenu != NULL)
-	{
+	if (pSysMenu != NULL) {
 		BOOL bNameValid;
 		CString strAboutMenu;
 		bNameValid = strAboutMenu.LoadString(IDS_ABOUTBOX);
 		ASSERT(bNameValid);
-		if (!strAboutMenu.IsEmpty())
-		{
+		if (!strAboutMenu.IsEmpty()) {
 			pSysMenu->AppendMenu(MF_SEPARATOR);
 			pSysMenu->AppendMenu(MF_STRING, IDM_ABOUTBOX, strAboutMenu);
 		}
@@ -161,12 +156,12 @@ BOOL CBasicDemoDlg::OnInitDialog() {
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
 
-// install the first run with variable need creating
+// global filename, used in all windows
 extern CString global_filename;
+// install the first run with variable need creating
 void CBasicDemoDlg::SettingInitial() {
     // initialize directory global save result file, use global variable in many sub-window
     global_filename = nFilename;
-    // Install initial parameters with variable need creat to use 
     // Segmentation
     if (segment_binary_method == L"Adaptive Threshold") {
         Size Adap_size = Size(adaptiveThreshold_KSize, adaptiveThreshold_KSize);
@@ -241,15 +236,12 @@ void CBasicDemoDlg::SettingInitial() {
 
 }
 
-void CBasicDemoDlg::OnSysCommand(UINT nID, LPARAM lParam)
-{
-	if ((nID & 0xFFF0) == IDM_ABOUTBOX)
-	{
+void CBasicDemoDlg::OnSysCommand(UINT nID, LPARAM lParam) {
+	if ((nID & 0xFFF0) == IDM_ABOUTBOX) {
 		CAboutDlg dlgAbout;
 		dlgAbout.DoModal();
 	}
-	else
-	{
+	else {
 		CDialog::OnSysCommand(nID, lParam);
 	}
 }
@@ -257,10 +249,8 @@ void CBasicDemoDlg::OnSysCommand(UINT nID, LPARAM lParam)
 // If you add a minimize button to your dialog, you will need the code below
 //  to draw the icon.  For MFC applications using the document/view model,
 //  this is automatically done for you by the framework.
-void CBasicDemoDlg::OnPaint()
-{
-	if (IsIconic())
-	{
+void CBasicDemoDlg::OnPaint() {
+	if (IsIconic()) {
 		CPaintDC dc(this); // device context for painting
 
 		SendMessage(WM_ICONERASEBKGND, reinterpret_cast<WPARAM>(dc.GetSafeHdc()), 0);
@@ -276,22 +266,19 @@ void CBasicDemoDlg::OnPaint()
 		// Draw the icon
 		dc.DrawIcon(x, y, m_hIcon);
 	}
-	else
-	{
+	else {
 		CDialog::OnPaint();
 	}
 }
 
 // The system calls this function to obtain the cursor to display while the user drags
 //  the minimized window.
-HCURSOR CBasicDemoDlg::OnQueryDragIcon()
-{
+HCURSOR CBasicDemoDlg::OnQueryDragIcon() {
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
 //en:Enable/Disable some controls when call this function
-void CBasicDemoDlg::EnableControls(BOOL bIsCameraReady)
-{
+void CBasicDemoDlg::EnableControls(BOOL bIsCameraReady) {
     GetDlgItem(IDC_OPEN_BUTTON)->EnableWindow(m_bOpenDevice ? FALSE : (bIsCameraReady ? TRUE : FALSE));
     GetDlgItem(IDC_CLOSE_BUTTON)->EnableWindow((m_bOpenDevice && bIsCameraReady && !m_bStartGrabbing) ? TRUE : FALSE);
     GetDlgItem(IDC_START_GRABBING_BUTTON)->EnableWindow((m_bStartGrabbing && bIsCameraReady) ? FALSE : (m_bOpenDevice ? TRUE : FALSE));
@@ -314,7 +301,7 @@ void CBasicDemoDlg::EnableControls(BOOL bIsCameraReady)
     GetDlgItem(IDC_STOP_COUNT_BUTTON)->EnableWindow(b_start_count ? TRUE : FALSE); // enable when counting
 }
 
-//en:Initial window initialization
+//en:Initial window initialization / SDK function
 void CBasicDemoDlg::DisplayWindowInitial() {
     CWnd *pWnd = GetDlgItem(IDC_DISPLAY_STATIC);
     if (pWnd) {
@@ -325,9 +312,8 @@ void CBasicDemoDlg::DisplayWindowInitial() {
     }
 }
 
-//en:Show error message
-void CBasicDemoDlg::ShowErrorMsg(CString csMessage, int nErrorNum)
-{
+//en:Show error message / SDK function
+void CBasicDemoDlg::ShowErrorMsg(CString csMessage, int nErrorNum) {
     CString errorMsg;
     if (nErrorNum == 0) {
         errorMsg =  csMessage;
@@ -335,7 +321,7 @@ void CBasicDemoDlg::ShowErrorMsg(CString csMessage, int nErrorNum)
     else {
         CString nE;
         nE.Format(L"%d", nErrorNum);
-        errorMsg = csMessage + L": Error = " + nE;
+        errorMsg = csMessage + L": Error=" + nE + L"\n";
     }
 
     switch(nErrorNum) {
@@ -362,18 +348,15 @@ void CBasicDemoDlg::ShowErrorMsg(CString csMessage, int nErrorNum)
 }
 
 //en:Close Device
-int CBasicDemoDlg::CloseDevice()
-{
+int CBasicDemoDlg::CloseDevice() {
     m_bThreadState = FALSE;
-    if (m_hGrabThread)
-    {
+    if (m_hGrabThread) {
         WaitForSingleObject(m_hGrabThread, INFINITE);
         CloseHandle(m_hGrabThread);
         m_hGrabThread = NULL;
     }
 
-    if (m_pcMyCamera)
-    {
+    if (m_pcMyCamera) {
         m_pcMyCamera->Close();
         delete m_pcMyCamera;
         m_pcMyCamera = NULL;
@@ -382,8 +365,7 @@ int CBasicDemoDlg::CloseDevice()
     m_bStartGrabbing = FALSE;
     m_bOpenDevice = FALSE;
 
-    if (m_pSaveImageBuf)
-    {
+    if (m_pSaveImageBuf) {
         free(m_pSaveImageBuf);
         m_pSaveImageBuf = NULL;
     }
@@ -392,24 +374,20 @@ int CBasicDemoDlg::CloseDevice()
     return MV_OK;
 }
 
-//en:Get Trigger Mode
-int CBasicDemoDlg::GetTriggerMode()
-{
+//en:Get Trigger Mode / SDK function
+int CBasicDemoDlg::GetTriggerMode() {
     MVCC_ENUMVALUE stEnumValue = {0};
 
     int nRet = m_pcMyCamera->GetEnumValue("TriggerMode", &stEnumValue);
-    if (MV_OK != nRet)
-    {
+    if (MV_OK != nRet) {
         return nRet;
     }
 
     m_nTriggerMode = stEnumValue.nCurValue;
-    if (MV_TRIGGER_MODE_ON ==  m_nTriggerMode)
-    {
+    if (MV_TRIGGER_MODE_ON ==  m_nTriggerMode) {
         OnBnClickedTriggerModeRadio();
     }
-    else
-    {
+    else {
         m_nTriggerMode = MV_TRIGGER_MODE_OFF;
         OnBnClickedContinusModeRadio();
     }
@@ -417,20 +395,18 @@ int CBasicDemoDlg::GetTriggerMode()
     return MV_OK;
 }
 
-// en:Set Trigger Mode
+// en:Set Trigger Mode / SDK function
 int CBasicDemoDlg::SetTriggerMode()
 {
     return m_pcMyCamera->SetEnumValue("TriggerMode", m_nTriggerMode);
 }
 
-//en:Get Exposure Time
-int CBasicDemoDlg::GetExposureTime()
-{
+//en:Get Exposure Time / SDK function
+int CBasicDemoDlg::GetExposureTime() {
     MVCC_FLOATVALUE stFloatValue = {0};
 
     int nRet = m_pcMyCamera->GetFloatValue("ExposureTime", &stFloatValue);
-    if (MV_OK != nRet)
-    {
+    if (MV_OK != nRet) {
         return nRet;
     }
 
@@ -439,13 +415,11 @@ int CBasicDemoDlg::GetExposureTime()
     return MV_OK;
 }
 
-// en:Set Exposure Time
-int CBasicDemoDlg::SetExposureTime()
-{
+// en:Set Exposure Time / SDK function
+int CBasicDemoDlg::SetExposureTime() {
     // en:Adjust these two exposure mode to allow exposure time effective
     int nRet = m_pcMyCamera->SetEnumValue("ExposureMode", MV_EXPOSURE_MODE_TIMED);
-    if (MV_OK != nRet)
-    {
+    if (MV_OK != nRet) {
         return nRet;
     }
 
@@ -454,14 +428,12 @@ int CBasicDemoDlg::SetExposureTime()
     return m_pcMyCamera->SetFloatValue("ExposureTime", (float)m_dExposureEdit);
 }
 
-// en:Get Gain
-int CBasicDemoDlg::GetGain()
-{
+// en:Get Gain / SDK function
+int CBasicDemoDlg::GetGain() {
     MVCC_FLOATVALUE stFloatValue = {0};
 
     int nRet = m_pcMyCamera->GetFloatValue("Gain", &stFloatValue);
-    if (MV_OK != nRet)
-    {
+    if (MV_OK != nRet) {
         return nRet;
     }
     m_dGainEdit = stFloatValue.fCurValue;
@@ -469,23 +441,20 @@ int CBasicDemoDlg::GetGain()
     return MV_OK;
 }
 
-//en:Set Gain
-int CBasicDemoDlg::SetGain()
-{
+//en:Set Gain / SDK function
+int CBasicDemoDlg::SetGain() {
     //en:Set Gain after Auto Gain is turned off, this failure does not need to return
     m_pcMyCamera->SetEnumValue("GainAuto", 0);
 
     return m_pcMyCamera->SetFloatValue("Gain", (float)m_dGainEdit);
 }
 
-//en:Get Frame Rate
-int CBasicDemoDlg::GetFrameRate()
-{
+//en:Get Frame Rate / SDK function
+int CBasicDemoDlg::GetFrameRate() {
     MVCC_FLOATVALUE stFloatValue = {0};
 
     int nRet = m_pcMyCamera->GetFloatValue("ResultingFrameRate", &stFloatValue);
-    if (MV_OK != nRet)
-    {
+    if (MV_OK != nRet) {
         return nRet;
     }
     m_dFrameRateEdit = stFloatValue.fCurValue;
@@ -493,62 +462,51 @@ int CBasicDemoDlg::GetFrameRate()
     return MV_OK;
 }
 
-//en:Set Frame Rate
-int CBasicDemoDlg::SetFrameRate()
-{
+//en:Set Frame Rate / SDK function
+int CBasicDemoDlg::SetFrameRate() {
     int nRet = m_pcMyCamera->SetBoolValue("AcquisitionFrameRateEnable", true);
-    if (MV_OK != nRet)
-    {
+    if (MV_OK != nRet) {
         return nRet;
     }
 
     return m_pcMyCamera->SetFloatValue("AcquisitionFrameRate", (float)m_dFrameRateEdit);
 }
 
-//en:Get Trigger Source
-int CBasicDemoDlg::GetTriggerSource()
-{
+//en:Get Trigger Source / SDK function
+int CBasicDemoDlg::GetTriggerSource() {
     MVCC_ENUMVALUE stEnumValue = {0};
 
     int nRet = m_pcMyCamera->GetEnumValue("TriggerSource", &stEnumValue);
-    if (MV_OK != nRet)
-    {
+    if (MV_OK != nRet) {
         return nRet;
     }
 
-    if ((unsigned int)MV_TRIGGER_SOURCE_SOFTWARE == stEnumValue.nCurValue)
-    {
+    if ((unsigned int)MV_TRIGGER_SOURCE_SOFTWARE == stEnumValue.nCurValue) {
         m_bSoftWareTriggerCheck = TRUE;
     }
-    else
-    {
+    else {
         m_bSoftWareTriggerCheck = FALSE;
     }
 
     return MV_OK;
 }
 
-//en:Set Trigger Source
-int CBasicDemoDlg::SetTriggerSource()
-{
+//en:Set Trigger Source / SDK function
+int CBasicDemoDlg::SetTriggerSource() {
     int nRet = MV_OK;
-    if (m_bSoftWareTriggerCheck)
-    {
+    if (m_bSoftWareTriggerCheck) {
         m_nTriggerSource = MV_TRIGGER_SOURCE_SOFTWARE;
         nRet = m_pcMyCamera->SetEnumValue("TriggerSource", m_nTriggerSource);
-        if (MV_OK != nRet)
-        {
+        if (MV_OK != nRet) {
             ShowErrorMsg(TEXT("Set Software Trigger Fail"), nRet);
             return nRet;
         }
         GetDlgItem(IDC_SOFTWARE_ONCE_BUTTON )->EnableWindow(TRUE);
     }
-    else
-    {
+    else {
         m_nTriggerSource = MV_TRIGGER_SOURCE_LINE0;
         nRet = m_pcMyCamera->SetEnumValue("TriggerSource", m_nTriggerSource);
-        if (MV_OK != nRet)
-        {
+        if (MV_OK != nRet) {
             ShowErrorMsg(TEXT("Set Hardware Trigger Fail"), nRet);
             return nRet;
         }
@@ -558,21 +516,18 @@ int CBasicDemoDlg::SetTriggerSource()
     return nRet;
 }
 
-//en:Save Image
-int CBasicDemoDlg::SaveImage(enum MV_SAVE_IAMGE_TYPE enSaveImageType)
-{
+//en:Save Image / SDK function
+int CBasicDemoDlg::SaveImage(enum MV_SAVE_IAMGE_TYPE enSaveImageType) {
     MV_SAVE_IMG_TO_FILE_PARAM stSaveFileParam;
     memset(&stSaveFileParam, 0, sizeof(MV_SAVE_IMG_TO_FILE_PARAM));
 
     EnterCriticalSection(&m_hSaveImageMux);
-    if (m_pSaveImageBuf == NULL || m_stImageInfo.enPixelType == 0)
-    {
+    if (m_pSaveImageBuf == NULL || m_stImageInfo.enPixelType == 0) {
         LeaveCriticalSection(&m_hSaveImageMux);
         return MV_E_NODATA;
     }
 
-    if(RemoveCustomPixelFormats(m_stImageInfo.enPixelType))
-    {
+    if(RemoveCustomPixelFormats(m_stImageInfo.enPixelType)) {
         LeaveCriticalSection(&m_hSaveImageMux);
         return MV_E_SUPPORT;
     }
@@ -586,21 +541,17 @@ int CBasicDemoDlg::SaveImage(enum MV_SAVE_IAMGE_TYPE enSaveImageType)
     stSaveFileParam.iMethodValue = 0;
 
     //en:jpg image nQuality range is (50-99], png image nQuality range is [0-9]
-    if (MV_Image_Bmp == stSaveFileParam.enImageType)
-    {
+    if (MV_Image_Bmp == stSaveFileParam.enImageType) {
         sprintf_s(stSaveFileParam.pImagePath, 256, "Image_w%d_h%d_fn%03d.bmp", stSaveFileParam.nWidth, stSaveFileParam.nHeight, m_stImageInfo.nFrameNum);
     }
-    else if (MV_Image_Jpeg == stSaveFileParam.enImageType)
-    {
+    else if (MV_Image_Jpeg == stSaveFileParam.enImageType) {
         stSaveFileParam.nQuality = 80;
         sprintf_s(stSaveFileParam.pImagePath, 256, "Image_w%d_h%d_fn%03d.jpg", stSaveFileParam.nWidth, stSaveFileParam.nHeight, m_stImageInfo.nFrameNum);
     }
-    else if (MV_Image_Tif == stSaveFileParam.enImageType)
-    {
+    else if (MV_Image_Tif == stSaveFileParam.enImageType) {
         sprintf_s(stSaveFileParam.pImagePath, 256, "Image_w%d_h%d_fn%03d.tif", stSaveFileParam.nWidth, stSaveFileParam.nHeight, m_stImageInfo.nFrameNum);
     }
-    else if (MV_Image_Png == stSaveFileParam.enImageType)
-    {
+    else if (MV_Image_Png == stSaveFileParam.enImageType) {
         stSaveFileParam.nQuality = 8;
         sprintf_s(stSaveFileParam.pImagePath, 256, "Image_w%d_h%d_fn%03d.png", stSaveFileParam.nWidth, stSaveFileParam.nHeight, m_stImageInfo.nFrameNum);
     }
@@ -623,24 +574,19 @@ int CBasicDemoDlg::GrabThreadProcess() {
     int nRet = MV_OK;
     double start_time_fps = 0;
     // Thread 0
-    while(m_bThreadState)
-    {
+    while(m_bThreadState) {
         nRet = m_pcMyCamera->GetImageBuffer(&stImageInfo, 1000);
-        if (nRet == MV_OK)
-        {
+        if (nRet == MV_OK) {
             //Enter Critical Thread get save image buffer
             EnterCriticalSection(&m_hSaveImageMux);
-            if (NULL == m_pSaveImageBuf || stImageInfo.stFrameInfo.nFrameLen > m_nSaveImageBufSize)
-            {
-                if (m_pSaveImageBuf)
-                {
+            if (NULL == m_pSaveImageBuf || stImageInfo.stFrameInfo.nFrameLen > m_nSaveImageBufSize) {
+                if (m_pSaveImageBuf) {
                     free(m_pSaveImageBuf);
                     m_pSaveImageBuf = NULL;
                 }
 
                 m_pSaveImageBuf = (unsigned char *)malloc(sizeof(unsigned char) * stImageInfo.stFrameInfo.nFrameLen);
-                if (m_pSaveImageBuf == NULL)
-                {
+                if (m_pSaveImageBuf == NULL) {
                     LeaveCriticalSection(&m_hSaveImageMux);
                     return 0;
                 }
@@ -652,8 +598,7 @@ int CBasicDemoDlg::GrabThreadProcess() {
             memcpy(&m_stImageInfo, &(stImageInfo.stFrameInfo), sizeof(MV_FRAME_OUT_INFO_EX));
             LeaveCriticalSection(&m_hSaveImageMux);
             // Rmove format, free buffer
-            if(RemoveCustomPixelFormats(stImageInfo.stFrameInfo.enPixelType))
-            {
+            if(RemoveCustomPixelFormats(stImageInfo.stFrameInfo.enPixelType)) {
                 m_pcMyCamera->FreeImageBuffer(&stImageInfo);
                 continue;
             }
@@ -703,15 +648,13 @@ int CBasicDemoDlg::GrabThreadProcess() {
             }
         }
     }
-    // for debug
+    // end thread, destroy all window
     //cv::destroyAllWindows();
-
     return MV_OK;
 }
 
-//en:Click Find Device button:Enumeration 
-void CBasicDemoDlg::OnBnClickedEnumButton()
-{
+//en:Click Find Device button:Enumeration / SDK function
+void CBasicDemoDlg::OnBnClickedEnumButton() {
     CString strMsg;
 
     m_ctrlDeviceCombo.ResetContent();
@@ -719,36 +662,30 @@ void CBasicDemoDlg::OnBnClickedEnumButton()
 
     //en:Enumerate all devices within subnet
     int nRet = CMvCamera::EnumDevices(MV_GIGE_DEVICE | MV_USB_DEVICE, &m_stDevList);
-    if (MV_OK != nRet)
-    {
+    if (MV_OK != nRet) {
         return;
     }
 
     // en:Add value to the information list box and display
-    for (unsigned int i = 0; i < m_stDevList.nDeviceNum; i++)
-    {
+    for (unsigned int i = 0; i < m_stDevList.nDeviceNum; i++) {
         MV_CC_DEVICE_INFO* pDeviceInfo = m_stDevList.pDeviceInfo[i];
-        if (NULL == pDeviceInfo)
-        {
+        if (NULL == pDeviceInfo) {
             continue;
         }
 
         wchar_t* pUserName = NULL;
-        if (pDeviceInfo->nTLayerType == MV_GIGE_DEVICE)
-        {
+        if (pDeviceInfo->nTLayerType == MV_GIGE_DEVICE) {
             int nIp1 = ((m_stDevList.pDeviceInfo[i]->SpecialInfo.stGigEInfo.nCurrentIp & 0xff000000) >> 24);
             int nIp2 = ((m_stDevList.pDeviceInfo[i]->SpecialInfo.stGigEInfo.nCurrentIp & 0x00ff0000) >> 16);
             int nIp3 = ((m_stDevList.pDeviceInfo[i]->SpecialInfo.stGigEInfo.nCurrentIp & 0x0000ff00) >> 8);
             int nIp4 = (m_stDevList.pDeviceInfo[i]->SpecialInfo.stGigEInfo.nCurrentIp & 0x000000ff);
 
-            if (strcmp("", (LPCSTR)(pDeviceInfo->SpecialInfo.stGigEInfo.chUserDefinedName)) != 0)
-            {
+            if (strcmp("", (LPCSTR)(pDeviceInfo->SpecialInfo.stGigEInfo.chUserDefinedName)) != 0) {
                 DWORD dwLenUserName = MultiByteToWideChar(CP_ACP, 0, (LPCSTR)(pDeviceInfo->SpecialInfo.stGigEInfo.chUserDefinedName), -1, NULL, 0);
                 pUserName = new wchar_t[dwLenUserName];
                 MultiByteToWideChar(CP_ACP, 0, (LPCSTR)(pDeviceInfo->SpecialInfo.stGigEInfo.chUserDefinedName), -1, pUserName, dwLenUserName);
             }
-            else
-            {
+            else {
                 char strUserName[256] = {0};
                 sprintf_s(strUserName, 256, "%s %s (%s)", pDeviceInfo->SpecialInfo.stGigEInfo.chManufacturerName,
                     pDeviceInfo->SpecialInfo.stGigEInfo.chModelName,
@@ -759,16 +696,13 @@ void CBasicDemoDlg::OnBnClickedEnumButton()
             }
             strMsg.Format(_T("[%d]GigE:    %s  (%d.%d.%d.%d)"), i, pUserName, nIp1, nIp2, nIp3, nIp4);
         }
-        else if (pDeviceInfo->nTLayerType == MV_USB_DEVICE)
-        {
-            if (strcmp("", (char*)pDeviceInfo->SpecialInfo.stUsb3VInfo.chUserDefinedName) != 0)
-            {
+        else if (pDeviceInfo->nTLayerType == MV_USB_DEVICE) {
+            if (strcmp("", (char*)pDeviceInfo->SpecialInfo.stUsb3VInfo.chUserDefinedName) != 0) {
                 DWORD dwLenUserName = MultiByteToWideChar(CP_ACP, 0, (LPCSTR)(pDeviceInfo->SpecialInfo.stUsb3VInfo.chUserDefinedName), -1, NULL, 0);
                 pUserName = new wchar_t[dwLenUserName];
                 MultiByteToWideChar(CP_ACP, 0, (LPCSTR)(pDeviceInfo->SpecialInfo.stUsb3VInfo.chUserDefinedName), -1, pUserName, dwLenUserName);
             }
-            else
-            {
+            else {
                 char strUserName[256] = {0};
                 sprintf_s(strUserName, 256, "%s %s (%s)", pDeviceInfo->SpecialInfo.stUsb3VInfo.chManufacturerName,
                     pDeviceInfo->SpecialInfo.stUsb3VInfo.chModelName,
@@ -779,21 +713,18 @@ void CBasicDemoDlg::OnBnClickedEnumButton()
             }
             strMsg.Format(_T("[%d]UsbV3:  %s"), i, pUserName);
         }
-        else
-        {
+        else {
             ShowErrorMsg(TEXT("Unknown device enumerated"), 0);
         }
         m_ctrlDeviceCombo.AddString(strMsg);
 
-        if (pUserName)
-        {
+        if (pUserName) {
             delete[] pUserName;
             pUserName = NULL;
         }
     }
 
-    if (0 == m_stDevList.nDeviceNum)
-    {
+    if (0 == m_stDevList.nDeviceNum) {
         ShowErrorMsg(TEXT("No device"), 0);
         return;
     }
@@ -802,38 +733,32 @@ void CBasicDemoDlg::OnBnClickedEnumButton()
     EnableControls(TRUE);
 }
 
-// en:Click Open button: Open Device
-void CBasicDemoDlg::OnBnClickedOpenButton() 
-{
-    if (TRUE == m_bOpenDevice || NULL != m_pcMyCamera)
-    {
+// en:Click Open button: Open Device / SDK function
+void CBasicDemoDlg::OnBnClickedOpenButton() {
+    if (TRUE == m_bOpenDevice || NULL != m_pcMyCamera) {
         return;
     }
     UpdateData(TRUE);
 
     int nIndex = m_nDeviceCombo;
-    if ((nIndex < 0) | (nIndex >= MV_MAX_DEVICE_NUM))
-    {
+    if ((nIndex < 0) | (nIndex >= MV_MAX_DEVICE_NUM)) {
         ShowErrorMsg(TEXT("Please select device"), 0);
         return;
     }
 
     //en:Device instance created by device information
-    if (NULL == m_stDevList.pDeviceInfo[nIndex])
-    {
+    if (NULL == m_stDevList.pDeviceInfo[nIndex]) {
         ShowErrorMsg(TEXT("Device does not exist"), 0);
         return;
     }
 
     m_pcMyCamera = new CMvCamera;
-    if (NULL == m_pcMyCamera)
-    {
+    if (NULL == m_pcMyCamera) {
         return;
     }
 
     int nRet = m_pcMyCamera->Open(m_stDevList.pDeviceInfo[nIndex]);
-    if (MV_OK != nRet)
-    {
+    if (MV_OK != nRet) {
         delete m_pcMyCamera;
         m_pcMyCamera = NULL;
         ShowErrorMsg(TEXT("Open Fail"), nRet);
@@ -841,20 +766,16 @@ void CBasicDemoDlg::OnBnClickedOpenButton()
     }
 
     //en:Detection network optimal package size(It only works for the GigE camera)
-    if (m_stDevList.pDeviceInfo[nIndex]->nTLayerType == MV_GIGE_DEVICE)
-    {
+    if (m_stDevList.pDeviceInfo[nIndex]->nTLayerType == MV_GIGE_DEVICE) {
         unsigned int nPacketSize = 0;
         nRet = m_pcMyCamera->GetOptimalPacketSize(&nPacketSize);
-        if (nRet == MV_OK)
-        {
+        if (nRet == MV_OK) {
             nRet = m_pcMyCamera->SetIntValue("GevSCPSPacketSize",nPacketSize);
-            if(nRet != MV_OK)
-            {
+            if(nRet != MV_OK) {
                 ShowErrorMsg(TEXT("Warning: Set Packet Size fail!"), nRet);
             }
         }
-        else
-        {
+        else {
             ShowErrorMsg(TEXT("Warning: Get Packet Size fail!"), nRet);
         }
     }
@@ -865,28 +786,25 @@ void CBasicDemoDlg::OnBnClickedOpenButton()
 }
 
 //en:Click Close button: Close Device
-void CBasicDemoDlg::OnBnClickedCloseButton()
-{
+void CBasicDemoDlg::OnBnClickedCloseButton() {
     CloseDevice();
     EnableControls(TRUE);
 }
 
-//en:Click Continues button
-void CBasicDemoDlg::OnBnClickedContinusModeRadio()
-{
+//en:Click Continues button / SDK function
+void CBasicDemoDlg::OnBnClickedContinusModeRadio() {
     ((CButton *)GetDlgItem(IDC_CONTINUS_MODE_RADIO))->SetCheck(TRUE);
     ((CButton *)GetDlgItem(IDC_TRIGGER_MODE_RADIO))->SetCheck(FALSE);
     ((CButton *)GetDlgItem(IDC_SOFTWARE_TRIGGER_CHECK))->EnableWindow(FALSE);
     m_nTriggerMode = MV_TRIGGER_MODE_OFF;
     int nRet = SetTriggerMode();
-    if (MV_OK != nRet)
-    {
+    if (MV_OK != nRet) {
         return;
     }
     GetDlgItem(IDC_SOFTWARE_ONCE_BUTTON)->EnableWindow(FALSE);
 } 
 
-//en:Click Trigger Mode button
+//en:Click Trigger Mode button / SDK function
 void CBasicDemoDlg::OnBnClickedTriggerModeRadio() {
     UpdateData(TRUE);
     ((CButton *)GetDlgItem(IDC_CONTINUS_MODE_RADIO))->SetCheck(FALSE);
@@ -894,25 +812,21 @@ void CBasicDemoDlg::OnBnClickedTriggerModeRadio() {
     ((CButton *)GetDlgItem(IDC_SOFTWARE_TRIGGER_CHECK))->EnableWindow(TRUE);
     m_nTriggerMode = MV_TRIGGER_MODE_ON;
     int nRet = SetTriggerMode();
-    if (MV_OK != nRet)
-    {
+    if (MV_OK != nRet) {
         ShowErrorMsg(TEXT("Set Trigger Mode Fail"), nRet);
         return;
     }
 
-    if (m_bStartGrabbing == TRUE)
-    {
-        if (TRUE == m_bSoftWareTriggerCheck)
-        {
+    if (m_bStartGrabbing == TRUE) {
+        if (TRUE == m_bSoftWareTriggerCheck) {
             GetDlgItem(IDC_SOFTWARE_ONCE_BUTTON )->EnableWindow(TRUE);
         }
     }
 }
 
 // Thread Display
-unsigned int __stdcall Display(void* pUser){
-    if (pUser)
-    {
+unsigned int __stdcall Display(void* pUser) {
+    if (pUser) {
         CBasicDemoDlg* display_Cam = (CBasicDemoDlg*)pUser;
 
         display_Cam->DisplayThread();
@@ -925,18 +839,23 @@ void CBasicDemoDlg::DisplayThread() {
 
     MV_DISPLAY_FRAME_INFO stDisplayInfo = { 0 };
     Mat Mat_display;
+
+    // show frame count
+    CString str_frame_count;
+    str_frame_count.Format(L"%lld", frame_count);
+    GetDlgItem(IDC_FRAME_COUNT_EDIT)->SetWindowTextW(str_frame_count);
+
     while (m_bThreadState) {
       
         // wait until Mat_src not NULL
-        if (Mat_src.empty())
-        {
+        if (Mat_src.empty()) {
             Sleep(5);
             //AfxMessageBox(L" Mat Display Error!");
             continue;
         }
 
         // copy Mat_src and draw
-        Mat_display = Mat_src.clone(); // Access violation 2 thead
+        Mat_display = Mat_src.clone(); // Access violation 2 thead-> fixed by waiting the first thread started
         
 
         putText(Mat_display, "FPS: "+ to_string(real_fps), Point(5, 25), FONT_HERSHEY_COMPLEX, 0.8, 0, 1, 8);
@@ -957,11 +876,9 @@ void CBasicDemoDlg::DisplayThread() {
         Shrimp_number = str_shirm_number;
 
         // show frame count after 100 frames
-        if (frame_count % 100 > 90) {
-            CString str_frame_count;
+        if (frame_count % 100 == 0) {
             str_frame_count.Format(L"%lld", frame_count);
             GetDlgItem(IDC_FRAME_COUNT_EDIT)->SetWindowTextW(str_frame_count);
-
         }
         // sleep 10ms
         waitKey(10);
@@ -971,26 +888,23 @@ void CBasicDemoDlg::DisplayThread() {
 }
 
 // en:Click Start button
-void CBasicDemoDlg::OnBnClickedStartGrabbingButton()
-{
-    if (FALSE == m_bOpenDevice || TRUE == m_bStartGrabbing || NULL == m_pcMyCamera)
-    {
+void CBasicDemoDlg::OnBnClickedStartGrabbingButton() {
+    if (FALSE == m_bOpenDevice || TRUE == m_bStartGrabbing || NULL == m_pcMyCamera) {
         return;
     }
 
     memset(&m_stImageInfo, 0, sizeof(MV_FRAME_OUT_INFO_EX));
 
     m_bThreadState = TRUE;
+
     // start get image and processing thread
     unsigned int nThreadID_0 = 0;
     m_hGrabThread = (void*)_beginthreadex( NULL , 0 , GrabThread , this, 0 , &nThreadID_0 );
-
     if (NULL == m_hGrabThread) {
         m_bThreadState = FALSE;
         ShowErrorMsg(TEXT("Create Image Processing Thread Fail!"), 0);
         return;
     }
-
     int nRet = m_pcMyCamera->StartGrabbing();
     if (MV_OK != nRet) {
         m_bThreadState = FALSE;
@@ -1013,19 +927,22 @@ void CBasicDemoDlg::OnBnClickedStartGrabbingButton()
 }
 
 // en:Click Stop button
-void CBasicDemoDlg::OnBnClickedStopGrabbingButton()
-{
-    if (FALSE == m_bOpenDevice || FALSE == m_bStartGrabbing || NULL == m_pcMyCamera)
-    {
+void CBasicDemoDlg::OnBnClickedStopGrabbingButton() {
+    if (FALSE == m_bOpenDevice || FALSE == m_bStartGrabbing || NULL == m_pcMyCamera) {
         return;
     }
 
     m_bThreadState = FALSE;
-    if (m_hGrabThread)
-    {
+
+    if (m_hGrabThread) {
         //WaitForSingleObject(m_hGrabThread, INFINITE); // bug infinite waiting
         CloseHandle(m_hGrabThread);
         m_hGrabThread = NULL;
+    }
+    if (d_hGrabThread) {
+        //WaitForSingleObject(d_hGrabThread, INFINITE); // bug infinite
+        CloseHandle(d_hGrabThread);
+        d_hGrabThread = NULL;
     }
 
     int nRet = m_pcMyCamera->StopGrabbing();
@@ -1036,6 +953,7 @@ void CBasicDemoDlg::OnBnClickedStopGrabbingButton()
     }
     m_bStartGrabbing = FALSE;
     EnableControls(TRUE);
+
     // Stop grabbing and stop count but not write to file
     b_start_count = false;
     GetDlgItem(IDC_START_COUNT_BUTTON)->EnableWindow(TRUE);
@@ -1047,7 +965,7 @@ void CBasicDemoDlg::OnBnClickedStopGrabbingButton()
     previous_centers.clear();
 }
 
-//en:Click Get Parameter button
+//en:Click Get Parameter button / SDK function
 void CBasicDemoDlg::OnBnClickedGetParameterButton() {
     int nRet = GetTriggerMode();
     if (nRet != MV_OK)
@@ -1082,7 +1000,7 @@ void CBasicDemoDlg::OnBnClickedGetParameterButton() {
     UpdateData(FALSE);
 }
 
-//en:Click Set Parameter button
+//en:Click Set Parameter button / SDK function
 void CBasicDemoDlg::OnBnClickedSetParameterButton() {
     UpdateData(TRUE);
 
@@ -1112,7 +1030,7 @@ void CBasicDemoDlg::OnBnClickedSetParameterButton() {
     }
 }
 
-//en:Click Software button
+//en:Click Software button / SDK function
 void CBasicDemoDlg::OnBnClickedSoftwareTriggerCheck() {
     UpdateData(TRUE);
 
@@ -1123,7 +1041,7 @@ void CBasicDemoDlg::OnBnClickedSoftwareTriggerCheck() {
     }
 }
 
-// en:Click Execute button
+// en:Click Execute button / SDK function
 void CBasicDemoDlg::OnBnClickedSoftwareOnceButton() {
     if (TRUE != m_bStartGrabbing)
     {
@@ -1133,7 +1051,7 @@ void CBasicDemoDlg::OnBnClickedSoftwareOnceButton() {
     m_pcMyCamera->CommandExecute("TriggerSoftware");
 }
 
-//en:Click Save BMP button
+//en:Click Save BMP button / SDK function
 void CBasicDemoDlg::OnBnClickedSaveBmpButton() {
     int nRet = SaveImage(MV_Image_Bmp);
     if (MV_OK != nRet)
@@ -1144,7 +1062,7 @@ void CBasicDemoDlg::OnBnClickedSaveBmpButton() {
     ShowErrorMsg(TEXT("Save bmp succeed"), nRet);
 }
 
-//en:Click Save JPG button
+//en:Click Save JPG button / SDK function
 void CBasicDemoDlg::OnBnClickedSaveJpgButton() {
     int nRet = SaveImage(MV_Image_Jpeg);
     if (MV_OK != nRet) {
@@ -1172,7 +1090,7 @@ void CBasicDemoDlg::OnBnClickedSavePngButton() {
     ShowErrorMsg(TEXT("Save png succeed"), nRet);
 }
 
-// en:Exit from upper right corner
+// en:Exit from upper right corner / SDK function
 void CBasicDemoDlg::OnClose() {
     PostQuitMessage(0);
     CloseDevice();
@@ -1212,7 +1130,6 @@ void CBasicDemoDlg::OnBnClickedSettingButton() {
     // click ok -> update = true
     if (open_setting_windown->update_setting == true) { // clicked OK
         // get image processing paramerters from setting window
-        
         // segment to binary method
         int adaptiveThreshold_check = abs(open_setting_windown->setting_adaptiveThreshold_Checked);
         int bsg_check = abs(open_setting_windown->setting_bsg_Checked);
@@ -1342,23 +1259,19 @@ void CBasicDemoDlg::OnBnClickedSettingButton() {
             return;
         }
         // All successed!
-        CString ch;
-        ch.Format(L"Updated All Parameters Success!");
-        AfxMessageBox(ch);
+        AfxMessageBox(L"Updated All Parameters Success!");
         delete open_setting_windown;
         return;
     }
     else {
-        CString ch;
-        ch.Format(L"Parameters have not been Updated!");
-        AfxMessageBox(ch);
+        //AfxMessageBox(L"Parameters have not been Updated!");
         delete open_setting_windown;
         return;
     }
     //open_setting_windown->DestroyWindow();
 }
 
-//opencv convert data to Mat
+//Opencv convert data to Mat
 bool CBasicDemoDlg::Convert2Mat(MV_FRAME_OUT_INFO_EX* pstImageInfo, unsigned char* pData, Mat *srcImage) {
     if (pstImageInfo->enPixelType == PixelType_Gvsp_Mono8) {
         *srcImage = Mat(pstImageInfo->nHeight, pstImageInfo->nWidth, CV_8UC1, pData);
@@ -1485,12 +1398,12 @@ void CBasicDemoDlg::AdaptiveThreshold_GPU(GpuMat gsrc, GpuMat &gdst) {
 // below the line in current centers matched with the point
 // above the line in previous centers to count
 void CBasicDemoDlg::My_Simple_Counting(int tolerance_x, float max_square_distance) {
-    if (previous_centers.size() == 0 || current_centers.size()==0)
+    if (previous_centers.size() == 0 || current_centers.size() == 0)
         return; // the first frame
     
     // find the same x point
     for (auto current_point = begin(current_centers); current_point != end(current_centers); ++current_point) {
-        if (current_point->y >= line_position){ //current point below the line
+        if (current_point->y >= line_position) { //current point below the line
             vector<Point> matched_points;
             for (auto pervious_point = begin(previous_centers); pervious_point != end(previous_centers); ++pervious_point) {
                 if (pervious_point->y < line_position) { // previous point above the line
@@ -1772,9 +1685,7 @@ void CBasicDemoDlg::OnBnClickedResetNumberButton() {
     GetDlgItem(IDC_FRAME_COUNT_EDIT)->SetWindowTextW(str_frame_count);
 }
 
-
-void CBasicDemoDlg::OnBnClickedLogButton()
-{
+void CBasicDemoDlg::OnBnClickedLogButton() {
     LogHistory* open_logHistory_windown = new LogHistory();
     open_logHistory_windown->DoModal();
     return;

@@ -225,5 +225,5 @@ public:
     CStdioFile StdFile;
 
     // define save directory
-    CString nFilename = L"C:/Users/ADMIN/Desktop/Result.txt";
+    CString nFilename = L"Result.txt";
 };
