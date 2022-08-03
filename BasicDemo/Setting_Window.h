@@ -39,6 +39,7 @@ public:
 	float setting_max_distance;
 	double setting_avg_area;
 	double setting_min_area;
+	double setting_max_area;
 	int setting_min_width;
 	int setting_min_height;
 	afx_msg void OnBnClickedOk();
@@ -55,14 +56,16 @@ public:
 	CString setting_adaptiveThreshold_method;
 	int setting_adaptiveThreshold_KSize;
 	int setting_adaptiveThreshold_C;
-	double setting_max_area;
 	int setting_tolerance_x;
 	BOOL setting_adaptiveThreshold_Checked;
 	BOOL setting_bsg_Checked;
 	BOOL setting_MyTracking_Checked;
 	BOOL setting_SORTTracking_Checked;
+	BOOL get_parameters_from_file(CString setting_filename);
 	afx_msg void OnBnClickedRadioBackgroundsubtraction();
 	afx_msg void OnBnClickedRadioAdaptivethreshold();
 	afx_msg void OnBnClickedRadioMyTracking();
 	afx_msg void OnBnClickedRadioSortTracking();
+	afx_msg void OnBnClickedSave();
+	afx_msg void OnBnClickedLoad();
 };

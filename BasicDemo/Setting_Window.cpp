@@ -113,6 +113,8 @@ BEGIN_MESSAGE_MAP(Setting_Window, CDialogEx)
 	ON_BN_CLICKED(IDC_RADIO_ADAPTIVETHRESHOLD, &Setting_Window::OnBnClickedRadioAdaptivethreshold)
 	ON_BN_CLICKED(IDC_RADIO_My_Tracking, &Setting_Window::OnBnClickedRadioMyTracking)
 	ON_BN_CLICKED(IDC_RADIO_SORT_TRACKING, &Setting_Window::OnBnClickedRadioSortTracking)
+	ON_BN_CLICKED(ID_SAVE, &Setting_Window::OnBnClickedSave)
+	ON_BN_CLICKED(ID_LOAD, &Setting_Window::OnBnClickedLoad)
 END_MESSAGE_MAP()
 
 
@@ -421,7 +423,119 @@ void Setting_Window::OnBnClickedRadioSortTracking()
 	EnableMyTracking(FALSE);
 }
 
+
+// the name of saved setting file:
+// 20220208_164712_Setting.txt
+BOOL Setting_Window::get_parameters_from_file(CString setting_filename) {
+	CStdioFile setting_StdFile;
+	CFileException setting_file_ex;
+	vector<CString> vector_get_parameters;
+	CString lineText;
+	if (!setting_StdFile.Open(setting_filename, CFile::modeNoTruncate | CFile::modeRead, &setting_file_ex)) {
+		AfxMessageBox(L"Cannot open file Setting.txt!");
+		return FALSE;
+	}
+	else {
+		vector_get_parameters.clear();
+		// Read data in each line and save in vector_get_parameters
+		while (setting_StdFile.ReadString(lineText)) {
+			// delete the only \n data in file
+			if (lineText == L"") {
+				continue;
+			}
+			else {
+				vector_get_parameters.push_back(lineText);
+			}
+		}
+		setting_StdFile.Close();
+	}
+	UpdateData(TRUE);
+	for ( size_t i = 0; i < vector_get_parameters.size(); ++i) {
+		CString data_ = vector_get_parameters[i];
+		if (data_.Replace(L"Blur_Method:", L"") == 1) {
+			setting_blur_method = data_;
+		}
+		else if (data_.Replace(L"Blur_Kernel:", L"") == 1) {
+			setting_blur_kernel = _ttoi(data_);
+		}
+		else if (data_.Replace(L"Mopho_Method:", L"") == 1) {
+			setting_morpho_type = data_;
+		}
+		else if (data_.Replace(L"Morpho_Kernel:", L"") == 1) {
+			setting_morpho_kernel = _ttoi(data_);
+		}
+		else if (data_.Replace(L"Line_Position:", L"") == 1) {
+			setting_line_position = _ttoi(data_);
+		}
+		else if (data_.Replace(L"Max_Distance:", L"") == 1) {
+			setting_max_distance = _ttoi(data_);
+		}
+		else if (data_.Replace(L"Avg_Area:", L"") == 1) {
+			setting_avg_area = _ttoi(data_);
+		}
+		else if (data_.Replace(L"Min_Area:", L"") == 1) {
+			setting_min_area = _ttoi(data_);
+		}
+		else if (data_.Replace(L"Max_Area:", L"") == 1) {
+			setting_max_area = _ttoi(data_);
+		}
+		else if (data_.Replace(L"Min_Width:", L"") == 1) {
+			setting_min_width = _ttoi(data_);
+		}
+		else if (data_.Replace(L"Min_Height:", L"") == 1) {
+			setting_min_height = _ttoi(data_);
+		}
+		else if (data_.Replace(L"Segment_To_Binary_Method:", L"") == 1) {
+			if (data_ == L"Adaptive_Threshold") {
+				setting_adaptiveThreshold_Checked = FALSE;
+				setting_bsg_Checked = TRUE;
+				CString data_adaptiveThreshod_Mehod = vector_get_parameters[i+1];
+				data_adaptiveThreshod_Mehod.Replace(L"Adaptive_Threshod_Method:", L"");
+				setting_adaptiveThreshold_method = data_adaptiveThreshod_Mehod;
+				CString data_adaptiveThreshod_KSize = vector_get_parameters[i+2];
+				data_adaptiveThreshod_KSize.Replace(L"KSize:", L"");
+				setting_adaptiveThreshold_KSize = _ttoi(data_adaptiveThreshod_KSize);
+				CString data_adaptiveThreshod_C = vector_get_parameters[i+3];
+				data_adaptiveThreshod_C.Replace(L"KSize:", L"");
+				setting_adaptiveThreshold_C = _ttoi(data_adaptiveThreshod_C);
+			}
+			else if (data_ == L"Background_Subtraction") {
+
+			}
+		} 
+		else if (data_.Replace(L"Tracking_Method:", L"") == 1) {
+			if (data_ == L"My_Simple_Tracking") {
+				setting_MyTracking_Checked = FALSE;
+				setting_SORTTracking_Checked = TRUE;
+				CString Tolerance_X = vector_get_parameters[i+1];
+				Tolerance_X.Replace(L"Tolerance_X:", L"");
+				setting_tolerance_x = _ttoi(Tolerance_X);
+			}
+			else if (data_ == L"SORT") {
+
+			}
+		}
+	}
+	UpdateData(FALSE);
+}
+
 // BOOL radio button bi loi
 // ban dau khoi tao nhan gia tri TRUE -> khong check
 // nhan bo check nhan gia tri -1, checked nhan gia tri 1
 // khong check, nhan gia tri 0 = FALSE
+
+void Setting_Window::OnBnClickedSave()
+{
+	// get date time
+	// create file
+	// save parameters to file
+}
+
+
+void Setting_Window::OnBnClickedLoad()
+{
+	// open window show list of date time result
+	// check select item
+	// open file selected
+	// load parameters from file to system
+}

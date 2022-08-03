@@ -5,7 +5,6 @@
 // Pass line counting
 // BasicDemoDlg.cpp : implementation file
 #include "stdafx.h"
-//#include <string>
 #include "BasicDemo.h"
 #include "BasicDemoDlg.h"
 
@@ -137,7 +136,6 @@ BOOL CBasicDemoDlg::OnInitDialog() {
 			pSysMenu->AppendMenu(MF_STRING, IDM_ABOUTBOX, strAboutMenu);
 		}
 	}
-    
     // Set font for shrimp number in dialog
     Font_big.CreatePointFont(400, _T("Microsoft Sans Serif"));
     GetDlgItem(IDC_SHIRMP_NUMBER_STATIC)->SetFont(&Font_big);
@@ -277,14 +275,14 @@ HCURSOR CBasicDemoDlg::OnQueryDragIcon() {
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
-//en:Enable/Disable some controls when call this function
+//en:Enable/Disable some controls when you call this function
 void CBasicDemoDlg::EnableControls(BOOL bIsCameraReady) {
     GetDlgItem(IDC_OPEN_BUTTON)->EnableWindow(m_bOpenDevice ? FALSE : (bIsCameraReady ? TRUE : FALSE));
     GetDlgItem(IDC_CLOSE_BUTTON)->EnableWindow((m_bOpenDevice && bIsCameraReady && !m_bStartGrabbing) ? TRUE : FALSE);
     GetDlgItem(IDC_START_GRABBING_BUTTON)->EnableWindow((m_bStartGrabbing && bIsCameraReady) ? FALSE : (m_bOpenDevice ? TRUE : FALSE));
     GetDlgItem(IDC_STOP_GRABBING_BUTTON)->EnableWindow(m_bStartGrabbing ? TRUE : FALSE);
-    GetDlgItem(IDC_SOFTWARE_TRIGGER_CHECK)->EnableWindow(m_bOpenDevice ? TRUE : FALSE);
-    GetDlgItem(IDC_SOFTWARE_ONCE_BUTTON)->EnableWindow((m_bStartGrabbing && m_bSoftWareTriggerCheck && ((CButton *)GetDlgItem(IDC_TRIGGER_MODE_RADIO))->GetCheck())? TRUE : FALSE);
+    GetDlgItem(IDC_SOFTWARE_TRIGGER_CHECK)->EnableWindow(m_bOpenDevice && ((CButton*)GetDlgItem(IDC_TRIGGER_MODE_RADIO))->GetCheck() ? TRUE : FALSE);
+    GetDlgItem(IDC_SOFTWARE_ONCE_BUTTON)->EnableWindow(m_bStartGrabbing && m_bSoftWareTriggerCheck? TRUE : FALSE);
     GetDlgItem(IDC_SAVE_BMP_BUTTON)->EnableWindow(m_bStartGrabbing ? TRUE : FALSE);
     GetDlgItem(IDC_SAVE_TIFF_BUTTON)->EnableWindow(m_bStartGrabbing ? TRUE : FALSE);
     GetDlgItem(IDC_SAVE_PNG_BUTTON)->EnableWindow(m_bStartGrabbing ? TRUE : FALSE);
@@ -940,7 +938,7 @@ void CBasicDemoDlg::OnBnClickedStopGrabbingButton() {
         m_hGrabThread = NULL;
     }
     if (d_hGrabThread) {
-        //WaitForSingleObject(d_hGrabThread, INFINITE); // bug infinite
+        //WaitForSingleObject(d_hGrabThread, INFINITE); // bug infinite time waiting
         CloseHandle(d_hGrabThread);
         d_hGrabThread = NULL;
     }
@@ -1397,6 +1395,7 @@ void CBasicDemoDlg::AdaptiveThreshold_GPU(GpuMat gsrc, GpuMat &gdst) {
 // this function find the point
 // below the line in current centers matched with the point
 // above the line in previous centers to count
+// output: counter
 void CBasicDemoDlg::My_Simple_Counting(int tolerance_x, float max_square_distance) {
     if (previous_centers.size() == 0 || current_centers.size() == 0)
         return; // the first frame

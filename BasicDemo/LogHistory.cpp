@@ -52,6 +52,7 @@ BOOL LogHistory::OnInitDialog() {
 
 	// Ask Mfc to create/insert a column
 	//UpdateData(TRUE);
+	m_listCtrl.SetExtendedStyle(LVS_EX_GRIDLINES); //LVS_EX_CHECKBOXES; LVS_EX_FULLROWSELECT; 
 	m_listCtrl.InsertColumn(
 		0,              // Rank of item 
 		L"ID",          // Caption for this header 
@@ -119,16 +120,14 @@ BOOL LogHistory::OnInitDialog() {
 }
 // LogHistory message handlers
 
-
 void LogHistory::OnBnClickedLogOk() {
 	// close window
 	this->SendMessage(WM_CLOSE);
 	return;
 }
 
-
 void LogHistory::OnBnClickedLogClearData() {
-	int message_box = AfxMessageBox(L"Clear All Data!!!!!!!!!", MB_YESNO);
+	int message_box = AfxMessageBox(L"Clear All Data!!!!!!!!!!!!!!", MB_YESNO);
 	if (message_box == IDYES) {
 		CStdioFile Log_StdFile;
 		CFileException Log_ex;
