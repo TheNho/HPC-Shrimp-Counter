@@ -85,6 +85,7 @@ void Setting_Window::DoDataExchange(CDataExchange* pDX) {
 BOOL Setting_Window::OnInitDialog() {
 	CDialogEx::OnInitDialog();
 	// initial setting set
+	//UpdateData(TRUE);
 	if (setting_adaptiveThreshold_Checked == FALSE) {
 		EnableAdaptiveThreshold(TRUE);
 		EnableBackgroundSubtraction(FALSE);
@@ -650,18 +651,17 @@ CString Setting_Window::get_parameters_from_window() {
 // nhan bo check nhan gia tri -1, checked nhan gia tri 1
 // khong check, nhan gia tri 0 = FALSE
 
-void Setting_Window::OnBnClickedSave()
-{
+void Setting_Window::OnBnClickedSave() {
 	bool ret = CheckParameters();
 	if (ret == false) {
 		return;
 	}
-	LPCTSTR pszFilter = _T("Parameters(*.paras)|*.paras");
-	CFileDialog dlgFile(FALSE, _T("paras"), _T("Untitled.paras"), OFN_OVERWRITEPROMPT, pszFilter, AfxGetMainWnd());
+	LPCTSTR pszFilter = _T("Parameters(*.parameters)|*.parameters");
+	CFileDialog dlgFile(FALSE, _T("parameters"), _T("Untitled.parameters"), OFN_OVERWRITEPROMPT, pszFilter, AfxGetMainWnd());
 	if (IDOK == dlgFile.DoModal()) {
 		try {
 			CStdioFile file(dlgFile.GetPathName(), CFile::modeCreate | CFile::modeWrite | CFile::typeText);
-			if (dlgFile.GetFileExt() == _T("paras")) {
+			if (dlgFile.GetFileExt() == _T("parameters")) {
 				CString save_data = get_parameters_from_window();
 				file.WriteString(save_data);
 			}
@@ -676,13 +676,12 @@ void Setting_Window::OnBnClickedSave()
 	return;
 }
 
-void Setting_Window::OnBnClickedLoad()
-{
-	LPCTSTR pszFilter = _T("Parameters(*.paras)|*.paras");
-	CFileDialog parasFile(TRUE, _T("paras"), NULL, OFN_HIDEREADONLY | OFN_FILEMUSTEXIST, pszFilter);
+void Setting_Window::OnBnClickedLoad() {
+	LPCTSTR pszFilter = _T("Parameters(*.parameters)|*.parameters");
+	CFileDialog parasFile(TRUE, _T("parameters"), NULL, OFN_HIDEREADONLY | OFN_FILEMUSTEXIST, pszFilter);
 	if (IDOK == parasFile.DoModal()) {
 		//CStdioFile file(parasFile.GetFileName(), CFile::modeRead);
-		if (parasFile.GetFileExt() == _T("paras")) {
+		if (parasFile.GetFileExt() == _T("parameters")) {
 			BOOL ret = get_parameters_from_file(parasFile.GetFolderPath() + L"/" + parasFile.GetFileName());
 			if (TRUE == ret)
 				AfxMessageBox(L"Load Setting Success!!!!");
