@@ -155,45 +155,7 @@ private:
     int real_fps = 0;
     bool b_start_count = false;
     uint64 frame_count = 0;
-    CString Shrimp_number;
-     
     uint64 counter = 0;
-
-    // Parameters Setting default in the first run
-    // blur image
-    CString blur_method = L"MEDIAN"; //AVG;GAUSS
-    int blur_kernel = 5;
-    // segmentation to binary
-    CString segment_binary_method = L"Adaptive Threshold"; // Background Subtraction
-    // Background Subtraction paprameters
-    CString bgs_method = L"MOG2"; //MOG2;MOG
-    float bgs_threshold = 10;
-    CString bgs_shadows = L"False"; //True
-    int bgs_history = 500;
-    // Adaptive Threshold Parameters
-    CString adaptiveThreshold_method = L"MEAN_C"; //GAUSSIAN_C
-    int adaptiveThreshold_KSize = 19;
-    int adaptiveThreshold_C = 5;
-    // Morphological Parameters
-    CString morphological_method = L"Open"; //Close;Erode;Dilate
-    int morphological_kernel = 3;
-    
-    // Counting
-    int line_position = 400;
-    float max_distance = 400; // 20 pixels
-    CString couting_method = L"My Simple Tracking"; //L"SORT"
-    // SORT parameters
-    float  IoU_threshold = 0.3;
-    int min_hits = 1;
-    int max_age = 5;
-    // my simple tracking parameter
-    int tolerance_x = 5;
-    // Detection parameters
-    double avg_area = 100;
-    double min_area = 10;
-    double max_area = 200;
-    int min_width = 1;
-    int min_height = 3;
 
     // Opencv variables
     Mat Mat_src;
@@ -225,5 +187,5 @@ public:
     CStdioFile StdFile;
 
     // define save directory
-    CString nFilename = L"Result.txt";
+    CString nFilename = L"Result.result";
 };

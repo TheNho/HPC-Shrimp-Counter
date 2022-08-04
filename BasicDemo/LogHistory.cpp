@@ -71,8 +71,8 @@ BOOL LogHistory::OnInitDialog() {
 	CString lineText;
 	// open the source file for reading and save as vector
 	if (!Log_StdFile.Open(global_filename, CFile::modeNoTruncate | CFile::modeRead, &Log_ex)) {
-		AfxMessageBox(L"Cannot open file Result.txt!");
-		int message = AfxMessageBox(L"Create new file Result.txt?", MB_YESNO);
+		AfxMessageBox(L"Cannot open file Result.result!");
+		int message = AfxMessageBox(L"Create new file Result.result?", MB_YESNO);
 		if (message == IDYES) {
 			Log_StdFile.Open(global_filename, CFile::modeCreate, &Log_ex);
 			Log_StdFile.Close();

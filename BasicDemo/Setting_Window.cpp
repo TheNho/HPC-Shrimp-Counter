@@ -7,40 +7,63 @@
 #include "BasicDemo.h"
 #include "Setting_Window.h"
 
-
-
 // Setting_Window dialog
-
 IMPLEMENT_DYNAMIC(Setting_Window, CDialogEx)
+
+// Global variable getting current parameters when initial window
+extern CString blur_method;
+extern int blur_kernel;
+extern CString segment_binary_method;
+extern CString bgs_method;
+extern float bgs_threshold;
+extern CString bgs_shadows;
+extern int bgs_history;
+extern CString adaptiveThreshold_method;
+extern int adaptiveThreshold_KSize;
+extern int adaptiveThreshold_C;
+extern CString morphological_method;
+extern int morphological_kernel;
+extern int line_position;
+extern float max_distance;
+extern CString couting_method;
+extern float  IoU_threshold;
+extern int min_hits;
+extern int max_age;
+extern int tolerance_x;
+extern double avg_area;
+extern double min_area;
+extern double max_area;
+extern int min_width;
+extern int min_height;
 
 Setting_Window::Setting_Window(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_Setting_DIALOG, pParent)
 	// Initial the firts display
-	, setting_blur_method(_T("MEDIAN"))
-	, setting_blur_kernel(5)
-	, setting_morpho_type(_T("Open"))
-	, setting_morpho_kernel(3)
-	, setting_bsg_method(_T("MOG2"))
-	, setting_bsg_threshold(10)
-	, setting_bsg_shadow(_T("False"))
-	, setting_bsg_history(500)
-	, setting_iou_threshold(0.3)
-	, setting_min_hits(1)
-	, setting_max_age(5)
-	, setting_line_position(400)
-	, setting_max_distance(400) // square (distance^2)
-	, setting_avg_area(100)
-	, setting_min_area(10)
-	, setting_max_area(200)
-	, setting_min_width(1)
-	, setting_min_height(3)
-	, setting_adaptiveThreshold_method(_T("MEAN_C"))
-	, setting_adaptiveThreshold_KSize(19)
-	, setting_adaptiveThreshold_C(5)
-	, setting_tolerance_x(5)
-	, setting_adaptiveThreshold_Checked(FALSE) // FALSE -> checked
+	, setting_blur_method(blur_method)
+	, setting_blur_kernel(blur_kernel)
+	, setting_morpho_type(morphological_method)
+	, setting_morpho_kernel(morphological_kernel)
+	, setting_bsg_method(bgs_method)
+	, setting_bsg_threshold(bgs_threshold)
+	, setting_bsg_shadow(bgs_shadows)
+	, setting_bsg_history(bgs_history)
+	, setting_iou_threshold(IoU_threshold)
+	, setting_min_hits(min_hits)
+	, setting_max_age(max_age)
+	, setting_line_position(line_position)
+	, setting_max_distance(max_distance) // square (distance^2)
+	, setting_avg_area(avg_area)
+	, setting_min_area(min_area)
+	, setting_max_area(max_area)
+	, setting_min_width(min_width)
+	, setting_min_height(min_height)
+	, setting_adaptiveThreshold_method(adaptiveThreshold_method)
+	, setting_adaptiveThreshold_KSize(adaptiveThreshold_KSize)
+	, setting_adaptiveThreshold_C(adaptiveThreshold_C)
+	, setting_tolerance_x(tolerance_x)
+	, setting_adaptiveThreshold_Checked(TRUE) // FALSE -> checked
 	, setting_bsg_Checked(TRUE)
-	, setting_MyTracking_Checked(FALSE)
+	, setting_MyTracking_Checked(TRUE)
 	, setting_SORTTracking_Checked(TRUE)
 {
 		
@@ -85,26 +108,38 @@ void Setting_Window::DoDataExchange(CDataExchange* pDX) {
 BOOL Setting_Window::OnInitDialog() {
 	CDialogEx::OnInitDialog();
 	// initial setting set
-	//UpdateData(TRUE);
-	if (setting_adaptiveThreshold_Checked == FALSE) {
+	if (segment_binary_method == L"Adaptive Threshold") {
+		setting_adaptiveThreshold_Checked = FALSE;
+		setting_bsg_Checked = TRUE;
 		EnableAdaptiveThreshold(TRUE);
 		EnableBackgroundSubtraction(FALSE);
 	}
-	else if (setting_bsg_Checked== FALSE){
+	else if (segment_binary_method == L"Background Subtraction"){
+		setting_adaptiveThreshold_Checked = TRUE;
+		setting_bsg_Checked = FALSE;
 		EnableAdaptiveThreshold(FALSE);
 		EnableBackgroundSubtraction(TRUE);
 	}
-	if (setting_MyTracking_Checked==FALSE){
+	
+	if (couting_method == L"My Simple Tracking"){
+		setting_MyTracking_Checked = FALSE;
+		setting_SORTTracking_Checked = TRUE;
 		EnableMyTracking(TRUE);
 		EnableSORTTracking(FALSE);
 	}
-	else if (setting_SORTTracking_Checked==FALSE){
+	else if (couting_method == L"SORT"){
+		setting_MyTracking_Checked = TRUE;
+		setting_SORTTracking_Checked = FALSE;
 		EnableMyTracking(FALSE);
 		EnableSORTTracking(TRUE);
 	}
 	HICON hIconS = AfxGetApp()->LoadIcon(IDI_SETTING_ICON);
 	SetIcon(hIconS, TRUE);
 	SetIcon(hIconS, FALSE);
+
+	//UpdateData(TRUE); // update data from window to variables
+	UpdateData(FALSE); // update data from variables to window
+	
 	return TRUE;
 }
 BEGIN_MESSAGE_MAP(Setting_Window, CDialogEx)
@@ -117,20 +152,6 @@ BEGIN_MESSAGE_MAP(Setting_Window, CDialogEx)
 	ON_BN_CLICKED(ID_SAVE, &Setting_Window::OnBnClickedSave)
 	ON_BN_CLICKED(ID_LOAD, &Setting_Window::OnBnClickedLoad)
 END_MESSAGE_MAP()
-
-
-// Setting_Window message handlers
-// void load_setting(){
-// // load setting from txt file
-// }
-
-// void save_setting(){
-// save setting to txt file
-//}
-
-// check input setting when press button ok, if not display error
-// bool check_input_setting(){
-//}
 
 void Setting_Window::OnBnClickedOk() {
 	bool ret = CheckParameters();
@@ -459,7 +480,7 @@ BOOL Setting_Window::get_parameters_from_file(CString setting_filename) {
 		AfxMessageBox(L"File is not parameters file!");
 		return FALSE;
 	}
-	UpdateData(TRUE);
+	// get parameters
 	for ( size_t i = 1; i < vector_get_parameters.size(); ++i) {
 		CString data_ = vector_get_parameters[i];
 		if (data_.Replace(L"Blur_Method:", L"") == 1) {
@@ -568,7 +589,7 @@ BOOL Setting_Window::get_parameters_from_file(CString setting_filename) {
 			}
 		}
 	}
-	UpdateData(FALSE);
+	UpdateData(FALSE); // update window from parameters
 	return TRUE;
 }
 

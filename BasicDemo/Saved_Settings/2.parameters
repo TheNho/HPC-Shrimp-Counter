@@ -1,0 +1,21 @@
+Hao Phuong - Parameters File
+Blur_Method:GAUSS
+Blur_Kernel:9
+Mopho_Method:Dilate
+Morpho_Kernel:9
+Avg_Area:200
+Min_Area:1
+Max_Area:23
+Min_Width:10
+Min_Height:32
+Line_Position:400
+Max_Distance:100
+Segment_To_Binary_Method:Background_Subtraction
+Background_Subtraction_Method:MOG2
+Background_Subtraction_Shadow:False
+Background_Subtraction_Threshold:10
+Background_Subtraction_History:500
+Tracking_Method:SORT
+Iou_Threshold:0.9
+Min_Hits:1
+Max_Age:5

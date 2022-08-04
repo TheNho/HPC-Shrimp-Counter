@@ -8,10 +8,40 @@
 #include "BasicDemo.h"
 #include "BasicDemoDlg.h"
 
-
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
+
+// Global variable
+// Parameters Setting 
+// using global to load parameters to setting window
+extern CString blur_method;
+extern int blur_kernel;
+extern CString segment_binary_method;
+extern CString bgs_method;
+extern float bgs_threshold;
+extern CString bgs_shadows;
+extern int bgs_history;
+extern CString adaptiveThreshold_method;
+extern int adaptiveThreshold_KSize;
+extern int adaptiveThreshold_C;
+extern CString morphological_method;
+extern int morphological_kernel;
+extern int line_position;
+extern float max_distance;
+extern CString couting_method;
+extern float  IoU_threshold;
+extern int min_hits;
+extern int max_age;
+extern int tolerance_x;
+extern double avg_area;
+extern double min_area;
+extern double max_area;
+extern int min_width;
+extern int min_height;
+
+// global filename, used in all windows
+extern CString global_filename;
 
 // CAboutDlg dialog used for App About
 class CAboutDlg : public CDialog {
@@ -41,7 +71,7 @@ END_MESSAGE_MAP()
 
 // CBasicDemoDlg dialog
 CBasicDemoDlg::CBasicDemoDlg(CWnd* pParent /*=NULL*/)
-	: CDialog(CBasicDemoDlg::IDD, pParent)
+    : CDialog(CBasicDemoDlg::IDD, pParent)
     , m_pcMyCamera(NULL)
     , m_nDeviceCombo(0)
     , m_bOpenDevice(FALSE)
@@ -56,7 +86,8 @@ CBasicDemoDlg::CBasicDemoDlg(CWnd* pParent /*=NULL*/)
     , m_nTriggerSource(MV_TRIGGER_SOURCE_SOFTWARE)
     , m_pSaveImageBuf(NULL)
     , m_nSaveImageBufSize(0)
-    , Shrimp_number(_T("0"))
+    , counter(0)
+    , frame_count(0)
 {
     // Load icon
 	//m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
@@ -72,7 +103,9 @@ void CBasicDemoDlg::DoDataExchange(CDataExchange* pDX) {
     DDX_Text(pDX, IDC_GAIN_EDIT, m_dGainEdit);
     DDX_Text(pDX, IDC_FRAME_RATE_EDIT, m_dFrameRateEdit);
     DDX_Check(pDX, IDC_SOFTWARE_TRIGGER_CHECK, m_bSoftWareTriggerCheck);
-    DDX_Text(pDX, IDC_SHIRMP_NUMBER_STATIC, Shrimp_number);
+    DDX_Text(pDX, IDC_SHIRMP_NUMBER_STATIC, counter);
+    DDX_Text(pDX, IDC_FRAME_COUNT_EDIT, frame_count);
+    
 }
 
 BEGIN_MESSAGE_MAP(CBasicDemoDlg, CDialog)
@@ -150,15 +183,41 @@ BOOL CBasicDemoDlg::OnInitDialog() {
 
     SettingInitial();
 
+    UpdateData(FALSE); // update intial data to windown
+
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
 
-// global filename, used in all windows
-extern CString global_filename;
-// install the first run with variable need creating
 void CBasicDemoDlg::SettingInitial() {
+    // install the first run variables
+    blur_method = L"MEDIAN"; //AVG;GAUSS
+    blur_kernel = 5;
+    segment_binary_method = L"Adaptive Threshold"; // ; Adaptive Threshold; Background Subtraction
+    bgs_method = L"MOG2"; //MOG2;MOG
+    bgs_threshold = 10;
+    bgs_shadows = L"False"; //True
+    bgs_history = 500;
+    adaptiveThreshold_method = L"MEAN_C"; //GAUSSIAN_C
+    adaptiveThreshold_KSize = 19;
+    adaptiveThreshold_C = 5;
+    morphological_method = L"Open"; //Close;Erode;Dilate
+    morphological_kernel = 3;
+    line_position = 400;
+    max_distance = 400; // 20 pixels
+    couting_method = L"My Simple Tracking"; //L"SORT" ; L"My Simple Tracking"
+    IoU_threshold = 0.3;
+    min_hits = 1;
+    max_age = 5;
+    tolerance_x = 5;
+    avg_area = 100;
+    min_area = 10;
+    max_area = 200;
+    min_width = 1;
+    min_height = 3;
+
     // initialize directory global save result file, use global variable in many sub-window
     global_filename = nFilename;
+
     // Segmentation
     if (segment_binary_method == L"Adaptive Threshold") {
         Size Adap_size = Size(adaptiveThreshold_KSize, adaptiveThreshold_KSize);
@@ -865,20 +924,11 @@ void CBasicDemoDlg::DisplayThread() {
         stDisplayInfo.nHeight = m_stImageInfo.nHeight;
         stDisplayInfo.enPixelType = m_stImageInfo.enPixelType;
         m_pcMyCamera->DisplayOneFrame(&stDisplayInfo);
-        
-        // Show conuter number
-        CString str_shirm_number;
-        str_shirm_number.Format(L"%lld", counter);
-        UpdateData(FALSE);
-        Shrimp_number = str_shirm_number;
 
-        // show frame count after 100 frames
-        if (frame_count % 100 == 0) {
-            str_frame_count.Format(L"%lld", frame_count);
-            GetDlgItem(IDC_FRAME_COUNT_EDIT)->SetWindowTextW(str_frame_count);
-        }
-        // sleep 10ms
-        waitKey(10);
+        UpdateData(FALSE); // update shrimp number and frame count to window
+
+        // sleep 30ms
+        waitKey(30);
     }
     Mat_display.release();
     return;
@@ -1288,11 +1338,13 @@ bool CBasicDemoDlg::Convert2Mat(MV_FRAME_OUT_INFO_EX* pstImageInfo, unsigned cha
 //input: Mat_src in gray scale
 //output1: vector<Trckingbox> detections
 //output2: vector<humoment[7]> HuMoments  // error
-// output3: vector<Point> current_centers
-// This function run in cuda gpu and contours cpu
+//output3: vector<Point> current_centers
+//This function run in cuda gpu and contours cpu
 void CBasicDemoDlg::ImageProcessing_GPU() {
 
     frame_count++;
+    // for test
+    //counter++;
 
     // check Mat_src input
     if (Mat_src.empty()) return;
@@ -1672,15 +1724,9 @@ void CBasicDemoDlg::OnBnClickedStopCountButton() {
 void CBasicDemoDlg::OnBnClickedResetNumberButton() {
     
     counter = 0;
-    CString str_shirm_number;
-    str_shirm_number.Format(L"%lld", counter);
-    UpdateData(FALSE);
-    Shrimp_number = str_shirm_number;
-
     frame_count = 0;
-    CString str_frame_count;
-    str_frame_count.Format(L"%lld", frame_count);
-    GetDlgItem(IDC_FRAME_COUNT_EDIT)->SetWindowTextW(str_frame_count);
+
+    UpdateData(FALSE);
 }
 
 void CBasicDemoDlg::OnBnClickedLogButton() {
