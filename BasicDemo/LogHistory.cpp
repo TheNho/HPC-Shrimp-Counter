@@ -5,7 +5,7 @@
 #include "stdafx.h"
 #include "BasicDemo.h"
 #include "LogHistory.h"
-#include "afxdialogex.h"
+//#include "afxdialogex.h"
 
 
 // LogHistory dialog

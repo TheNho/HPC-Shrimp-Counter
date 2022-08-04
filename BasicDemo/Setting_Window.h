@@ -62,6 +62,7 @@ public:
 	BOOL setting_MyTracking_Checked;
 	BOOL setting_SORTTracking_Checked;
 	BOOL get_parameters_from_file(CString setting_filename);
+	CString get_parameters_from_window();
 	afx_msg void OnBnClickedRadioBackgroundsubtraction();
 	afx_msg void OnBnClickedRadioAdaptivethreshold();
 	afx_msg void OnBnClickedRadioMyTracking();
