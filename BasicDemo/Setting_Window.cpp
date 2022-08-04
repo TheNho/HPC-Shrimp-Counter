@@ -425,24 +425,28 @@ void Setting_Window::OnBnClickedRadioBackgroundsubtraction()
 	// TODO: Add your control notification handler code here
 	EnableAdaptiveThreshold(FALSE);
 	EnableBackgroundSubtraction(TRUE);
+	segment_binary_method = L"Background Subtraction";
 }
 void Setting_Window::OnBnClickedRadioAdaptivethreshold()
 {
 	// TODO: Add your control notification handler code here
 	EnableAdaptiveThreshold(TRUE);
 	EnableBackgroundSubtraction(FALSE);
+	segment_binary_method = L"Adaptive Threshold";
 }
 void Setting_Window::OnBnClickedRadioMyTracking()
 {
 	// TODO: Add your control notification handler code here
 	EnableMyTracking(TRUE);
 	EnableSORTTracking(FALSE);
+	couting_method = L"My Simple Tracking";
 }
 void Setting_Window::OnBnClickedRadioSortTracking()
 {
 	// TODO: Add your control notification handler code here
 	EnableSORTTracking(TRUE);
 	EnableMyTracking(FALSE);
+	couting_method = L"SORT";
 }
 
 BOOL Setting_Window::get_parameters_from_file(CString setting_filename) {

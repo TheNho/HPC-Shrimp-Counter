@@ -1178,11 +1178,11 @@ void CBasicDemoDlg::OnBnClickedSettingButton() {
     if (open_setting_windown->update_setting == true) { // clicked OK
         // get image processing paramerters from setting window
         // segment to binary method
-        int adaptiveThreshold_check = abs(open_setting_windown->setting_adaptiveThreshold_Checked);
-        int bsg_check = abs(open_setting_windown->setting_bsg_Checked);
-        if (adaptiveThreshold_check == FALSE && bsg_check == TRUE) {
+        //int adaptiveThreshold_check = abs(open_setting_windown->setting_adaptiveThreshold_Checked);
+        //int bsg_check = abs(open_setting_windown->setting_bsg_Checked);
+        // use in grabThreadProcess function
+        if (segment_binary_method == L"Adaptive Threshold") {
                 // adaptive threshold
-                segment_binary_method = L"Adaptive Threshold"; // use in grabThreadProcess function
                 adaptiveThreshold_method = open_setting_windown->setting_adaptiveThreshold_method;
                 adaptiveThreshold_KSize = open_setting_windown->setting_adaptiveThreshold_KSize;
                 adaptiveThreshold_C = open_setting_windown->setting_adaptiveThreshold_C;
@@ -1200,10 +1200,11 @@ void CBasicDemoDlg::OnBnClickedSettingButton() {
                     delete open_setting_windown;
                     return;
                 }
+                // for test
+                //AfxMessageBox(L"Adaptive Threshold Success!");
         }
-        else if (adaptiveThreshold_check == TRUE && bsg_check == FALSE) {
+        else if (segment_binary_method == L"Background Subtraction") {
                 // back ground subtraction
-                segment_binary_method = L"Background Subtraction";
                 bgs_method = open_setting_windown->setting_bsg_method;
                 bgs_threshold = open_setting_windown->setting_bsg_threshold;
                 bgs_shadows = open_setting_windown->setting_bsg_shadow;
@@ -1226,6 +1227,8 @@ void CBasicDemoDlg::OnBnClickedSettingButton() {
                     delete open_setting_windown;
                     return;
                 }
+                // for test
+                //AfxMessageBox(L"BSG Success!");
         }
         else {
             // for debug
@@ -1235,19 +1238,23 @@ void CBasicDemoDlg::OnBnClickedSettingButton() {
         }
 
         // counting method
-        int MyTracking_check = abs(open_setting_windown->setting_MyTracking_Checked); // use abs because -1 after dont check
-        int SORTTracking_check = abs(open_setting_windown->setting_SORTTracking_Checked); // checked = 0
-        if (MyTracking_check == FALSE && SORTTracking_check == TRUE) {
+        //int MyTracking_check = abs(open_setting_windown->setting_MyTracking_Checked); // use abs because -1 after dont check
+        //int SORTTracking_check = abs(open_setting_windown->setting_SORTTracking_Checked); // checked = 0
+        if (couting_method == L"My Simple Tracking") {
             // my simple couting
-            couting_method = L"My Simple Tracking";
             tolerance_x = open_setting_windown->setting_tolerance_x;
+
+            // for test
+            //AfxMessageBox(L"Simple Success!");
         }
-        else if (MyTracking_check == TRUE && SORTTracking_check == FALSE) {
+        else if (couting_method == L"SORT") {
             // SORT Tracking + counting
-            couting_method = L"SORT";
             IoU_threshold = open_setting_windown->setting_iou_threshold;
             min_hits = open_setting_windown->setting_min_hits;
             max_age = open_setting_windown->setting_max_age;
+
+            // for test
+            //AfxMessageBox(L"SORT Success!");
         }
         else {
             AfxMessageBox(L"Counting Method Setting Error!");
