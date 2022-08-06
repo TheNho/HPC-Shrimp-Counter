@@ -399,6 +399,7 @@ bool Setting_Window::CheckFloat(CString text) {
 		return false;
 }
 
+// Enable/ Disable some elements
 void Setting_Window::EnableBackgroundSubtraction(BOOL CHECKED) {
 	GetDlgItem(ID_BSG_METHOD)->EnableWindow(CHECKED);
 	GetDlgItem(ID_BSG_THRESHOLD)->EnableWindow(CHECKED);
@@ -448,14 +449,6 @@ void Setting_Window::OnBnClickedRadioSortTracking()
 	EnableMyTracking(FALSE);
 	couting_method = L"SORT";
 }
-
-
-
-// BOOL radio button bi loi
-// ban dau khoi tao nhan gia tri TRUE -> khong check
-// nhan bo check nhan gia tri -1, checked nhan gia tri 1
-// khong check, nhan gia tri 0 = FALSE
-
 
 CString Setting_Window::get_parameters_from_window() {
 	CString data;
@@ -679,44 +672,42 @@ BOOL Setting_Window::get_parameters_from_file(CString setting_filename) {
 	}
 
 	// find the position of Tracking method
-	CString data__;
 	size_t idx = 0;
 	if (data_ == L"Adaptive_Threshold")
 		idx = 16;
 	else if (data_ == L"Background_Subtraction")
 		idx = 17;
-	data__ = vector_get_parameters[idx];
+	CString dataTM_ = vector_get_parameters[idx];
 	data_.Replace(L"Tracking_Method:", L"");
-	if (data__ == L"My_Simple_Tracking") {
+	if (dataTM_ == L"My_Simple_Tracking") {
 		setting_MyTracking_Checked = FALSE;
 		setting_SORTTracking_Checked = TRUE;
 		EnableSORTTracking(FALSE);
 		EnableMyTracking(TRUE);
 
-		CString Tolerance_X = vector_get_parameters[idx + 1];
-		Tolerance_X.Replace(L"Tolerance_X:", L"");
-		setting_tolerance_x = _ttoi(Tolerance_X);
+		CString data_TX = vector_get_parameters[idx + 1];
+		data_TX.Replace(L"Tolerance_X:", L"");
+		setting_tolerance_x = _ttoi(data_TX);
 	}
-	else if (data__ == L"SORT") {
+	else if (dataTM_ == L"SORT") {
 		setting_MyTracking_Checked = TRUE;
 		setting_SORTTracking_Checked = FALSE;
 		EnableSORTTracking(TRUE);
 		EnableMyTracking(FALSE);
 
-		CString data_IoU_Threshold = vector_get_parameters[idx + 1];
-		data_IoU_Threshold.Replace(L"Iou_Threshold:", L"");
-		setting_iou_threshold = _ttof(data_IoU_Threshold);
+		CString data_SORT = vector_get_parameters[idx + 1];
+		data_SORT.Replace(L"Iou_Threshold:", L"");
+		setting_iou_threshold = _ttof(data_SORT);
 
-		CString data_Min_Hits = vector_get_parameters[idx + 2];
-		data_Min_Hits.Replace(L"Min_Hits:", L"");
-		setting_min_hits = _ttoi(data_Min_Hits);
+		data_SORT = vector_get_parameters[idx + 2];
+		data_SORT.Replace(L"Min_Hits:", L"");
+		setting_min_hits = _ttoi(data_SORT);
 
-		CString data_Max_Age = vector_get_parameters[idx + 3];
-		data_Max_Age.Replace(L"Max_Age:", L"");
-		setting_max_age = _ttoi(data_Max_Age);
+		data_SORT = vector_get_parameters[idx + 3];
+		data_SORT.Replace(L"Max_Age:", L"");
+		setting_max_age = _ttoi(data_SORT);
 	}
-
-	UpdateData(FALSE); // update window from parameters
+	UpdateData(FALSE); // update parameters to window
 	return TRUE;
 }
 void Setting_Window::OnBnClickedLoad() {
@@ -736,3 +727,8 @@ void Setting_Window::OnBnClickedLoad() {
 	}
 	return;
 }
+
+// BOOL radio button bi loi
+// ban dau khoi tao nhan gia tri TRUE -> khong check
+// nhan bo check nhan gia tri -1, checked nhan gia tri 1
+// khong check, nhan gia tri 0 = FALSE
