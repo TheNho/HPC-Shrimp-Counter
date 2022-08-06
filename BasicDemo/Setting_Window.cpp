@@ -449,6 +449,112 @@ void Setting_Window::OnBnClickedRadioSortTracking()
 	couting_method = L"SORT";
 }
 
+
+
+// BOOL radio button bi loi
+// ban dau khoi tao nhan gia tri TRUE -> khong check
+// nhan bo check nhan gia tri -1, checked nhan gia tri 1
+// khong check, nhan gia tri 0 = FALSE
+
+
+CString Setting_Window::get_parameters_from_window() {
+	CString data;
+	data = data + L"Hao Phuong - Parameters File" + L"\n"; // signature // line 0
+	// Blur
+	CString get_cblur_method, get_cblur_kernel, get_cmorpho_method, get_cmorpho_kernel;
+	GetDlgItem(ID_BLUR_MEDTHOD)->GetWindowTextW(get_cblur_method);
+	GetDlgItem(ID_BLUR_KERNEL)->GetWindowTextW(get_cblur_kernel);
+	GetDlgItem(ID_MORPHO_METHOD)->GetWindowTextW(get_cmorpho_method);
+	GetDlgItem(ID_MORPHO_KERNEL)->GetWindowTextW(get_cmorpho_kernel);
+	data = data + L"Blur_Method:" + get_cblur_method + L"\n"; // line 1
+	data = data + L"Blur_Kernel:" + get_cblur_kernel + L"\n"; // line 2
+	data = data + L"Mopho_Method:" + get_cmorpho_method + L"\n"; // line 3
+	data = data + L"Morpho_Kernel:" + get_cmorpho_kernel + L"\n"; // line 4
+	// detection
+	CString get_avg_area, get_min_area, get_max_area, get_min_width, get_min_height;
+	GetDlgItem(ID_AVG_AREA)->GetWindowTextW(get_avg_area);
+	GetDlgItem(ID_MIN_AREA)->GetWindowTextW(get_min_area);
+	GetDlgItem(ID_MAX_AREA)->GetWindowTextW(get_max_area);
+	GetDlgItem(ID_MIN_WIDTH)->GetWindowTextW(get_min_width);
+	GetDlgItem(ID_MIN_HEIGHT)->GetWindowTextW(get_min_height);
+	data = data + L"Avg_Area:" + get_avg_area + L"\n"; // line 5
+	data = data + L"Min_Area:" + get_min_area + L"\n"; // line 6
+	data = data + L"Max_Area:" + get_max_area + L"\n"; // line 7
+	data = data + L"Min_Width:" + get_min_width + L"\n"; // line 8
+	data = data + L"Min_Height:" + get_min_height + L"\n"; // line 9
+	// counting
+	CString get_line_position, get_max_square_distance;
+	GetDlgItem(ID_LINE_POSITION)->GetWindowTextW(get_line_position);
+	GetDlgItem(ID_MAX_DISTANCE)->GetWindowTextW(get_max_square_distance);
+	data = data + L"Line_Position:" + get_line_position + L"\n"; // line 10
+	data = data + L"Max_Distance:" + get_max_square_distance + L"\n"; // line 11
+
+	if (IsDlgButtonChecked(IDC_RADIO_BACKGROUNDSUBTRACTION)) {
+		data = data + L"Segment_To_Binary_Method:Background_Subtraction" + L"\n"; // line 12
+		CString get_bsg_method, get_bsg_shadow, get_bsg_threshold, get_bsg_history;
+		GetDlgItem(ID_BSG_METHOD)->GetWindowTextW(get_bsg_method);
+		GetDlgItem(ID_BSG_SHADOW)->GetWindowTextW(get_bsg_shadow);
+		GetDlgItem(ID_BSG_THRESHOLD)->GetWindowTextW(get_bsg_threshold);
+		GetDlgItem(ID_BSG_HISTORY)->GetWindowTextW(get_bsg_history);
+		data = data + L"Background_Subtraction_Method:" + get_bsg_method + L"\n"; // line 13
+		data = data + L"Background_Subtraction_Shadow:" + get_bsg_shadow + L"\n"; // line 14
+		data = data + L"Background_Subtraction_Threshold:" + get_bsg_threshold + L"\n"; // line 15
+		data = data + L"Background_Subtraction_History:" + get_bsg_history + L"\n"; // line 16
+	}
+	else if (IsDlgButtonChecked(IDC_RADIO_ADAPTIVETHRESHOLD)) {
+		data = data + L"Segment_To_Binary_Method:Adaptive_Threshold" + L"\n"; // line 12
+		CString get_adaptiveThreshold_method, get_adaptiveThreshold_KSize, get_adaptiveThreshold_C;
+		GetDlgItem(ID_ADAPTIVETHRESHOLD_METHOD)->GetWindowTextW(get_adaptiveThreshold_method);
+		GetDlgItem(ID_ADAPTIVETHRESHOLD_KSIZE)->GetWindowTextW(get_adaptiveThreshold_KSize);
+		GetDlgItem(ID_ADAPTIVETHRESHOLD_C)->GetWindowTextW(get_adaptiveThreshold_C);
+		data = data + L"Adaptive_Threshod_Method:" + get_adaptiveThreshold_method + L"\n"; // line 13
+		data = data + L"KSize:" + get_adaptiveThreshold_KSize + L"\n"; // line 14
+		data = data + L"C:" + get_adaptiveThreshold_C + L"\n"; // line 15
+	}
+
+	if (IsDlgButtonChecked(IDC_RADIO_SORT_TRACKING)) {
+		data = data + L"Tracking_Method:SORT" + L"\n"; // line 16/17
+		CString get_iou_threshold, get_min_hits, get_max_age;
+		GetDlgItem(ID_IOU_THRESHOLD)->GetWindowTextW(get_iou_threshold);
+		GetDlgItem(ID_MIN_HITS)->GetWindowTextW(get_min_hits);
+		GetDlgItem(ID_MAX_AGE)->GetWindowTextW(get_max_age);
+		data = data + L"Iou_Threshold:" + get_iou_threshold + L"\n"; // + 1
+		data = data + L"Min_Hits:" + get_min_hits + L"\n"; // + 2
+		data = data + L"Max_Age:" + get_max_age + L"\n"; // + 3
+	}
+	else if (IsDlgButtonChecked(IDC_RADIO_My_Tracking)) {
+		data = data + L"Tracking_Method:My_Simple_Tracking" + L"\n"; // line 16 / 17
+		CString get_tolerrance_x;
+		GetDlgItem(IDC_TOLERANCE_X)->GetWindowTextW(get_tolerrance_x);
+		data = data + L"Tolerance_X:" + get_tolerrance_x + L"\n"; // + 1
+	}
+	return data;
+}
+void Setting_Window::OnBnClickedSave() {
+	bool ret = CheckParameters();
+	if (ret == false) {
+		return;
+	}
+	LPCTSTR pszFilter = _T("Parameters(*.parameters)|*.parameters||");
+	CFileDialog dlgFile(FALSE, _T("parameters"), _T("Untitled.parameters"), OFN_OVERWRITEPROMPT, pszFilter, AfxGetMainWnd());
+	if (IDOK == dlgFile.DoModal()) {
+		try {
+			CStdioFile file(dlgFile.GetPathName(), CFile::modeCreate | CFile::modeWrite | CFile::typeText);
+			if (dlgFile.GetFileExt() == _T("parameters")) {
+				CString save_data = get_parameters_from_window();
+				file.WriteString(save_data);
+			}
+			file.Close();
+		}
+		catch (CFileException* pe) {
+			CString error;
+			error.Format(_T("File could not be saved, cause = %d \n"), pe->m_cause);
+			pe->Delete();
+		}	
+	}
+	return;
+}
+
 BOOL Setting_Window::get_parameters_from_file(CString setting_filename) {
 	CStdioFile Paras_File;
 	CFileException Log_ex;
@@ -479,241 +585,153 @@ BOOL Setting_Window::get_parameters_from_file(CString setting_filename) {
 		Paras_File.Close();
 	}
 	// check signature
-	CString data0 = vector_get_parameters[0];
-	if (data0 != L"Hao Phuong - Parameters File") { 
+	CString data_ = vector_get_parameters[0];
+	if (data_ != L"Hao Phuong - Parameters File") {
 		AfxMessageBox(L"File is not parameters file!");
 		return FALSE;
 	}
-	// get parameters
-	for ( size_t i = 1; i < vector_get_parameters.size(); ++i) {
-		CString data_ = vector_get_parameters[i];
-		if (data_.Replace(L"Blur_Method:", L"") == 1) {
-			setting_blur_method = data_;
-		}
-		else if (data_.Replace(L"Blur_Kernel:", L"") == 1) {
-			setting_blur_kernel = _ttoi(data_);
-		}
-		else if (data_.Replace(L"Mopho_Method:", L"") == 1) {
-			setting_morpho_type = data_;
-		}
-		else if (data_.Replace(L"Morpho_Kernel:", L"") == 1) {
-			setting_morpho_kernel = _ttoi(data_);
-		}
-		else if (data_.Replace(L"Line_Position:", L"") == 1) {
-			setting_line_position = _ttoi(data_);
-		}
-		else if (data_.Replace(L"Max_Distance:", L"") == 1) {
-			setting_max_distance = _ttoi(data_);
-		}
-		else if (data_.Replace(L"Avg_Area:", L"") == 1) {
-			setting_avg_area = _ttoi(data_);
-		}
-		else if (data_.Replace(L"Min_Area:", L"") == 1) {
-			setting_min_area = _ttoi(data_);
-		}
-		else if (data_.Replace(L"Max_Area:", L"") == 1) {
-			setting_max_area = _ttoi(data_);
-		}
-		else if (data_.Replace(L"Min_Width:", L"") == 1) {
-			setting_min_width = _ttoi(data_);
-		}
-		else if (data_.Replace(L"Min_Height:", L"") == 1) {
-			setting_min_height = _ttoi(data_);
-		}
-		else if (data_.Replace(L"Segment_To_Binary_Method:", L"") == 1) {
-			if (data_ == L"Adaptive_Threshold") {
-				setting_adaptiveThreshold_Checked = FALSE;
-				setting_bsg_Checked = TRUE;
-				EnableAdaptiveThreshold(TRUE);
-				EnableBackgroundSubtraction(FALSE);
 
-				CString data_adaptiveThreshod_Mehod = vector_get_parameters[i+1];
-				data_adaptiveThreshod_Mehod.Replace(L"Adaptive_Threshod_Method:", L"");
-				setting_adaptiveThreshold_method = data_adaptiveThreshod_Mehod;
+	data_ = vector_get_parameters[1];
+	data_.Replace(L"Blur_Method:", L"");
+	setting_blur_method = data_;
 
-				CString data_adaptiveThreshod_KSize = vector_get_parameters[i+2];
-				data_adaptiveThreshod_KSize.Replace(L"KSize:", L"");
-				setting_adaptiveThreshold_KSize = _ttoi(data_adaptiveThreshod_KSize);
+	data_ = vector_get_parameters[2];
+	data_.Replace(L"Blur_Kernel:", L"");
+	setting_blur_kernel = _ttoi(data_);
 
-				CString data_adaptiveThreshod_C = vector_get_parameters[i+3];
-				data_adaptiveThreshod_C.Replace(L"C:", L"");
-				setting_adaptiveThreshold_C = _ttoi(data_adaptiveThreshod_C);
-			}
-			else if (data_ == L"Background_Subtraction") {
-				setting_adaptiveThreshold_Checked = TRUE;
-				setting_bsg_Checked = FALSE;
-				EnableAdaptiveThreshold(FALSE);
-				EnableBackgroundSubtraction(TRUE);
+	data_ = vector_get_parameters[3];
+	data_.Replace(L"Mopho_Method:", L"");
+	setting_morpho_type = data_;
 
-				CString data_Background_Subtraction_Mehod = vector_get_parameters[i + 1];
-				data_Background_Subtraction_Mehod.Replace(L"Background_Subtraction_Method:", L"");
-				setting_bsg_method = data_Background_Subtraction_Mehod;
+	data_ = vector_get_parameters[4];
+	data_.Replace(L"Morpho_Kernel:", L"");
+	setting_morpho_kernel = _ttoi(data_);
 
-				CString data_Background_Subtraction_Shadow = vector_get_parameters[i + 2];
-				data_Background_Subtraction_Shadow.Replace(L"Background_Subtraction_Shadow:", L"");
-				setting_bsg_shadow = data_Background_Subtraction_Shadow;
+	data_ = vector_get_parameters[5];
+	data_.Replace(L"Avg_Area:", L"");
+	setting_avg_area = _ttoi(data_);
 
-				CString data_Background_Subtraction_Threshold = vector_get_parameters[i + 3];
-				data_Background_Subtraction_Threshold.Replace(L"Background_Subtraction_Threshold:", L"");
-				setting_bsg_threshold = _ttof(data_Background_Subtraction_Threshold);
+	data_ = vector_get_parameters[6];
+	data_.Replace(L"Min_Area:", L"");
+	setting_min_area = _ttoi(data_);
 
-				CString data_Background_Subtraction_History = vector_get_parameters[i + 4];
-				data_Background_Subtraction_History.Replace(L"Background_Subtraction_History:", L"");
-				setting_bsg_history = _ttoi(data_Background_Subtraction_History);
-			}
-		} 
-		else if (data_.Replace(L"Tracking_Method:", L"") == 1) {
-			if (data_ == L"My_Simple_Tracking") {
-				setting_MyTracking_Checked = FALSE;
-				setting_SORTTracking_Checked = TRUE;
-				EnableSORTTracking(FALSE);
-				EnableMyTracking(TRUE);
+	data_ = vector_get_parameters[7];
+	data_.Replace(L"Max_Area:", L"");
+	setting_max_area = _ttoi(data_);
 
-				CString Tolerance_X = vector_get_parameters[i+1];
-				Tolerance_X.Replace(L"Tolerance_X:", L"");
-				setting_tolerance_x = _ttoi(Tolerance_X);
-			}
-			else if (data_ == L"SORT") {
-				setting_MyTracking_Checked = TRUE;
-				setting_SORTTracking_Checked = FALSE;
-				EnableSORTTracking(TRUE);
-				EnableMyTracking(FALSE);
+	data_ = vector_get_parameters[8];
+	data_.Replace(L"Min_Width:", L"");
+	setting_min_width = _ttoi(data_);
 
-				CString data_IoU_Threshold = vector_get_parameters[i + 1];
-				data_IoU_Threshold.Replace(L"Iou_Threshold:", L"");
-				setting_iou_threshold = _ttof(data_IoU_Threshold);
+	data_ = vector_get_parameters[9];
+	data_.Replace(L"Min_Height:", L"");
+	setting_min_height = _ttoi(data_);
 
-				CString data_Min_Hits = vector_get_parameters[i + 2];
-				data_Min_Hits.Replace(L"Min_Hits:", L"");
-				setting_min_hits = _ttoi(data_Min_Hits);
+	data_ = vector_get_parameters[10];
+	data_.Replace(L"Line_Position:", L"");
+	setting_line_position = _ttoi(data_);
 
-				CString data_Max_Age = vector_get_parameters[i + 3];
-				data_Max_Age.Replace(L"Max_Age:", L"");
-				setting_max_age = _ttoi(data_Max_Age);
-			}
-		}
+	data_ = vector_get_parameters[11];
+	data_.Replace(L"Max_Distance:", L"");
+	setting_max_distance = _ttoi(data_);
+
+	data_ = vector_get_parameters[12];
+	data_.Replace(L"Segment_To_Binary_Method:", L"");
+	if (data_ == L"Adaptive_Threshold") {
+		setting_adaptiveThreshold_Checked = FALSE;
+		setting_bsg_Checked = TRUE;
+		EnableAdaptiveThreshold(TRUE);
+		EnableBackgroundSubtraction(FALSE);
+
+		CString data_AT = vector_get_parameters[13];
+		data_AT.Replace(L"Adaptive_Threshod_Method:", L"");
+		setting_adaptiveThreshold_method = data_AT;
+
+		data_AT = vector_get_parameters[14];
+		data_AT.Replace(L"KSize:", L"");
+		setting_adaptiveThreshold_KSize = _ttoi(data_AT);
+
+		data_AT = vector_get_parameters[15];
+		data_AT.Replace(L"C:", L"");
+		setting_adaptiveThreshold_C = _ttoi(data_AT);
 	}
+	else if (data_ == L"Background_Subtraction") {
+		setting_adaptiveThreshold_Checked = TRUE;
+		setting_bsg_Checked = FALSE;
+		EnableAdaptiveThreshold(FALSE);
+		EnableBackgroundSubtraction(TRUE);
+
+		CString data_BSG = vector_get_parameters[13];
+		data_BSG.Replace(L"Background_Subtraction_Method:", L"");
+		setting_bsg_method = data_BSG;
+
+		data_BSG = vector_get_parameters[14];
+		data_BSG.Replace(L"Background_Subtraction_Shadow:", L"");
+		setting_bsg_shadow = data_BSG;
+
+		data_BSG = vector_get_parameters[15];
+		data_BSG.Replace(L"Background_Subtraction_Threshold:", L"");
+		setting_bsg_threshold = _ttof(data_BSG);
+
+		data_BSG = vector_get_parameters[16];
+		data_BSG.Replace(L"Background_Subtraction_History:", L"");
+		setting_bsg_history = _ttoi(data_BSG);
+	}
+
+	// find the position of Tracking method
+	CString data__;
+	size_t idx = 0;
+	if (data_ == L"Adaptive_Threshold")
+		idx = 16;
+	else if (data_ == L"Background_Subtraction")
+		idx = 17;
+	data__ = vector_get_parameters[idx];
+	data_.Replace(L"Tracking_Method:", L"");
+	if (data__ == L"My_Simple_Tracking") {
+		setting_MyTracking_Checked = FALSE;
+		setting_SORTTracking_Checked = TRUE;
+		EnableSORTTracking(FALSE);
+		EnableMyTracking(TRUE);
+
+		CString Tolerance_X = vector_get_parameters[idx + 1];
+		Tolerance_X.Replace(L"Tolerance_X:", L"");
+		setting_tolerance_x = _ttoi(Tolerance_X);
+	}
+	else if (data__ == L"SORT") {
+		setting_MyTracking_Checked = TRUE;
+		setting_SORTTracking_Checked = FALSE;
+		EnableSORTTracking(TRUE);
+		EnableMyTracking(FALSE);
+
+		CString data_IoU_Threshold = vector_get_parameters[idx + 1];
+		data_IoU_Threshold.Replace(L"Iou_Threshold:", L"");
+		setting_iou_threshold = _ttof(data_IoU_Threshold);
+
+		CString data_Min_Hits = vector_get_parameters[idx + 2];
+		data_Min_Hits.Replace(L"Min_Hits:", L"");
+		setting_min_hits = _ttoi(data_Min_Hits);
+
+		CString data_Max_Age = vector_get_parameters[idx + 3];
+		data_Max_Age.Replace(L"Max_Age:", L"");
+		setting_max_age = _ttoi(data_Max_Age);
+	}
+
 	UpdateData(FALSE); // update window from parameters
 	return TRUE;
 }
-
-CString Setting_Window::get_parameters_from_window() {
-	CString data;
-	data = data + L"Hao Phuong - Parameters File" + L"\n"; // signature
-	// Blur
-	CString get_cblur_method, get_cblur_kernel, get_cmorpho_method, get_cmorpho_kernel;
-	GetDlgItem(ID_BLUR_MEDTHOD)->GetWindowTextW(get_cblur_method);
-	GetDlgItem(ID_BLUR_KERNEL)->GetWindowTextW(get_cblur_kernel);
-	GetDlgItem(ID_MORPHO_METHOD)->GetWindowTextW(get_cmorpho_method);
-	GetDlgItem(ID_MORPHO_KERNEL)->GetWindowTextW(get_cmorpho_kernel);
-	data = data + L"Blur_Method:" + get_cblur_method + L"\n";
-	data = data + L"Blur_Kernel:" + get_cblur_kernel + L"\n";
-	data = data + L"Mopho_Method:" + get_cmorpho_method + L"\n";
-	data = data + L"Morpho_Kernel:" + get_cmorpho_kernel + L"\n";
-	// detection
-	CString get_avg_area, get_min_area, get_max_area, get_min_width, get_min_height;
-	GetDlgItem(ID_AVG_AREA)->GetWindowTextW(get_avg_area);
-	GetDlgItem(ID_MIN_AREA)->GetWindowTextW(get_min_area);
-	GetDlgItem(ID_MAX_AREA)->GetWindowTextW(get_max_area);
-	GetDlgItem(ID_MIN_WIDTH)->GetWindowTextW(get_min_width);
-	GetDlgItem(ID_MIN_HEIGHT)->GetWindowTextW(get_min_height);
-	data = data + L"Avg_Area:" + get_avg_area + L"\n";
-	data = data + L"Min_Area:" + get_min_area + L"\n";
-	data = data + L"Max_Area:" + get_max_area + L"\n";
-	data = data + L"Min_Width:" + get_min_width + L"\n";
-	data = data + L"Min_Height:" + get_min_height + L"\n";
-	// counting
-	CString get_line_position, get_max_square_distance;
-	GetDlgItem(ID_LINE_POSITION)->GetWindowTextW(get_line_position);
-	GetDlgItem(ID_MAX_DISTANCE)->GetWindowTextW(get_max_square_distance);
-	data = data + L"Line_Position:" + get_line_position + L"\n";
-	data = data + L"Max_Distance:" + get_max_square_distance + L"\n";
-
-	if (IsDlgButtonChecked(IDC_RADIO_BACKGROUNDSUBTRACTION)) {
-		data = data + L"Segment_To_Binary_Method:Background_Subtraction" + L"\n";
-		CString get_bsg_method, get_bsg_shadow, get_bsg_threshold, get_bsg_history;
-		GetDlgItem(ID_BSG_METHOD)->GetWindowTextW(get_bsg_method);
-		GetDlgItem(ID_BSG_SHADOW)->GetWindowTextW(get_bsg_shadow);
-		GetDlgItem(ID_BSG_THRESHOLD)->GetWindowTextW(get_bsg_threshold);
-		GetDlgItem(ID_BSG_HISTORY)->GetWindowTextW(get_bsg_history);
-		data = data + L"Background_Subtraction_Method:" + get_bsg_method + L"\n";
-		data = data + L"Background_Subtraction_Shadow:" + get_bsg_shadow + L"\n";
-		data = data + L"Background_Subtraction_Threshold:" + get_bsg_threshold + L"\n";
-		data = data + L"Background_Subtraction_History:" + get_bsg_history + L"\n";
-	}
-	else if (IsDlgButtonChecked(IDC_RADIO_ADAPTIVETHRESHOLD)) {
-		data = data + L"Segment_To_Binary_Method:Adaptive_Threshold" + L"\n";
-		CString get_adaptiveThreshold_method, get_adaptiveThreshold_KSize, get_adaptiveThreshold_C;
-		GetDlgItem(ID_ADAPTIVETHRESHOLD_METHOD)->GetWindowTextW(get_adaptiveThreshold_method);
-		GetDlgItem(ID_ADAPTIVETHRESHOLD_KSIZE)->GetWindowTextW(get_adaptiveThreshold_KSize);
-		GetDlgItem(ID_ADAPTIVETHRESHOLD_C)->GetWindowTextW(get_adaptiveThreshold_C);
-		data = data + L"Adaptive_Threshod_Method:" + get_adaptiveThreshold_method + L"\n";
-		data = data + L"KSize:" + get_adaptiveThreshold_KSize + L"\n";
-		data = data + L"C:" + get_adaptiveThreshold_C + L"\n";
-	}
-
-	if (IsDlgButtonChecked(IDC_RADIO_SORT_TRACKING)) {
-		data = data + L"Tracking_Method:SORT" + L"\n";
-		CString get_iou_threshold, get_min_hits, get_max_age;
-		GetDlgItem(ID_IOU_THRESHOLD)->GetWindowTextW(get_iou_threshold);
-		GetDlgItem(ID_MIN_HITS)->GetWindowTextW(get_min_hits);
-		GetDlgItem(ID_MAX_AGE)->GetWindowTextW(get_max_age);
-		data = data + L"Iou_Threshold:" + get_iou_threshold + L"\n";
-		data = data + L"Min_Hits:" + get_min_hits + L"\n";
-		data = data + L"Max_Age:" + get_max_age + L"\n";
-	}
-	else if (IsDlgButtonChecked(IDC_RADIO_My_Tracking)) {
-		data = data + L"Tracking_Method:My_Simple_Tracking" + L"\n"; 
-		CString get_tolerrance_x;
-		GetDlgItem(IDC_TOLERANCE_X)->GetWindowTextW(get_tolerrance_x);
-		data = data + L"Tolerance_X:" + get_tolerrance_x + L"\n";
-	}
-	return data;
-}
-
-// BOOL radio button bi loi
-// ban dau khoi tao nhan gia tri TRUE -> khong check
-// nhan bo check nhan gia tri -1, checked nhan gia tri 1
-// khong check, nhan gia tri 0 = FALSE
-
-void Setting_Window::OnBnClickedSave() {
-	bool ret = CheckParameters();
-	if (ret == false) {
-		return;
-	}
-	LPCTSTR pszFilter = _T("Parameters(*.parameters)|*.parameters");
-	CFileDialog dlgFile(FALSE, _T("parameters"), _T("Untitled.parameters"), OFN_OVERWRITEPROMPT, pszFilter, AfxGetMainWnd());
-	if (IDOK == dlgFile.DoModal()) {
-		try {
-			CStdioFile file(dlgFile.GetPathName(), CFile::modeCreate | CFile::modeWrite | CFile::typeText);
-			if (dlgFile.GetFileExt() == _T("parameters")) {
-				CString save_data = get_parameters_from_window();
-				file.WriteString(save_data);
-			}
-			file.Close();
-		}
-		catch (CFileException* pe) {
-			CString error;
-			error.Format(_T("File could not be saved, cause = %d \n"), pe->m_cause);
-			pe->Delete();
-		}	
-	}
-	return;
-}
-
 void Setting_Window::OnBnClickedLoad() {
-	LPCTSTR pszFilter = _T("Parameters(*.parameters)|*.parameters");
+	LPCTSTR pszFilter = _T("Parameters(*.parameters)|*.parameters||");
 	CFileDialog parasFile(TRUE, _T("parameters"), NULL, OFN_HIDEREADONLY | OFN_FILEMUSTEXIST, pszFilter);
 	if (IDOK == parasFile.DoModal()) {
 		//CStdioFile file(parasFile.GetFileName(), CFile::modeRead);
 		if (parasFile.GetFileExt() == _T("parameters")) {
-			BOOL ret = get_parameters_from_file(parasFile.GetFolderPath() + L"/" + parasFile.GetFileName());
-			if (TRUE == ret)
+			BOOL ret1 = get_parameters_from_file(parasFile.GetFolderPath() + L"/" + parasFile.GetFileName());
+			bool ret2 = CheckParameters();
+			if (TRUE == ret1&&ret2)
 				AfxMessageBox(L"Load Setting Success!!!!");
 		}
 		else {
 			AfxMessageBox(L"Error while loading file!!!!");
-			return;
 		}
 	}
 	return;
