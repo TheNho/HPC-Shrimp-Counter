@@ -71,7 +71,9 @@ BOOL LogHistory::OnInitDialog() {
 	CString lineText;
 	// open the source file for reading and save as vector
 	if (!Log_StdFile.Open(global_filename, CFile::modeNoTruncate | CFile::modeRead, &Log_ex)) {
-		AfxMessageBox(L"Cannot open file Result.result!");
+		CString error;
+		error.Format(L"Cannot open file Result.result!\nCause = %d", Log_ex.m_cause);
+		AfxMessageBox(error);
 		int message = AfxMessageBox(L"Create new file Result.result?", MB_YESNO);
 		if (message == IDYES) {
 			Log_StdFile.Open(global_filename, CFile::modeCreate, &Log_ex);
@@ -132,7 +134,9 @@ void LogHistory::OnBnClickedLogClearData() {
 		CStdioFile Log_StdFile;
 		CFileException Log_ex;
 		if (!Log_StdFile.Open(global_filename, CFile::modeCreate , &Log_ex)) {
-			AfxMessageBox(L"Cannot clear data file Result!");
+			CString error;
+			error.Format(L"Cannot clear data file Result!\nCause = %d", Log_ex.m_cause);
+			AfxMessageBox(error);
 			return;
 		}
 		else {

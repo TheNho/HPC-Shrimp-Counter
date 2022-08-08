@@ -1706,27 +1706,33 @@ void CBasicDemoDlg::OnBnClickedStopCountButton() {
 
     // write result to file
     // open save file mode write
+    CStdioFile StdFile;
     CFileException ex;
     if (!StdFile.Open(global_filename, CFile::modeNoTruncate | CFile::modeWrite, &ex)) {
-        AfxMessageBox(L"Error when open file to write result!");
-        return;
+        CString error;
+        error.Format(L"Error when open file to write result!\nCause = %d", ex.m_cause);
+        AfxMessageBox(error);
+        int message = AfxMessageBox(L"Create new file Result.result?", MB_YESNO);
+        if (message == IDYES)
+            StdFile.Open(global_filename, CFile::modeCreate | CFile::modeWrite, &ex);
+        else 
+            return;
     }
-    else {
-        // get date
-        CTime time = CTime::GetCurrentTime();
-        CString text_date = time.Format("%d/%m/%Y");
-        // get time
-        CString text_time = time.Format("%H:%M:%S");
-        // get number
-        CString text_counter;
-        text_counter.Format(L"%lld", counter);
-        CString text_result = text_date + L" " + text_time + L" " + text_counter + L"\n";
-        // set pointer to the end file
-        StdFile.SeekToEnd();
-        // write result
-        StdFile.WriteString(text_result);
-        StdFile.Close();
-    }
+    // get date
+    CTime time = CTime::GetCurrentTime();
+    CString text_date = time.Format("%d/%m/%Y");
+    // get time
+    CString text_time = time.Format("%H:%M:%S");
+    // get number
+    CString text_counter;
+    text_counter.Format(L"%lld", counter);
+    CString text_result = text_date + L" " + text_time + L" " + text_counter + L"\n";
+    // set pointer to the end file
+    StdFile.SeekToEnd();
+    // write result
+    StdFile.WriteString(text_result);
+    StdFile.Close();
+    return;
 }
 void CBasicDemoDlg::OnBnClickedResetNumberButton() {
     

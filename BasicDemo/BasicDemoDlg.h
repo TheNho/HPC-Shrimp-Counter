@@ -184,7 +184,7 @@ public:
     afx_msg void OnBnClickedResetNumberButton();
     afx_msg void OnBnClickedLogButton();
 public:
-    CStdioFile StdFile;
+    
 
     // define save directory
     CString nFilename = L"Result.result";

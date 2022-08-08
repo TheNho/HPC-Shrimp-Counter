@@ -543,7 +543,8 @@ void Setting_Window::OnBnClickedSave() {
 		}
 		catch (CFileException* pe) {
 			CString error;
-			error.Format(_T("File could not be saved, cause = %d \n"), pe->m_cause);
+			error.Format(L"File could not be saved!\nCause = %d ", pe->m_cause);
+			AfxMessageBox(error);
 			pe->Delete();
 		}	
 	}
@@ -555,8 +556,10 @@ BOOL Setting_Window::get_parameters_from_file(CString setting_filename) {
 	CFileException Log_ex;
 	vector<CString> vector_get_parameters;
 	// get all line text save to vector
-	if (!Paras_File.Open(setting_filename, CFile::modeNoTruncate | CFile::modeRead, &Log_ex)) { // 
-		AfxMessageBox(L"Cannot open file Setting.txt!");
+	if (!Paras_File.Open(setting_filename, CFile::modeNoTruncate | CFile::modeRead, &Log_ex)) { 
+		CString error;
+		error.Format(L"Cannot open file Setting.txt!\nCause = %d! ", Log_ex.m_cause);
+		AfxMessageBox(error);
 		return FALSE;
 	}
 	else {
