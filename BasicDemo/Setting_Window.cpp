@@ -418,7 +418,6 @@ void Setting_Window::EnableSORTTracking(BOOL CHECKED) {
 	GetDlgItem(ID_IOU_THRESHOLD)->EnableWindow(CHECKED);
 	GetDlgItem(ID_MIN_HITS)->EnableWindow(CHECKED);
 	GetDlgItem(ID_MAX_AGE)->EnableWindow(CHECKED);
-
 }
 
 void Setting_Window::OnBnClickedRadioBackgroundsubtraction()
@@ -482,45 +481,48 @@ CString Setting_Window::get_parameters_from_window() {
 	data = data + L"Line_Position:" + get_line_position + L"\n"; // line 10
 	data = data + L"Max_Distance:" + get_max_square_distance + L"\n"; // line 11
 
-	if (IsDlgButtonChecked(IDC_RADIO_BACKGROUNDSUBTRACTION)) {
+	// detetion method
+	if (IsDlgButtonChecked(IDC_RADIO_BACKGROUNDSUBTRACTION))
 		data = data + L"Segment_To_Binary_Method:Background_Subtraction" + L"\n"; // line 12
-		CString get_bsg_method, get_bsg_shadow, get_bsg_threshold, get_bsg_history;
-		GetDlgItem(ID_BSG_METHOD)->GetWindowTextW(get_bsg_method);
-		GetDlgItem(ID_BSG_SHADOW)->GetWindowTextW(get_bsg_shadow);
-		GetDlgItem(ID_BSG_THRESHOLD)->GetWindowTextW(get_bsg_threshold);
-		GetDlgItem(ID_BSG_HISTORY)->GetWindowTextW(get_bsg_history);
-		data = data + L"Background_Subtraction_Method:" + get_bsg_method + L"\n"; // line 13
-		data = data + L"Background_Subtraction_Shadow:" + get_bsg_shadow + L"\n"; // line 14
-		data = data + L"Background_Subtraction_Threshold:" + get_bsg_threshold + L"\n"; // line 15
-		data = data + L"Background_Subtraction_History:" + get_bsg_history + L"\n"; // line 16
-	}
-	else if (IsDlgButtonChecked(IDC_RADIO_ADAPTIVETHRESHOLD)) {
+	else if (IsDlgButtonChecked(IDC_RADIO_ADAPTIVETHRESHOLD))
 		data = data + L"Segment_To_Binary_Method:Adaptive_Threshold" + L"\n"; // line 12
-		CString get_adaptiveThreshold_method, get_adaptiveThreshold_KSize, get_adaptiveThreshold_C;
-		GetDlgItem(ID_ADAPTIVETHRESHOLD_METHOD)->GetWindowTextW(get_adaptiveThreshold_method);
-		GetDlgItem(ID_ADAPTIVETHRESHOLD_KSIZE)->GetWindowTextW(get_adaptiveThreshold_KSize);
-		GetDlgItem(ID_ADAPTIVETHRESHOLD_C)->GetWindowTextW(get_adaptiveThreshold_C);
-		data = data + L"Adaptive_Threshod_Method:" + get_adaptiveThreshold_method + L"\n"; // line 13
-		data = data + L"KSize:" + get_adaptiveThreshold_KSize + L"\n"; // line 14
-		data = data + L"C:" + get_adaptiveThreshold_C + L"\n"; // line 15
-	}
+	// Background Subtraction
+	CString get_bsg_method, get_bsg_shadow, get_bsg_threshold, get_bsg_history;
+	GetDlgItem(ID_BSG_METHOD)->GetWindowTextW(get_bsg_method);
+	GetDlgItem(ID_BSG_SHADOW)->GetWindowTextW(get_bsg_shadow);
+	GetDlgItem(ID_BSG_THRESHOLD)->GetWindowTextW(get_bsg_threshold);
+	GetDlgItem(ID_BSG_HISTORY)->GetWindowTextW(get_bsg_history);
+	data = data + L"Background_Subtraction_Method:" + get_bsg_method + L"\n"; // line 13
+	data = data + L"Background_Subtraction_Shadow:" + get_bsg_shadow + L"\n"; // line 14
+	data = data + L"Background_Subtraction_Threshold:" + get_bsg_threshold + L"\n"; // line 15
+	data = data + L"Background_Subtraction_History:" + get_bsg_history + L"\n"; // line 16
+	// Adaptive Threshod
+	CString get_adaptiveThreshold_method, get_adaptiveThreshold_KSize, get_adaptiveThreshold_C;
+	GetDlgItem(ID_ADAPTIVETHRESHOLD_METHOD)->GetWindowTextW(get_adaptiveThreshold_method);
+	GetDlgItem(ID_ADAPTIVETHRESHOLD_KSIZE)->GetWindowTextW(get_adaptiveThreshold_KSize);
+	GetDlgItem(ID_ADAPTIVETHRESHOLD_C)->GetWindowTextW(get_adaptiveThreshold_C);
+	data = data + L"Adaptive_Threshod_Method:" + get_adaptiveThreshold_method + L"\n"; // line 17
+	data = data + L"KSize:" + get_adaptiveThreshold_KSize + L"\n"; // line 18
+	data = data + L"C:" + get_adaptiveThreshold_C + L"\n"; // line 19
 
-	if (IsDlgButtonChecked(IDC_RADIO_SORT_TRACKING)) {
-		data = data + L"Tracking_Method:SORT" + L"\n"; // line 16/17
-		CString get_iou_threshold, get_min_hits, get_max_age;
-		GetDlgItem(ID_IOU_THRESHOLD)->GetWindowTextW(get_iou_threshold);
-		GetDlgItem(ID_MIN_HITS)->GetWindowTextW(get_min_hits);
-		GetDlgItem(ID_MAX_AGE)->GetWindowTextW(get_max_age);
-		data = data + L"Iou_Threshold:" + get_iou_threshold + L"\n"; // + 1
-		data = data + L"Min_Hits:" + get_min_hits + L"\n"; // + 2
-		data = data + L"Max_Age:" + get_max_age + L"\n"; // + 3
-	}
-	else if (IsDlgButtonChecked(IDC_RADIO_My_Tracking)) {
-		data = data + L"Tracking_Method:My_Simple_Tracking" + L"\n"; // line 16 / 17
-		CString get_tolerrance_x;
-		GetDlgItem(IDC_TOLERANCE_X)->GetWindowTextW(get_tolerrance_x);
-		data = data + L"Tolerance_X:" + get_tolerrance_x + L"\n"; // + 1
-	}
+	// Counting method
+	if (IsDlgButtonChecked(IDC_RADIO_SORT_TRACKING))
+		data = data + L"Tracking_Method:SORT" + L"\n"; // line 20
+	else if (IsDlgButtonChecked(IDC_RADIO_My_Tracking))
+		data = data + L"Tracking_Method:My_Simple_Tracking" + L"\n"; // line 20
+	// SORT counting
+	CString get_iou_threshold, get_min_hits, get_max_age;
+	GetDlgItem(ID_IOU_THRESHOLD)->GetWindowTextW(get_iou_threshold);
+	GetDlgItem(ID_MIN_HITS)->GetWindowTextW(get_min_hits);
+	GetDlgItem(ID_MAX_AGE)->GetWindowTextW(get_max_age);
+	data = data + L"Iou_Threshold:" + get_iou_threshold + L"\n"; // line 21
+	data = data + L"Min_Hits:" + get_min_hits + L"\n"; // line 22
+	data = data + L"Max_Age:" + get_max_age + L"\n"; // line 23
+	// Distance counting
+	CString get_tolerrance_x;
+	GetDlgItem(IDC_TOLERANCE_X)->GetWindowTextW(get_tolerrance_x);
+	data = data + L"Tolerance_X:" + get_tolerrance_x + L"\n"; // line 24
+	
 	return data;
 }
 void Setting_Window::OnBnClickedSave() {
@@ -552,7 +554,6 @@ BOOL Setting_Window::get_parameters_from_file(CString setting_filename) {
 	CStdioFile Paras_File;
 	CFileException Log_ex;
 	vector<CString> vector_get_parameters;
-	CString lineText;
 	// get all line text save to vector
 	if (!Paras_File.Open(setting_filename, CFile::modeNoTruncate | CFile::modeRead, &Log_ex)) { // 
 		AfxMessageBox(L"Cannot open file Setting.txt!");
@@ -561,10 +562,11 @@ BOOL Setting_Window::get_parameters_from_file(CString setting_filename) {
 	else {
 		// check empty file
 		if (Paras_File.GetLength() == 0) {
-			AfxMessageBox(L"FIle is empty!");
+			AfxMessageBox(L"File is empty!");
 			return FALSE;
 		}
-		vector_get_parameters.clear();
+		CString lineText;
+		vector_get_parameters.clear(); // dont need
 		// Read data in each line and save in vector_get_parameters
 		while (Paras_File.ReadString(lineText)) { // error if file empty
 			// delete the only \n data in file
@@ -636,15 +638,15 @@ BOOL Setting_Window::get_parameters_from_file(CString setting_filename) {
 		EnableAdaptiveThreshold(TRUE);
 		EnableBackgroundSubtraction(FALSE);
 
-		CString data_AT = vector_get_parameters[13];
+		CString data_AT = vector_get_parameters[17];
 		data_AT.Replace(L"Adaptive_Threshod_Method:", L"");
 		setting_adaptiveThreshold_method = data_AT;
 
-		data_AT = vector_get_parameters[14];
+		data_AT = vector_get_parameters[18];
 		data_AT.Replace(L"KSize:", L"");
 		setting_adaptiveThreshold_KSize = _ttoi(data_AT);
 
-		data_AT = vector_get_parameters[15];
+		data_AT = vector_get_parameters[19];
 		data_AT.Replace(L"C:", L"");
 		setting_adaptiveThreshold_C = _ttoi(data_AT);
 	}
@@ -671,46 +673,42 @@ BOOL Setting_Window::get_parameters_from_file(CString setting_filename) {
 		setting_bsg_history = _ttoi(data_BSG);
 	}
 
-	// find the position of Tracking method
-	size_t idx = 0;
-	if (data_ == L"Adaptive_Threshold")
-		idx = 16;
-	else if (data_ == L"Background_Subtraction")
-		idx = 17;
-	CString dataTM_ = vector_get_parameters[idx];
+	data_ = vector_get_parameters[20];
 	data_.Replace(L"Tracking_Method:", L"");
-	if (dataTM_ == L"My_Simple_Tracking") {
+	if (data_ == L"My_Simple_Tracking") {
 		setting_MyTracking_Checked = FALSE;
 		setting_SORTTracking_Checked = TRUE;
-		EnableSORTTracking(FALSE);
 		EnableMyTracking(TRUE);
-
-		CString data_TX = vector_get_parameters[idx + 1];
+		EnableSORTTracking(FALSE);
+		
+		CString data_TX = vector_get_parameters[24];
 		data_TX.Replace(L"Tolerance_X:", L"");
 		setting_tolerance_x = _ttoi(data_TX);
 	}
-	else if (dataTM_ == L"SORT") {
+	else if (data_ == L"SORT") {
 		setting_MyTracking_Checked = TRUE;
 		setting_SORTTracking_Checked = FALSE;
-		EnableSORTTracking(TRUE);
 		EnableMyTracking(FALSE);
-
-		CString data_SORT = vector_get_parameters[idx + 1];
+		EnableSORTTracking(TRUE);
+		
+		CString data_SORT = vector_get_parameters[21];
 		data_SORT.Replace(L"Iou_Threshold:", L"");
 		setting_iou_threshold = _ttof(data_SORT);
 
-		data_SORT = vector_get_parameters[idx + 2];
+		data_SORT = vector_get_parameters[22];
 		data_SORT.Replace(L"Min_Hits:", L"");
 		setting_min_hits = _ttoi(data_SORT);
 
-		data_SORT = vector_get_parameters[idx + 3];
+		data_SORT = vector_get_parameters[23];
 		data_SORT.Replace(L"Max_Age:", L"");
 		setting_max_age = _ttoi(data_SORT);
 	}
+
 	UpdateData(FALSE); // update parameters to window
 	return TRUE;
 }
 void Setting_Window::OnBnClickedLoad() {
+	UpdateData(TRUE); //update wintext to parameters to save current window
 	LPCTSTR pszFilter = _T("Parameters(*.parameters)|*.parameters||");
 	CFileDialog parasFile(TRUE, _T("parameters"), NULL, OFN_HIDEREADONLY | OFN_FILEMUSTEXIST, pszFilter);
 	if (IDOK == parasFile.DoModal()) {
