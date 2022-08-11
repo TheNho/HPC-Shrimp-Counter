@@ -159,6 +159,8 @@ private:
 
     // Opencv variables
     Mat Mat_src;
+    Mat dst; // dst is a binary image
+
     GpuMat gpu_Mat_src, gpu_Mat_dst;
     // blur
     Ptr<cuda::Filter> cuda_filter;

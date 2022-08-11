@@ -27,6 +27,7 @@ extern int adaptiveThreshold_KSize;
 extern int adaptiveThreshold_C;
 extern CString morphological_method;
 extern int morphological_kernel;
+extern int morphological_iterations;
 extern int line_position;
 extern float max_distance;
 extern CString couting_method;
@@ -202,6 +203,7 @@ void CBasicDemoDlg::SettingInitial() {
     adaptiveThreshold_C = 5;
     morphological_method = L"Open"; //Close;Erode;Dilate
     morphological_kernel = 3;
+    morphological_iterations = 1;
     line_position = 400;
     max_distance = 400; // 20 pixels
     couting_method = L"My Simple Tracking"; //L"SORT" ; L"My Simple Tracking"
@@ -274,16 +276,16 @@ void CBasicDemoDlg::SettingInitial() {
     // Morphological filter
     mo_kernel = getStructuringElement(MORPH_RECT, Size(morphological_kernel, morphological_kernel));
     if (morphological_method == L"Dilate") {
-        mo_filter = cuda::createMorphologyFilter(MORPH_DILATE, CV_8U, mo_kernel);
+        mo_filter = cuda::createMorphologyFilter(MORPH_DILATE, CV_8U, mo_kernel, Point(-1, -1), morphological_iterations);
     }
     else if (morphological_method == L"Erode") {
-        mo_filter = cuda::createMorphologyFilter(MORPH_ERODE, CV_8U, mo_kernel);
+        mo_filter = cuda::createMorphologyFilter(MORPH_ERODE, CV_8U, mo_kernel, Point(-1, -1), morphological_iterations);
     }
     else if (morphological_method == L"Open") {
-        mo_filter = cuda::createMorphologyFilter(MORPH_OPEN, CV_8U, mo_kernel);
+        mo_filter = cuda::createMorphologyFilter(MORPH_OPEN, CV_8U, mo_kernel, Point(-1, -1), morphological_iterations);
     }
     else if (morphological_method == L"Close") {
-        mo_filter = cuda::createMorphologyFilter(MORPH_CLOSE, CV_8U, mo_kernel);
+        mo_filter = cuda::createMorphologyFilter(MORPH_CLOSE, CV_8U, mo_kernel, Point(-1, -1), morphological_iterations);
     }
     else {
         AfxMessageBox(L"Morphological method Initail Error!");
@@ -896,11 +898,6 @@ void CBasicDemoDlg::DisplayThread() {
     MV_DISPLAY_FRAME_INFO stDisplayInfo = { 0 };
     Mat Mat_display;
 
-    // show frame count
-    CString str_frame_count;
-    str_frame_count.Format(L"%lld", frame_count);
-    GetDlgItem(IDC_FRAME_COUNT_EDIT)->SetWindowTextW(str_frame_count);
-
     while (m_bThreadState) {
       
         // wait until Mat_src not NULL
@@ -911,11 +908,11 @@ void CBasicDemoDlg::DisplayThread() {
         }
 
         // copy Mat_src and draw
-        Mat_display = Mat_src.clone(); // Access violation 2 thead-> fixed by waiting the first thread started
+        Mat_display = Mat_src.clone();
+        //Mat_display = Mat_src.clone(); // Access violation 2 thead-> fixed by waiting the first thread started
         
-
         putText(Mat_display, "FPS: "+ to_string(real_fps), Point(5, 25), FONT_HERSHEY_COMPLEX, 0.8, 0, 1, 8);
-        line(Mat_display, Point(0, line_position), Point(640, line_position), 12, 1, 8);
+        line(Mat_display, Point(0, line_position), Point(640, line_position), 0, 2, 8, 0);
         // display frame
         stDisplayInfo.hWnd = m_hwndDisplay;
         stDisplayInfo.pData = Mat_display.data;
@@ -1371,9 +1368,12 @@ void CBasicDemoDlg::ImageProcessing_GPU() {
     }
 
     //cuda blur image
-    cuda_filter->apply(gpu_Mat_src, gpu_Mat_src);
+    //cuda_filter->apply(gpu_Mat_src, gpu_Mat_src);
 
     // Segmentation to binary image
+    // Threshold
+    //cuda::threshold(gpu_Mat_src, gpu_Mat_dst, 127, 255, THRESH_BINARY_INV);
+
     if (segment_binary_method == L"Adaptive Threshold") {
         AdaptiveThreshold_GPU(gpu_Mat_src, gpu_Mat_dst);
     }
@@ -1384,11 +1384,10 @@ void CBasicDemoDlg::ImageProcessing_GPU() {
         AfxMessageBox(L"Image Processing Error Binary Segment Method!");
         return;
     }
-
+   
     // morphological filter
     mo_filter->apply(gpu_Mat_dst, gpu_Mat_dst);
 
-    Mat dst; // dst is a binary image
     gpu_Mat_dst.download(dst);
 
     // Distance transform
@@ -1455,29 +1454,29 @@ void CBasicDemoDlg::AdaptiveThreshold_GPU(GpuMat gsrc, GpuMat &gdst) {
 // above the line in previous centers to count
 // output: counter
 void CBasicDemoDlg::My_Simple_Counting(int tolerance_x, float max_square_distance) {
-    if (previous_centers.size() == 0 || current_centers.size() == 0)
+    if (current_centers.size() == 0)
         return; // the first frame
     
     // find the same x point
     for (auto current_point = begin(current_centers); current_point != end(current_centers); ++current_point) {
         if (current_point->y >= line_position) { //current point below the line
             vector<Point> matched_points;
+            matched_points.clear();
             for (auto pervious_point = begin(previous_centers); pervious_point != end(previous_centers); ++pervious_point) {
                 if (pervious_point->y < line_position) { // previous point above the line
-                    if (current_point->x > pervious_point->x - tolerance_x) {
-                        if (current_point->x < pervious_point->x + tolerance_x) { // the same x position
+                    if ((current_point->x > pervious_point->x - tolerance_x) && (current_point->x < pervious_point->x + tolerance_x)) {
                             int delta_y = current_point->y - pervious_point->y;
                             int delta_x = current_point->x - pervious_point->x;
                             unsigned int square_distance = delta_y * delta_y + delta_x * delta_x;
                             if (square_distance < max_square_distance) { // Check distance
                                 Point matched_point = Point(pervious_point->x, pervious_point->y);
                                 matched_points.push_back(matched_point);
-                            }
                         }
                     }
                 }
             }
             if (matched_points.size() > 0) { // least one point matched
+                counter++;
                 // find matched point by sort y
                 // sort decrease through y value
                 // tested -> ok
@@ -1486,14 +1485,13 @@ void CBasicDemoDlg::My_Simple_Counting(int tolerance_x, float max_square_distanc
                 auto position_ = find(previous_centers.begin(), previous_centers.end(), matched_points[0]);
                 //if (position_ != previous_centers.end())
                 previous_centers.erase(position_);
-                counter++;
                 matched_points.clear();
             }
         }
     }
     // copy current centers to previous centers
     previous_centers.clear();
-    copy(current_centers.begin(), current_centers.end(), back_inserter(previous_centers));
+    std::copy(current_centers.begin(), current_centers.end(), back_inserter(previous_centers));
     //clear current centers
     current_centers.clear();
     return;
@@ -1645,8 +1643,8 @@ void CBasicDemoDlg::SORT(int max_age, int min_hits, double iouThreshold) {
 // ouput: counter
 void CBasicDemoDlg::SORT_Counting() {
 
-    if ((previous_frameTrackingResult.size() == 0) || (frameTrackingResult.size() == 0))
-        return; // check size
+    if (frameTrackingResult.size() == 0)
+        return; // the first frame
 
     for (int i = 0; i < frameTrackingResult.size(); i++){
         if (frameTrackingResult[i].box.y < line_position) { // current point above line ->> pass

@@ -51,6 +51,7 @@ int adaptiveThreshold_C;
 // Morphological Parameters
 CString morphological_method;
 int morphological_kernel;
+int morphological_iterations;
 
 // Counting
 int line_position;

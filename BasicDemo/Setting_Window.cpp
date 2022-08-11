@@ -331,7 +331,7 @@ bool Setting_Window::CheckParameters() {
 	GetDlgItem(ID_MAX_DISTANCE)->GetWindowTextW(get_max_square_distance);
 	// line position
 	if (CheckInt(get_line_position) == true) {
-		if (_ttof(get_line_position) <= 0 || _ttof(get_line_position) >= 480) {
+		if (_ttoi(get_line_position) <= 0 || _ttoi(get_line_position) >= 480) {
 			AfxMessageBox(L"Line Position must be Int (0, 480)!");
 			return false;
 		}
