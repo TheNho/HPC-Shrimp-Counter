@@ -64,13 +64,13 @@ void KalmanTracker::update(StateType stateMat)
 	m_hits += 1;
 	m_hit_streak += 1;
 
-	// measurement
+	// measurement is a cv::Mat
 	measurement.at<float>(0, 0) = stateMat.x + stateMat.width / 2;
 	measurement.at<float>(1, 0) = stateMat.y + stateMat.height / 2;
 	measurement.at<float>(2, 0) = stateMat.area();
 	measurement.at<float>(3, 0) = stateMat.width / stateMat.height;
 
-	// update
+	// update //function of opencv
 	kf.correct(measurement);
 }
 

@@ -23,6 +23,8 @@ extern int adaptiveThreshold_KSize;
 extern int adaptiveThreshold_C;
 extern CString morphological_method;
 extern int morphological_kernel;
+extern int morphological_iterations;
+
 extern int line_position;
 extern float max_distance;
 extern CString couting_method;
@@ -43,6 +45,7 @@ Setting_Window::Setting_Window(CWnd* pParent /*=nullptr*/)
 	, setting_blur_kernel(blur_kernel)
 	, setting_morpho_type(morphological_method)
 	, setting_morpho_kernel(morphological_kernel)
+	, setting_morpho_iterations(morphological_iterations)
 	, setting_bsg_method(bgs_method)
 	, setting_bsg_threshold(bgs_threshold)
 	, setting_bsg_shadow(bgs_shadows)
@@ -102,6 +105,7 @@ void Setting_Window::DoDataExchange(CDataExchange* pDX) {
 	DDX_Radio(pDX, IDC_RADIO_BACKGROUNDSUBTRACTION, setting_bsg_Checked);
 	DDX_Radio(pDX, IDC_RADIO_My_Tracking, setting_MyTracking_Checked);
 	DDX_Radio(pDX, IDC_RADIO_SORT_TRACKING, setting_SORTTracking_Checked);
+	DDX_Text(pDX, IDC_MORPHO_ITERATIONS, setting_morpho_iterations);
 }
 
 // initial window
@@ -182,10 +186,10 @@ void Setting_Window::OnBnClickedCancel()
 bool Setting_Window::CheckParameters() {
 	// Check image processing parameters
 	vector<CString> cblur_method = { L"MEDIAN", L"AVG", L"GAUSS" };
-	vector<CString> cblur_kernel = { L"3", L"5", L"7", L"9" };
+	vector<CString> cblur_kernel = { L"1", L"3", L"5", L"7", L"9" };
 	vector<CString> cmorpho_method = { L"Dilate", L"Erode", L"Open", L"Close" };
-	vector<CString> cmorpho_kernel = { L"3", L"5", L"7", L"9" };
-	CString get_cblur_method, get_cblur_kernel, get_cmorpho_method, get_cmorpho_kernel;
+	vector<CString> cmorpho_kernel = { L"1", L"3", L"5", L"7", L"9" };
+	CString get_cblur_method, get_cblur_kernel, get_cmorpho_method, get_cmorpho_kernel, get_cmorpho_iterations;
 	GetDlgItem(ID_BLUR_MEDTHOD)->GetWindowTextW(get_cblur_method);
 	GetDlgItem(ID_BLUR_KERNEL)->GetWindowTextW(get_cblur_kernel);
 	GetDlgItem(ID_MORPHO_METHOD)->GetWindowTextW(get_cmorpho_method);
@@ -210,7 +214,18 @@ bool Setting_Window::CheckParameters() {
 		AfxMessageBox(L"Morphological Kernel Error!");
 		return false;
 	}
-
+	// morpho iterations
+	GetDlgItem(IDC_MORPHO_ITERATIONS)->GetWindowTextW(get_cmorpho_iterations);
+	if (CheckInt(get_cmorpho_iterations) == true) {
+		if (_ttoi(get_cmorpho_iterations) < 0) {
+			AfxMessageBox(L"Morphological iterations must be >0!");
+			return false;
+		}
+	}
+	else {
+		AfxMessageBox(L"Morphological iterations must be Int!");
+		return false;
+	}
 	// sementation to binary
 	if (IsDlgButtonChecked(IDC_RADIO_BACKGROUNDSUBTRACTION)) {
 		// Check Background Subtraction Parameters
@@ -292,10 +307,10 @@ bool Setting_Window::CheckParameters() {
 		GetDlgItem(ID_MAX_AGE)->GetWindowTextW(get_max_age);
 		// Sort iou threshold
 		if (CheckFloat(get_iou_threshold) == true) {
-			if (_ttof(get_iou_threshold) <= 0 || _ttof(get_iou_threshold) >= 1) {
-				AfxMessageBox(L"IoU Threshold must be (0,1)!");
-				return false;
-			}
+			//if (_ttof(get_iou_threshold) <= 0 || _ttof(get_iou_threshold) >= 1) {
+				//AfxMessageBox(L"IoU Threshold must be (0,1)!");
+				//return false;
+			//}
 		}
 		else {
 			AfxMessageBox(L"IoU Threshold Error!");
@@ -453,15 +468,17 @@ CString Setting_Window::get_parameters_from_window() {
 	CString data;
 	data = data + L"Hao Phuong - Parameters File" + L"\n"; // signature // line 0
 	// Blur
-	CString get_cblur_method, get_cblur_kernel, get_cmorpho_method, get_cmorpho_kernel;
+	CString get_cblur_method, get_cblur_kernel, get_cmorpho_method, get_cmorpho_kernel, get_cmorpho_iterations;
 	GetDlgItem(ID_BLUR_MEDTHOD)->GetWindowTextW(get_cblur_method);
 	GetDlgItem(ID_BLUR_KERNEL)->GetWindowTextW(get_cblur_kernel);
 	GetDlgItem(ID_MORPHO_METHOD)->GetWindowTextW(get_cmorpho_method);
 	GetDlgItem(ID_MORPHO_KERNEL)->GetWindowTextW(get_cmorpho_kernel);
+	GetDlgItem(IDC_MORPHO_ITERATIONS)->GetWindowTextW(get_cmorpho_iterations);
 	data = data + L"Blur_Method:" + get_cblur_method + L"\n"; // line 1
 	data = data + L"Blur_Kernel:" + get_cblur_kernel + L"\n"; // line 2
 	data = data + L"Mopho_Method:" + get_cmorpho_method + L"\n"; // line 3
 	data = data + L"Morpho_Kernel:" + get_cmorpho_kernel + L"\n"; // line 4
+	data = data + L"Morpho_iterations:" + get_cmorpho_iterations + L"\n"; // line 5
 	// detection
 	CString get_avg_area, get_min_area, get_max_area, get_min_width, get_min_height;
 	GetDlgItem(ID_AVG_AREA)->GetWindowTextW(get_avg_area);
@@ -469,59 +486,59 @@ CString Setting_Window::get_parameters_from_window() {
 	GetDlgItem(ID_MAX_AREA)->GetWindowTextW(get_max_area);
 	GetDlgItem(ID_MIN_WIDTH)->GetWindowTextW(get_min_width);
 	GetDlgItem(ID_MIN_HEIGHT)->GetWindowTextW(get_min_height);
-	data = data + L"Avg_Area:" + get_avg_area + L"\n"; // line 5
-	data = data + L"Min_Area:" + get_min_area + L"\n"; // line 6
-	data = data + L"Max_Area:" + get_max_area + L"\n"; // line 7
-	data = data + L"Min_Width:" + get_min_width + L"\n"; // line 8
-	data = data + L"Min_Height:" + get_min_height + L"\n"; // line 9
+	data = data + L"Avg_Area:" + get_avg_area + L"\n"; // line 6
+	data = data + L"Min_Area:" + get_min_area + L"\n"; // line 7
+	data = data + L"Max_Area:" + get_max_area + L"\n"; // line 8
+	data = data + L"Min_Width:" + get_min_width + L"\n"; // line 9
+	data = data + L"Min_Height:" + get_min_height + L"\n"; // line 10
 	// counting
 	CString get_line_position, get_max_square_distance;
 	GetDlgItem(ID_LINE_POSITION)->GetWindowTextW(get_line_position);
 	GetDlgItem(ID_MAX_DISTANCE)->GetWindowTextW(get_max_square_distance);
-	data = data + L"Line_Position:" + get_line_position + L"\n"; // line 10
-	data = data + L"Max_Distance:" + get_max_square_distance + L"\n"; // line 11
+	data = data + L"Line_Position:" + get_line_position + L"\n"; // line 11
+	data = data + L"Max_Distance:" + get_max_square_distance + L"\n"; // line 12
 
 	// detetion method
 	if (IsDlgButtonChecked(IDC_RADIO_BACKGROUNDSUBTRACTION))
-		data = data + L"Segment_To_Binary_Method:Background_Subtraction" + L"\n"; // line 12
+		data = data + L"Segment_To_Binary_Method:Background_Subtraction" + L"\n"; // line 13
 	else if (IsDlgButtonChecked(IDC_RADIO_ADAPTIVETHRESHOLD))
-		data = data + L"Segment_To_Binary_Method:Adaptive_Threshold" + L"\n"; // line 12
+		data = data + L"Segment_To_Binary_Method:Adaptive_Threshold" + L"\n"; // line 13
 	// Background Subtraction
 	CString get_bsg_method, get_bsg_shadow, get_bsg_threshold, get_bsg_history;
 	GetDlgItem(ID_BSG_METHOD)->GetWindowTextW(get_bsg_method);
 	GetDlgItem(ID_BSG_SHADOW)->GetWindowTextW(get_bsg_shadow);
 	GetDlgItem(ID_BSG_THRESHOLD)->GetWindowTextW(get_bsg_threshold);
 	GetDlgItem(ID_BSG_HISTORY)->GetWindowTextW(get_bsg_history);
-	data = data + L"Background_Subtraction_Method:" + get_bsg_method + L"\n"; // line 13
-	data = data + L"Background_Subtraction_Shadow:" + get_bsg_shadow + L"\n"; // line 14
-	data = data + L"Background_Subtraction_Threshold:" + get_bsg_threshold + L"\n"; // line 15
-	data = data + L"Background_Subtraction_History:" + get_bsg_history + L"\n"; // line 16
+	data = data + L"Background_Subtraction_Method:" + get_bsg_method + L"\n"; // line 14
+	data = data + L"Background_Subtraction_Shadow:" + get_bsg_shadow + L"\n"; // line 15
+	data = data + L"Background_Subtraction_Threshold:" + get_bsg_threshold + L"\n"; // line 16
+	data = data + L"Background_Subtraction_History:" + get_bsg_history + L"\n"; // line 17
 	// Adaptive Threshod
 	CString get_adaptiveThreshold_method, get_adaptiveThreshold_KSize, get_adaptiveThreshold_C;
 	GetDlgItem(ID_ADAPTIVETHRESHOLD_METHOD)->GetWindowTextW(get_adaptiveThreshold_method);
 	GetDlgItem(ID_ADAPTIVETHRESHOLD_KSIZE)->GetWindowTextW(get_adaptiveThreshold_KSize);
 	GetDlgItem(ID_ADAPTIVETHRESHOLD_C)->GetWindowTextW(get_adaptiveThreshold_C);
-	data = data + L"Adaptive_Threshod_Method:" + get_adaptiveThreshold_method + L"\n"; // line 17
-	data = data + L"KSize:" + get_adaptiveThreshold_KSize + L"\n"; // line 18
-	data = data + L"C:" + get_adaptiveThreshold_C + L"\n"; // line 19
+	data = data + L"Adaptive_Threshod_Method:" + get_adaptiveThreshold_method + L"\n"; // line 18
+	data = data + L"KSize:" + get_adaptiveThreshold_KSize + L"\n"; // line 19
+	data = data + L"C:" + get_adaptiveThreshold_C + L"\n"; // line 20
 
 	// Counting method
 	if (IsDlgButtonChecked(IDC_RADIO_SORT_TRACKING))
-		data = data + L"Tracking_Method:SORT" + L"\n"; // line 20
+		data = data + L"Tracking_Method:SORT" + L"\n"; // line 21
 	else if (IsDlgButtonChecked(IDC_RADIO_My_Tracking))
-		data = data + L"Tracking_Method:My_Simple_Tracking" + L"\n"; // line 20
+		data = data + L"Tracking_Method:My_Simple_Tracking" + L"\n"; // line 22
 	// SORT counting
 	CString get_iou_threshold, get_min_hits, get_max_age;
 	GetDlgItem(ID_IOU_THRESHOLD)->GetWindowTextW(get_iou_threshold);
 	GetDlgItem(ID_MIN_HITS)->GetWindowTextW(get_min_hits);
 	GetDlgItem(ID_MAX_AGE)->GetWindowTextW(get_max_age);
-	data = data + L"Iou_Threshold:" + get_iou_threshold + L"\n"; // line 21
-	data = data + L"Min_Hits:" + get_min_hits + L"\n"; // line 22
-	data = data + L"Max_Age:" + get_max_age + L"\n"; // line 23
+	data = data + L"Iou_Threshold:" + get_iou_threshold + L"\n"; // line 22
+	data = data + L"Min_Hits:" + get_min_hits + L"\n"; // line 23
+	data = data + L"Max_Age:" + get_max_age + L"\n"; // line 24
 	// Distance counting
 	CString get_tolerrance_x;
 	GetDlgItem(IDC_TOLERANCE_X)->GetWindowTextW(get_tolerrance_x);
-	data = data + L"Tolerance_X:" + get_tolerrance_x + L"\n"; // line 24
+	data = data + L"Tolerance_X:" + get_tolerrance_x + L"\n"; // line 25
 	
 	return data;
 }
@@ -606,34 +623,38 @@ BOOL Setting_Window::get_parameters_from_file(CString setting_filename) {
 	setting_morpho_kernel = _ttoi(data_);
 
 	data_ = vector_get_parameters[5];
+	data_.Replace(L"Morpho_iterations:", L"");
+	setting_morpho_iterations = _ttoi(data_);
+
+	data_ = vector_get_parameters[6];
 	data_.Replace(L"Avg_Area:", L"");
 	setting_avg_area = _ttoi(data_);
 
-	data_ = vector_get_parameters[6];
+	data_ = vector_get_parameters[7];
 	data_.Replace(L"Min_Area:", L"");
 	setting_min_area = _ttoi(data_);
 
-	data_ = vector_get_parameters[7];
+	data_ = vector_get_parameters[8];
 	data_.Replace(L"Max_Area:", L"");
 	setting_max_area = _ttoi(data_);
 
-	data_ = vector_get_parameters[8];
+	data_ = vector_get_parameters[9];
 	data_.Replace(L"Min_Width:", L"");
 	setting_min_width = _ttoi(data_);
 
-	data_ = vector_get_parameters[9];
+	data_ = vector_get_parameters[10];
 	data_.Replace(L"Min_Height:", L"");
 	setting_min_height = _ttoi(data_);
 
-	data_ = vector_get_parameters[10];
+	data_ = vector_get_parameters[11];
 	data_.Replace(L"Line_Position:", L"");
 	setting_line_position = _ttoi(data_);
 
-	data_ = vector_get_parameters[11];
+	data_ = vector_get_parameters[12];
 	data_.Replace(L"Max_Distance:", L"");
 	setting_max_distance = _ttoi(data_);
 
-	data_ = vector_get_parameters[12];
+	data_ = vector_get_parameters[13];
 	data_.Replace(L"Segment_To_Binary_Method:", L"");
 	if (data_ == L"Adaptive_Threshold") {
 		setting_adaptiveThreshold_Checked = FALSE;
@@ -641,15 +662,15 @@ BOOL Setting_Window::get_parameters_from_file(CString setting_filename) {
 		EnableAdaptiveThreshold(TRUE);
 		EnableBackgroundSubtraction(FALSE);
 
-		CString data_AT = vector_get_parameters[17];
+		CString data_AT = vector_get_parameters[18];
 		data_AT.Replace(L"Adaptive_Threshod_Method:", L"");
 		setting_adaptiveThreshold_method = data_AT;
 
-		data_AT = vector_get_parameters[18];
+		data_AT = vector_get_parameters[19];
 		data_AT.Replace(L"KSize:", L"");
 		setting_adaptiveThreshold_KSize = _ttoi(data_AT);
 
-		data_AT = vector_get_parameters[19];
+		data_AT = vector_get_parameters[20];
 		data_AT.Replace(L"C:", L"");
 		setting_adaptiveThreshold_C = _ttoi(data_AT);
 	}
@@ -659,24 +680,24 @@ BOOL Setting_Window::get_parameters_from_file(CString setting_filename) {
 		EnableAdaptiveThreshold(FALSE);
 		EnableBackgroundSubtraction(TRUE);
 
-		CString data_BSG = vector_get_parameters[13];
+		CString data_BSG = vector_get_parameters[14];
 		data_BSG.Replace(L"Background_Subtraction_Method:", L"");
 		setting_bsg_method = data_BSG;
 
-		data_BSG = vector_get_parameters[14];
+		data_BSG = vector_get_parameters[15];
 		data_BSG.Replace(L"Background_Subtraction_Shadow:", L"");
 		setting_bsg_shadow = data_BSG;
 
-		data_BSG = vector_get_parameters[15];
+		data_BSG = vector_get_parameters[16];
 		data_BSG.Replace(L"Background_Subtraction_Threshold:", L"");
 		setting_bsg_threshold = _ttof(data_BSG);
 
-		data_BSG = vector_get_parameters[16];
+		data_BSG = vector_get_parameters[17];
 		data_BSG.Replace(L"Background_Subtraction_History:", L"");
 		setting_bsg_history = _ttoi(data_BSG);
 	}
 
-	data_ = vector_get_parameters[20];
+	data_ = vector_get_parameters[21];
 	data_.Replace(L"Tracking_Method:", L"");
 	if (data_ == L"My_Simple_Tracking") {
 		setting_MyTracking_Checked = FALSE;
@@ -684,7 +705,7 @@ BOOL Setting_Window::get_parameters_from_file(CString setting_filename) {
 		EnableMyTracking(TRUE);
 		EnableSORTTracking(FALSE);
 		
-		CString data_TX = vector_get_parameters[24];
+		CString data_TX = vector_get_parameters[25];
 		data_TX.Replace(L"Tolerance_X:", L"");
 		setting_tolerance_x = _ttoi(data_TX);
 	}
@@ -694,15 +715,15 @@ BOOL Setting_Window::get_parameters_from_file(CString setting_filename) {
 		EnableMyTracking(FALSE);
 		EnableSORTTracking(TRUE);
 		
-		CString data_SORT = vector_get_parameters[21];
+		CString data_SORT = vector_get_parameters[22];
 		data_SORT.Replace(L"Iou_Threshold:", L"");
 		setting_iou_threshold = _ttof(data_SORT);
 
-		data_SORT = vector_get_parameters[22];
+		data_SORT = vector_get_parameters[23];
 		data_SORT.Replace(L"Min_Hits:", L"");
 		setting_min_hits = _ttoi(data_SORT);
 
-		data_SORT = vector_get_parameters[23];
+		data_SORT = vector_get_parameters[24];
 		data_SORT.Replace(L"Max_Age:", L"");
 		setting_max_age = _ttoi(data_SORT);
 	}

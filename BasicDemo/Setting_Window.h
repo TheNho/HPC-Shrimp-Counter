@@ -28,6 +28,7 @@ public:
 	int setting_blur_kernel;
 	CString setting_morpho_type;
 	int setting_morpho_kernel;
+	int setting_morpho_iterations;
 	CString setting_bsg_method;
 	float setting_bsg_threshold;
 	CString setting_bsg_shadow;
@@ -69,4 +70,5 @@ public:
 	afx_msg void OnBnClickedRadioSortTracking();
 	afx_msg void OnBnClickedSave();
 	afx_msg void OnBnClickedLoad();
+	
 };

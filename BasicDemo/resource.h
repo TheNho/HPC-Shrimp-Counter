@@ -120,6 +120,8 @@
 #define ID_LOG_OK                       1061
 #define ID_LOG_CANCLE                   1062
 #define ID_LOG_CLEAR_DATA               1062
+#define IDC_EDIT16                      1071
+#define IDC_MORPHO_ITERATIONS           1071
 
 // Next default values for new objects
 // 
@@ -127,7 +129,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        147
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1071
+#define _APS_NEXT_CONTROL_VALUE         1072
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

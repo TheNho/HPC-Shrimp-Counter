@@ -191,8 +191,8 @@ BOOL CBasicDemoDlg::OnInitDialog() {
 
 void CBasicDemoDlg::SettingInitial() {
     // install the first run variables
-    blur_method = L"MEDIAN"; //AVG;GAUSS
-    blur_kernel = 5;
+    blur_method = L"AVG"; //AVG;GAUSS;MEDIAN
+    blur_kernel = 3;
     segment_binary_method = L"Adaptive Threshold"; // ; Adaptive Threshold; Background Subtraction
     bgs_method = L"MOG2"; //MOG2;MOG
     bgs_threshold = 10;
@@ -924,8 +924,8 @@ void CBasicDemoDlg::DisplayThread() {
 
         UpdateData(FALSE); // update shrimp number and frame count to window
 
-        // sleep 30ms
-        waitKey(30);
+        // sleep 15ms/60fps
+        waitKey(15);
     }
     Mat_display.release();
     return;
@@ -1291,18 +1291,19 @@ void CBasicDemoDlg::OnBnClickedSettingButton() {
         // Morphological filter
         morphological_method = open_setting_windown->setting_morpho_type;
         morphological_kernel = open_setting_windown->setting_morpho_kernel;
+        morphological_iterations = open_setting_windown->setting_morpho_iterations;
         mo_kernel = getStructuringElement(MORPH_RECT, Size(morphological_kernel, morphological_kernel));
         if (morphological_method == L"Dilate") {
-            mo_filter = cuda::createMorphologyFilter(MORPH_DILATE, CV_8U, mo_kernel);
+            mo_filter = cuda::createMorphologyFilter(MORPH_DILATE, CV_8U, mo_kernel, Point(-1, -1), morphological_iterations);
         }
         else if (morphological_method == L"Erode") {
-            mo_filter = cuda::createMorphologyFilter(MORPH_ERODE, CV_8U, mo_kernel);
+            mo_filter = cuda::createMorphologyFilter(MORPH_ERODE, CV_8U, mo_kernel, Point(-1, -1), morphological_iterations);
         }
         else if (morphological_method == L"Open") {
-            mo_filter = cuda::createMorphologyFilter(MORPH_OPEN, CV_8U, mo_kernel);
+            mo_filter = cuda::createMorphologyFilter(MORPH_OPEN, CV_8U, mo_kernel, Point(-1, -1), morphological_iterations);
         }
         else if (morphological_method == L"Close") {
-            mo_filter = cuda::createMorphologyFilter(MORPH_CLOSE, CV_8U, mo_kernel);
+            mo_filter = cuda::createMorphologyFilter(MORPH_CLOSE, CV_8U, mo_kernel, Point(-1, -1), morphological_iterations);
         }
         else {
             AfxMessageBox(L"Morphological Method Setting Error!");
@@ -1368,7 +1369,8 @@ void CBasicDemoDlg::ImageProcessing_GPU() {
     }
 
     //cuda blur image
-    //cuda_filter->apply(gpu_Mat_src, gpu_Mat_src);
+    if (blur_kernel != 1) // kernel == 1 no convolution
+        cuda_filter->apply(gpu_Mat_src, gpu_Mat_src);
 
     // Segmentation to binary image
     // Threshold
@@ -1386,7 +1388,8 @@ void CBasicDemoDlg::ImageProcessing_GPU() {
     }
    
     // morphological filter
-    mo_filter->apply(gpu_Mat_dst, gpu_Mat_dst);
+    if (morphological_kernel != 1) // kernel == 1 no convolution
+        mo_filter->apply(gpu_Mat_dst, gpu_Mat_dst);
 
     gpu_Mat_dst.download(dst);
 
@@ -1498,13 +1501,16 @@ void CBasicDemoDlg::My_Simple_Counting(int tolerance_x, float max_square_distanc
 }
 
 double CBasicDemoDlg::GetIOU(Rect_<float> bb_test, Rect_<float> bb_gt) {
-    float in = (bb_test & bb_gt).area();
-    float un = bb_test.area() + bb_gt.area() - in;
-
+    //float in = (bb_test & bb_gt).area();
+    //float un = bb_test.area() + bb_gt.area() - in;
+    float delta_xx = (bb_test.x + bb_test.width / 2) - (bb_gt.x + bb_gt.width / 2); // center x
+    float delta_yy = (bb_test.y + bb_test.height / 2) - (bb_gt.y + bb_gt.height / 2); // center y
+    float un = delta_xx * delta_xx + delta_yy * delta_yy;
     if (un < DBL_EPSILON)
         return 0;
 
-    return (double)(in / un);
+    //return (double)(in / un);
+    return un;
 }
 //input: trackers, detection
 //output: vector<Trakingbox> frameTrackingResult
