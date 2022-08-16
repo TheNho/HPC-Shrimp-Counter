@@ -142,10 +142,10 @@ public:
     //opencv convert buffer data to Mat
     bool Convert2Mat(MV_FRAME_OUT_INFO_EX* pstImageInfo, unsigned char* pData, cv::Mat *srcImage);
     void SORT(int max_age, int min_hits, double iouThreshold);
-    double GetIOU(Rect_<float> bb_test, Rect_<float> bb_gt);
+    double GetDistance(Point2f center_test, Point2f center_gt);
     void ImageProcessing_GPU();
     void AdaptiveThreshold_GPU(GpuMat gsrc, GpuMat &gdst);
-    void My_Simple_Counting(int tolerance_x, float max_square_distance);
+    void My_Simple_Counting(int tolerance_x, float max_distance);
     void SORT_Counting();
     void DisplayThread();
     void SettingInitial();
@@ -171,14 +171,15 @@ private:
     Ptr<cuda::Filter> mo_filter;
     // Backgruond subtraction
     Ptr<BackgroundSubtractor> pBackSub;
+
     // Detection
     vector<Point> current_centers;
     vector<Point> previous_centers;
-    vector<TrackingBox> detections; // detection in one frame
+    vector<TrackingCenter> detections; // detection in one frame
     vector<array<float, 7>> HuMoments; // contain stack [humoment] of 2->4 shirmps in one detection , pop up after classify
     vector<KalmanTracker> trackers;  // reset this in stop count
-    vector<TrackingBox> previous_frameTrackingResult;
-    vector<TrackingBox> frameTrackingResult; // contain id, box position
+    vector<TrackingCenter> previous_frameTrackingResult;
+    vector<TrackingCenter> frameTrackingResult; // contain id, box position
 
 public:
     afx_msg void OnBnClickedStartCountButton();
@@ -186,8 +187,8 @@ public:
     afx_msg void OnBnClickedResetNumberButton();
     afx_msg void OnBnClickedLogButton();
 public:
-    
-
     // define save directory
+    CString FilenameSave_Sort_data = L"Data_SORT.txt";
+    CStdioFile fileSortdaata;
     CString nFilename = L"Result.result";
 };

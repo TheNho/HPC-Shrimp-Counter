@@ -23,6 +23,8 @@ protected:
 
 	DECLARE_MESSAGE_MAP()
 public:
+	CString setting_segment_binary_method;
+	CString setting_counting_method;
 	bool update_setting = false;
 	CString setting_blur_method;
 	int setting_blur_kernel;
@@ -33,7 +35,7 @@ public:
 	float setting_bsg_threshold;
 	CString setting_bsg_shadow;
 	int setting_bsg_history;
-	float setting_iou_threshold;
+	float setting_distance_threshold;
 	int setting_min_hits;
 	int setting_max_age;
 	int setting_line_position;
@@ -71,4 +73,6 @@ public:
 	afx_msg void OnBnClickedSave();
 	afx_msg void OnBnClickedLoad();
 	
+	int setting_max_width;
+	int setting_max_height;
 };

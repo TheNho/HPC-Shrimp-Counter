@@ -80,6 +80,7 @@
 #define ID_MORPHO_KERNEL                1039
 #define IDC_EDIT8                       1040
 #define ID_IOU_THRESHOLD                1040
+#define ID_DISTANCE_THRESHOLD           1040
 #define IDC_EDIT9                       1041
 #define IDC_AVG_SIZE_EDIT               1041
 #define ID_MIN_HITS                     1041
@@ -117,10 +118,12 @@
 #define IDC_RADIO_SORT_TRACKING         1059
 #define IDC_LIST3                       1060
 #define IDC_LOG_HISTORY_LIST            1060
+#define ID_MAX_WIDTH                    1060
 #define ID_LOG_OK                       1061
+#define ID_MIN_HEIGHT2                  1061
+#define ID_MAX_HEIGHT                   1061
 #define ID_LOG_CANCLE                   1062
 #define ID_LOG_CLEAR_DATA               1062
-#define IDC_EDIT16                      1071
 #define IDC_MORPHO_ITERATIONS           1071
 
 // Next default values for new objects

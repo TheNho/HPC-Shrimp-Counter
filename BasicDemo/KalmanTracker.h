@@ -13,32 +13,22 @@
 using namespace std;
 using namespace cv;
 
-#define StateType Rect_<float>
+#define StateType Point2f
 
-typedef struct _TrackingBox
+typedef struct _TrackingCenter
 {
 	int64 frame;
 	int64 id;
-	Rect_<float> box;
-}TrackingBox;
+	Point2f center;
+}TrackingCenter;
 
 // This class represents the internel state of individual tracked objects observed as bounding box.
 class KalmanTracker
 {
 public:
-	KalmanTracker()
+	KalmanTracker(StateType initCenter)
 	{
-		init_kf(StateType());
-		m_time_since_update = 0;
-		m_hits = 0;
-		m_hit_streak = 0;
-		m_age = 0;
-		m_id = kf_count;
-		//kf_count++;
-	}
-	KalmanTracker(StateType initRect)
-	{
-		init_kf(initRect);
+		init_kf(initCenter);
 		m_time_since_update = 0;
 		m_hits = 0;
 		m_hit_streak = 0;
@@ -56,15 +46,14 @@ public:
 	void update(StateType stateMat);
 	
 	StateType get_state();
-	StateType get_rect_xysr(float cx, float cy, float s, float r);
 
-	static int kf_count;
+	static uint64 kf_count;
 
 	int m_time_since_update;
 	int m_hits;
 	int m_hit_streak;
 	int m_age;
-	int64 m_id;
+	uint64 m_id;
 
 private:
 	void init_kf(StateType stateMat);

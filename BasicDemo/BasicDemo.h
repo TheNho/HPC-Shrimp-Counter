@@ -9,6 +9,8 @@
 
 #include "resource.h"		
 
+#define Image_Width 640
+#define Image_Height 480
 
 // CBasicDemoApp:
 // BasicDemo.cpp

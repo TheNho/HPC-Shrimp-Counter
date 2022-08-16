@@ -26,7 +26,6 @@ CBasicDemoApp::CBasicDemoApp()
 	// InitInstance 
 }
 
-
 // CBasicDemoApp global
 CBasicDemoApp theApp;
 
@@ -58,7 +57,7 @@ int line_position;
 float max_distance;
 CString couting_method;
 // SORT parameters
-float  IoU_threshold;
+float  distance_threshold;
 int min_hits;
 int max_age;
 // my simple tracking parameter
@@ -69,7 +68,8 @@ double min_area;
 double max_area;
 int min_width;
 int min_height;
-
+int max_width;
+int max_height;
 
 // CBasicDemoApp 
 BOOL CBasicDemoApp::InitInstance()
