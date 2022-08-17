@@ -11,6 +11,7 @@
 IMPLEMENT_DYNAMIC(Setting_Window, CDialogEx)
 
 // Global variable getting current parameters when initial window
+extern CString flip_image;
 extern CString blur_method;
 extern int blur_kernel;
 extern CString segment_binary_method;
@@ -72,6 +73,7 @@ Setting_Window::Setting_Window(CWnd* pParent /*=nullptr*/)
 	, setting_SORTTracking_Checked(TRUE)
 	, setting_max_width(max_width)
 	, setting_max_height(max_height)
+	, setting_flip_image(flip_image)
 {
 		
 }
@@ -112,6 +114,7 @@ void Setting_Window::DoDataExchange(CDataExchange* pDX) {
 	DDX_Text(pDX, IDC_MORPHO_ITERATIONS, setting_morpho_iterations);
 	DDX_Text(pDX, ID_MAX_WIDTH, setting_max_width);
 	DDX_Text(pDX, ID_MAX_HEIGHT, setting_max_height);
+	DDX_CBString(pDX, ID_FLIP_IMAGE, setting_flip_image);
 }
 
 // initial window
@@ -191,6 +194,14 @@ void Setting_Window::OnBnClickedCancel()
 }
 
 bool Setting_Window::CheckParameters() {
+	// Check flip image
+	vector<CString> cflip_image = { L"None", L"X", L"Y" };
+	CString get_flip_image;
+	GetDlgItem(ID_FLIP_IMAGE)->GetWindowTextW(get_flip_image);
+	if (find(cflip_image.begin(), cflip_image.end(), get_flip_image) == cflip_image.end()) {
+		AfxMessageBox(L"Flip Image Method Error!");
+		return false;
+	}
 	// Check image processing parameters
 	vector<CString> cblur_method = { L"MEDIAN", L"AVG", L"GAUSS" };
 	vector<CString> cblur_kernel = { L"1", L"3", L"5", L"7", L"9" };
@@ -552,6 +563,8 @@ CString Setting_Window::get_parameters_from_window() {
 	// Distance counting
 	data_counting_method.Format(L"%d", setting_tolerance_x);
 	data = data + L"Tolerance_X:" + data_counting_method + L"\n"; // line 27
+	// Flip image
+	data = data + L"Flip_Image:" + setting_flip_image + L"\n"; // line 28
 
 	return data;
 }
@@ -751,8 +764,11 @@ BOOL Setting_Window::get_parameters_from_file(CString setting_filename) {
 		data_SORT.Replace(L"Max_Age:", L"");
 		setting_max_age = _ttoi(data_SORT);
 	}
+	CString data_flip_image;
+	data_flip_image = vector_get_parameters[28];
+	data_flip_image.Replace(L"Flip_Image:", L"");
+	setting_flip_image = data_flip_image;
 
-	UpdateData(FALSE); // update parameters to window
 	return TRUE;
 }
 void Setting_Window::OnBnClickedLoad() {
@@ -763,9 +779,11 @@ void Setting_Window::OnBnClickedLoad() {
 		//CStdioFile file(parasFile.GetFileName(), CFile::modeRead);
 		if (parasFile.GetFileExt() == _T("parameters")) {
 			BOOL ret1 = get_parameters_from_file(parasFile.GetFolderPath() + L"/" + parasFile.GetFileName());
+			UpdateData(FALSE); // update parameters to window
 			bool ret2 = CheckParameters();
-			if (TRUE == ret1&&ret2)
+			if (TRUE == ret1&&ret2) {
 				AfxMessageBox(L"Load Setting Success!!!!");
+			}
 		}
 		else {
 			AfxMessageBox(L"Error while loading file!!!!");

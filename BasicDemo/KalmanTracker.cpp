@@ -44,7 +44,7 @@ StateType KalmanTracker::predict()
 	StateType predictCenter = Point2f(p.at<float>(0, 0), p.at<float>(1, 0));
 
 	m_history.push_back(predictCenter);
-	return m_history.back(); // vector.back -> return the last element of vector
+	return predictCenter;
 }
 
 // Update the state vector with observed Center.

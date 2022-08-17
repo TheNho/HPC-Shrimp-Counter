@@ -31,7 +31,7 @@ CBasicDemoApp theApp;
 
 // global filename variable using in all window
 CString global_filename;
-
+CString flip_image;
 // Parameters Setting default in the first run
 	// blur image
 CString blur_method;

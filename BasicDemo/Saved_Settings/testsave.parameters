@@ -1,28 +1,29 @@
 Hao Phuong - Parameters File
 Blur_Method:AVG
-Blur_Kernel:1
+Blur_Kernel:3
 Mopho_Method:Open
-Morpho_Kernel:5
-Morpho_iterations:4
-Avg_Area:9.000000
-Min_Area:3.000000
-Max_Area:4.000000
-Min_Width:5
-Max_Width:7
-Min_Height:6
-Max_Height:8
-Line_Position:1
-Max_Distance:2.000000
-Segment_To_Binary_Method:Adaptive Threshold
+Morpho_Kernel:3
+Morpho_iterations:1
+Avg_Area:100.000000
+Min_Area:10.000000
+Max_Area:1000.000000
+Min_Width:1
+Max_Width:50
+Min_Height:1
+Max_Height:50
+Line_Position:400
+Max_Distance:100.000000
+Segment_To_Binary_Method:Background Subtraction
 Background_Subtraction_Method:MOG2
 Background_Subtraction_Shadow:False
-Background_Subtraction_Threshold:2.000000
-Background_Subtraction_History:3
+Background_Subtraction_Threshold:15.000000
+Background_Subtraction_History:500
 Adaptive_Threshod_Method:MEAN_C
-KSize:1
-C:2
-Tracking_Method:My Simple Tracking
-Distance_Threshold:6.000000
-Min_Hits:7
-Max_Age:8
-Tolerance_X:3
+KSize:25
+C:5
+Tracking_Method:SORT
+Distance_Threshold:15.000000
+Min_Hits:1
+Max_Age:3
+Tolerance_X:5
+Flip_Image:None

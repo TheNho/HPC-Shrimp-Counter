@@ -149,6 +149,7 @@ public:
     void SORT_Counting();
     void DisplayThread();
     void SettingInitial();
+    void MySORTAlgorithmn(int max_age, int min_hits, double distanceThreshold);
     afx_msg void OnBnClickedSettingButton();
 
 private:
@@ -156,7 +157,6 @@ private:
     bool b_start_count = false;
     uint64 frame_count = 0;
     uint64 counter = 0;
-
     // Opencv variables
     Mat Mat_src;
     Mat dst; // dst is a binary image

@@ -120,10 +120,11 @@
 #define IDC_LOG_HISTORY_LIST            1060
 #define ID_MAX_WIDTH                    1060
 #define ID_LOG_OK                       1061
-#define ID_MIN_HEIGHT2                  1061
 #define ID_MAX_HEIGHT                   1061
 #define ID_LOG_CANCLE                   1062
 #define ID_LOG_CLEAR_DATA               1062
+#define ID_BLUR_KERNEL2                 1062
+#define ID_FLIP_IMAGE                   1062
 #define IDC_MORPHO_ITERATIONS           1071
 
 // Next default values for new objects

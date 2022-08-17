@@ -75,4 +75,5 @@ public:
 	
 	int setting_max_width;
 	int setting_max_height;
+	CString setting_flip_image;
 };
