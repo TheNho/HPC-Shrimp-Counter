@@ -19,6 +19,7 @@ extern CString bgs_method;
 extern float bgs_threshold;
 extern CString bgs_shadows;
 extern int bgs_history;
+extern float bsg_learning_rate;
 extern CString adaptiveThreshold_method;
 extern int adaptiveThreshold_KSize;
 extern int adaptiveThreshold_C;
@@ -28,7 +29,7 @@ extern int morphological_iterations;
 
 extern int line_position;
 extern float max_distance;
-extern CString couting_method;
+extern CString counting_method;
 extern float  distance_threshold;
 extern int min_hits;
 extern int max_age;
@@ -53,6 +54,7 @@ Setting_Window::Setting_Window(CWnd* pParent /*=nullptr*/)
 	, setting_bsg_threshold(bgs_threshold)
 	, setting_bsg_shadow(bgs_shadows)
 	, setting_bsg_history(bgs_history)
+	, setting_bsg_learning_rate(bsg_learning_rate)
 	, setting_distance_threshold(distance_threshold)
 	, setting_min_hits(min_hits)
 	, setting_max_age(max_age)
@@ -74,6 +76,7 @@ Setting_Window::Setting_Window(CWnd* pParent /*=nullptr*/)
 	, setting_max_width(max_width)
 	, setting_max_height(max_height)
 	, setting_flip_image(flip_image)
+	
 {
 		
 }
@@ -115,6 +118,7 @@ void Setting_Window::DoDataExchange(CDataExchange* pDX) {
 	DDX_Text(pDX, ID_MAX_WIDTH, setting_max_width);
 	DDX_Text(pDX, ID_MAX_HEIGHT, setting_max_height);
 	DDX_CBString(pDX, ID_FLIP_IMAGE, setting_flip_image);
+	DDX_Text(pDX, ID_BSG_LEARNING_RATE, setting_bsg_learning_rate);
 }
 
 // initial window
@@ -134,7 +138,7 @@ BOOL Setting_Window::OnInitDialog() {
 		EnableAdaptiveThreshold(FALSE);
 		EnableBackgroundSubtraction(TRUE);
 	}
-	setting_counting_method = couting_method;
+	setting_counting_method = counting_method;
 	if (setting_counting_method == L"My Simple Tracking"){
 		setting_MyTracking_Checked = FALSE;
 		setting_SORTTracking_Checked = TRUE;
@@ -193,7 +197,7 @@ void Setting_Window::OnBnClickedCancel()
 	this->SendMessage(WM_CLOSE);
 }
 
-bool Setting_Window::CheckParameters() {
+bool Setting_Window::CheckParameters() { // Check parameters in current window
 	// Check flip image
 	vector<CString> cflip_image = { L"None", L"X", L"Y" };
 	CString get_flip_image;
@@ -212,6 +216,7 @@ bool Setting_Window::CheckParameters() {
 	GetDlgItem(ID_BLUR_KERNEL)->GetWindowTextW(get_cblur_kernel);
 	GetDlgItem(ID_MORPHO_METHOD)->GetWindowTextW(get_cmorpho_method);
 	GetDlgItem(ID_MORPHO_KERNEL)->GetWindowTextW(get_cmorpho_kernel);
+	GetDlgItem(IDC_MORPHO_ITERATIONS)->GetWindowTextW(get_cmorpho_iterations);
 	// blur method
 	if (find(cblur_method.begin(), cblur_method.end(), get_cblur_method) == cblur_method.end()) {
 		AfxMessageBox(L"Blur Method Error!");
@@ -233,10 +238,9 @@ bool Setting_Window::CheckParameters() {
 		return false;
 	}
 	// morpho iterations
-	GetDlgItem(IDC_MORPHO_ITERATIONS)->GetWindowTextW(get_cmorpho_iterations);
 	if (CheckInt(get_cmorpho_iterations) == true) {
-		if (_ttoi(get_cmorpho_iterations) < 0) {
-			AfxMessageBox(L"Morphological iterations must be >0!");
+		if (_ttoi(get_cmorpho_iterations) <= 0) {
+			AfxMessageBox(L"Morphological iterations must be Positive!");
 			return false;
 		}
 	}
@@ -246,15 +250,15 @@ bool Setting_Window::CheckParameters() {
 	}
 	// sementation to binary
 	if (IsDlgButtonChecked(IDC_RADIO_BACKGROUNDSUBTRACTION)) {
-		
 		// Check Background Subtraction Parameters
 		vector<CString> cbsg_method = { L"MOG2", L"MOG"};
 		vector<CString> cbsg_shadow = { L"True", L"False"};
-		CString get_bsg_method, get_bsg_shadow, get_bsg_threshold,  get_bsg_history;
+		CString get_bsg_method, get_bsg_shadow, get_bsg_threshold,  get_bsg_history, get_bsg_learning_rate;
 		GetDlgItem(ID_BSG_METHOD)->GetWindowTextW(get_bsg_method);
 		GetDlgItem(ID_BSG_SHADOW)->GetWindowTextW(get_bsg_shadow);
 		GetDlgItem(ID_BSG_THRESHOLD)->GetWindowTextW(get_bsg_threshold);
 		GetDlgItem(ID_BSG_HISTORY)->GetWindowTextW(get_bsg_history);
+		GetDlgItem(ID_BSG_LEARNING_RATE)->GetWindowTextW(get_bsg_learning_rate);
 		//bsg method
 		if (find(cbsg_method.begin(), cbsg_method.end(), get_bsg_method) == cbsg_method.end()) {
 			AfxMessageBox(L"Background Subtraction Method Error!");
@@ -273,12 +277,29 @@ bool Setting_Window::CheckParameters() {
 			}
 		}
 		else {
-			AfxMessageBox(L"Background Subtraction Threshold Error!");
+			AfxMessageBox(L"Background Subtraction Threshold Float!");
 			return false;
 		}
 		// bsg history
-		if (CheckInt(get_bsg_history) == false) {
+		if (CheckInt(get_bsg_history) == true) {
+			if (_ttoi(get_bsg_history) <=0) {
+				AfxMessageBox(L"Background Subtraction History Positive");
+				return false;
+			}
+		}
+		else {
 			AfxMessageBox(L"Background Subtraction History must be Int!");
+			return false;
+		}
+		// bsg learning rate
+		if (CheckFloat(get_bsg_learning_rate) == true) {
+			if (_ttof(get_bsg_learning_rate) > 1) {
+				AfxMessageBox(L"Background Subtraction Learning Rate must be (0,1)\nNegative for auto Learning Rate");
+				return false;
+			}
+		}
+		else {
+			AfxMessageBox(L"Background Subtraction Learning Rate must be Float!");
 			return false;
 		}
 	}
@@ -302,11 +323,19 @@ bool Setting_Window::CheckParameters() {
 			AfxMessageBox(L"Adaptive Threshold C must be Int!");
 			return false;
 		}
+		if (_ttoi(get_adaptiveThreshold_C) <= 0) {
+			AfxMessageBox(L"Adaptive Threshold C must be Positive!");
+			return false;
+		}
 		if (get_adaptiveThreshold_method == L"GAUSSIAN_C") {
 			if (_ttoi(get_adaptiveThreshold_KSize) >= 33) {
 				AfxMessageBox(L"KSize GAUSSIAN_C must be < 33!");
 				return false;
 			}
+		}
+		if (_ttoi(get_adaptiveThreshold_KSize) <= 0) {
+			AfxMessageBox(L"KSize must be Positive!");
+			return false;
 		}
 		if (_ttoi(get_adaptiveThreshold_KSize) % 2 == 0) {
 			AfxMessageBox(L"KSize must be odd number!");
@@ -328,10 +357,10 @@ bool Setting_Window::CheckParameters() {
 		GetDlgItem(ID_MAX_AGE)->GetWindowTextW(get_max_age);
 		// Sort Distance threshold
 		if (CheckFloat(get_distance_threshold) == true) {
-			//if (_ttof(get_distance_threshold) <= 0 || _ttof(get_distance_threshold) >= 1) {
-				//AfxMessageBox(L"Distance Threshold must be (0,1)!");
-				//return false;
-			//}
+			if (_ttof(get_distance_threshold) <= 0) {
+				AfxMessageBox(L"Distance Threshold must be Positive!");
+				return false;
+			}
 		}
 		else {
 			AfxMessageBox(L"Distance Threshold Error!");
@@ -342,9 +371,17 @@ bool Setting_Window::CheckParameters() {
 			AfxMessageBox(L"Min Hits must be Int!");
 			return false;
 		}
+		if (_ttoi(get_min_hits) <= 0) {
+			AfxMessageBox(L"Min Hits must be Positive!");
+			return false;
+		}
 		// sort max age
 		if (CheckInt(get_max_age) == false) {
 			AfxMessageBox(L"Max Age must be Int!");
+			return false;
+		}
+		if (_ttoi(get_max_age) <= 0) {
+			AfxMessageBox(L"Max Age must be Positive!");
 			return false;
 		}
 	}
@@ -382,7 +419,10 @@ bool Setting_Window::CheckParameters() {
 		AfxMessageBox(L"Max Square Distance must be float!");
 		return false;
 	}
-
+	if (_ttof(get_max_square_distance) <=0) {
+		AfxMessageBox(L"Max Square Distance must be Positive!");
+		return false;
+	}
 	// Check Detection parameters
 	CString get_avg_area, get_min_area, get_max_area, get_min_width, get_max_width, get_min_height, get_max_height;
 	GetDlgItem(ID_AVG_AREA)->GetWindowTextW(get_avg_area);
@@ -397,9 +437,17 @@ bool Setting_Window::CheckParameters() {
 		AfxMessageBox(L"Avg Area must be Float!");
 		return false;
 	}
+	if (_ttof(get_avg_area) <=0) {
+		AfxMessageBox(L"Avg Area must be Postitive!");
+		return false;
+	}
 	// max area
 	if (CheckFloat(get_max_area) == false) {
 		AfxMessageBox(L"Max Area must be Float!");
+		return false;
+	}
+	if (_ttof(get_max_area) <= 0) {
+		AfxMessageBox(L"Max Area must be Postitive!");
 		return false;
 	}
 	// min area
@@ -407,9 +455,17 @@ bool Setting_Window::CheckParameters() {
 		AfxMessageBox(L"Min Area must be Float!");
 		return false;
 	}
+	if (_ttof(get_min_area) <= 0) {
+		AfxMessageBox(L"Min Area must be Postitive!");
+		return false;
+	}
 	// min width
 	if (CheckInt(get_min_width) == false) {
 		AfxMessageBox(L"Min Width must be Int!");
+		return false;
+	}
+	if (_ttoi(get_min_width) <= 0) {
+		AfxMessageBox(L"Min Width must be Postitive!");
 		return false;
 	}
 	// max width
@@ -417,14 +473,26 @@ bool Setting_Window::CheckParameters() {
 		AfxMessageBox(L"Max Width must be Int!");
 		return false;
 	}
+	if (_ttoi(get_max_width) <= 0) {
+		AfxMessageBox(L"Max Width must be Postitive!");
+		return false;
+	}
 	// min height
 	if (CheckInt(get_min_height) == false) {
 		AfxMessageBox(L"Min Height must be Int!");
 		return false;
 	}
+	if (_ttoi(get_min_height) <= 0) {
+		AfxMessageBox(L"Min Height must be Postitive!");
+		return false;
+	}
 	// max height
 	if (CheckInt(get_max_height) == false) {
 		AfxMessageBox(L"Max Height must be Int!");
+		return false;
+	}
+	if (_ttoi(get_max_height) <= 0) {
+		AfxMessageBox(L"Max Height must be Postitive!");
 		return false;
 	}
 	// all check done!
@@ -434,7 +502,7 @@ bool Setting_Window::CheckParameters() {
 bool Setting_Window::CheckInt(CString text) {
 	if (text == L"")
 		return false;
-	if (text.SpanIncluding(L"0123456789") == text)
+	if (text.SpanIncluding(L"-0123456789") == text)
 		return true;
 	else
 		return false;
@@ -442,7 +510,7 @@ bool Setting_Window::CheckInt(CString text) {
 bool Setting_Window::CheckFloat(CString text) {
 	if (text == L"") 
 		return false;
-	if (text.SpanIncluding(L"0123456789.") == text && text.Replace(L".", L"0") < 2)
+	if (text.SpanIncluding(L"-0123456789.") == text && text.Replace(L".", L"0") < 2)
 		return true;
 	else
 		return false;
@@ -454,6 +522,7 @@ void Setting_Window::EnableBackgroundSubtraction(BOOL CHECKED) {
 	GetDlgItem(ID_BSG_THRESHOLD)->EnableWindow(CHECKED);
 	GetDlgItem(ID_BSG_SHADOW)->EnableWindow(CHECKED);
 	GetDlgItem(ID_BSG_HISTORY)->EnableWindow(CHECKED);
+	GetDlgItem(ID_BSG_LEARNING_RATE)->EnableWindow(CHECKED);
 }
 void Setting_Window::EnableAdaptiveThreshold(BOOL CHECKED) {
 	GetDlgItem(ID_ADAPTIVETHRESHOLD_METHOD)->EnableWindow(CHECKED);
@@ -544,12 +613,14 @@ CString Setting_Window::get_parameters_from_window() {
 	data = data + L"Background_Subtraction_Threshold:" + data_detection_method + L"\n"; // line 18
 	data_detection_method.Format(L"%d", setting_bsg_history);
 	data = data + L"Background_Subtraction_History:" + data_detection_method + L"\n"; // line 19
+	data_detection_method.Format(L"%f", setting_bsg_learning_rate);
+	data = data + L"Background_Subtraction_Learning_Rate:" + data_detection_method + L"\n"; // line 20
 	// Adaptive Threshod
-	data = data + L"Adaptive_Threshod_Method:" + setting_adaptiveThreshold_method + L"\n"; // line 20
+	data = data + L"Adaptive_Threshod_Method:" + setting_adaptiveThreshold_method + L"\n"; // line 21
 	data_detection_method.Format(L"%d", setting_adaptiveThreshold_KSize);
-	data = data + L"KSize:" + data_detection_method + L"\n"; // line 21
+	data = data + L"KSize:" + data_detection_method + L"\n"; // line 22
 	data_detection_method.Format(L"%d", setting_adaptiveThreshold_C);
-	data = data + L"C:" + data_detection_method + L"\n"; // line 22
+	data = data + L"C:" + data_detection_method + L"\n"; // line 23
 	// Counting method
 	data = data + L"Tracking_Method:" + setting_counting_method + L"\n";
 	CString data_counting_method;
@@ -559,12 +630,12 @@ CString Setting_Window::get_parameters_from_window() {
 	data_counting_method.Format(L"%d", setting_min_hits);
 	data = data + L"Min_Hits:" + data_counting_method + L"\n"; // line 25
 	data_counting_method.Format(L"%d", setting_max_age);
-	data = data + L"Max_Age:" + data_counting_method + L"\n"; // line 26
+	data = data + L"Max_Age:" + data_counting_method + L"\n"; // line 27
 	// Distance counting
 	data_counting_method.Format(L"%d", setting_tolerance_x);
-	data = data + L"Tolerance_X:" + data_counting_method + L"\n"; // line 27
+	data = data + L"Tolerance_X:" + data_counting_method + L"\n"; // line 28
 	// Flip image
-	data = data + L"Flip_Image:" + setting_flip_image + L"\n"; // line 28
+	data = data + L"Flip_Image:" + setting_flip_image + L"\n"; // line 29
 
 	return data;
 }
@@ -692,25 +763,7 @@ BOOL Setting_Window::get_parameters_from_file(CString setting_filename) {
 	data_ = vector_get_parameters[15];
 	data_.Replace(L"Segment_To_Binary_Method:", L"");
 	setting_segment_binary_method = data_;
-	if (setting_segment_binary_method == L"Adaptive Threshold") {
-		setting_adaptiveThreshold_Checked = FALSE;
-		setting_bsg_Checked = TRUE;
-		EnableAdaptiveThreshold(TRUE);
-		EnableBackgroundSubtraction(FALSE);
-
-		CString data_AT = vector_get_parameters[20];
-		data_AT.Replace(L"Adaptive_Threshod_Method:", L"");
-		setting_adaptiveThreshold_method = data_AT;
-
-		data_AT = vector_get_parameters[21];
-		data_AT.Replace(L"KSize:", L"");
-		setting_adaptiveThreshold_KSize = _ttoi(data_AT);
-
-		data_AT = vector_get_parameters[22];
-		data_AT.Replace(L"C:", L"");
-		setting_adaptiveThreshold_C = _ttoi(data_AT);
-	}
-	else if (setting_segment_binary_method == L"Background Subtraction") {
+	if (setting_segment_binary_method == L"Background Subtraction") {
 		setting_adaptiveThreshold_Checked = TRUE;
 		setting_bsg_Checked = FALSE;
 		EnableAdaptiveThreshold(FALSE);
@@ -731,41 +784,64 @@ BOOL Setting_Window::get_parameters_from_file(CString setting_filename) {
 		data_BSG = vector_get_parameters[19];
 		data_BSG.Replace(L"Background_Subtraction_History:", L"");
 		setting_bsg_history = _ttoi(data_BSG);
+
+		data_BSG = vector_get_parameters[20];
+		data_BSG.Replace(L"Background_Subtraction_Learning_Rate:", L"");
+		setting_bsg_learning_rate = _ttof(data_BSG);
+	}
+	else if (setting_segment_binary_method == L"Adaptive Threshold") {
+		setting_adaptiveThreshold_Checked = FALSE;
+		setting_bsg_Checked = TRUE;
+		EnableAdaptiveThreshold(TRUE);
+		EnableBackgroundSubtraction(FALSE);
+
+		CString data_AT = vector_get_parameters[21];
+		data_AT.Replace(L"Adaptive_Threshod_Method:", L"");
+		setting_adaptiveThreshold_method = data_AT;
+
+		data_AT = vector_get_parameters[22];
+		data_AT.Replace(L"KSize:", L"");
+		setting_adaptiveThreshold_KSize = _ttoi(data_AT);
+
+		data_AT = vector_get_parameters[23];
+		data_AT.Replace(L"C:", L"");
+		setting_adaptiveThreshold_C = _ttoi(data_AT);
 	}
 
-	data_ = vector_get_parameters[23];
+	data_ = vector_get_parameters[24];
 	data_.Replace(L"Tracking_Method:", L"");
 	setting_counting_method = data_;
-	if (setting_counting_method == L"My Simple Tracking") {
+	if (setting_counting_method == L"SORT") {
+		setting_MyTracking_Checked = TRUE;
+		setting_SORTTracking_Checked = FALSE;
+		EnableMyTracking(FALSE);
+		EnableSORTTracking(TRUE);
+
+		CString data_SORT = vector_get_parameters[25];
+		data_SORT.Replace(L"Distance_Threshold:", L"");
+		setting_distance_threshold = _ttof(data_SORT);
+
+		data_SORT = vector_get_parameters[26];
+		data_SORT.Replace(L"Min_Hits:", L"");
+		setting_min_hits = _ttoi(data_SORT);
+
+		data_SORT = vector_get_parameters[27];
+		data_SORT.Replace(L"Max_Age:", L"");
+		setting_max_age = _ttoi(data_SORT);
+	}
+	else if (setting_counting_method == L"My Simple Tracking") {
 		setting_MyTracking_Checked = FALSE;
 		setting_SORTTracking_Checked = TRUE;
 		EnableMyTracking(TRUE);
 		EnableSORTTracking(FALSE);
 		
-		CString data_TX = vector_get_parameters[27];
+		CString data_TX = vector_get_parameters[28];
 		data_TX.Replace(L"Tolerance_X:", L"");
 		setting_tolerance_x = _ttoi(data_TX);
 	}
-	else if (setting_counting_method == L"SORT") {
-		setting_MyTracking_Checked = TRUE;
-		setting_SORTTracking_Checked = FALSE;
-		EnableMyTracking(FALSE);
-		EnableSORTTracking(TRUE);
-		
-		CString data_SORT = vector_get_parameters[24];
-		data_SORT.Replace(L"Distance_Threshold:", L"");
-		setting_distance_threshold = _ttof(data_SORT);
-
-		data_SORT = vector_get_parameters[25];
-		data_SORT.Replace(L"Min_Hits:", L"");
-		setting_min_hits = _ttoi(data_SORT);
-
-		data_SORT = vector_get_parameters[26];
-		data_SORT.Replace(L"Max_Age:", L"");
-		setting_max_age = _ttoi(data_SORT);
-	}
+	
 	CString data_flip_image;
-	data_flip_image = vector_get_parameters[28];
+	data_flip_image = vector_get_parameters[29];
 	data_flip_image.Replace(L"Flip_Image:", L"");
 	setting_flip_image = data_flip_image;
 

@@ -1,5 +1,6 @@
-﻿///////////////////////////////////////////////////////////////////////////////
-// KalmanTracker.cpp: KalmanTracker Class Implementation Declaration
+﻿// KalmanTracker.cpp: KalmanTracker Class Implementation Declaration
+// Using KalmanTracker OpenCV
+// This code is implemented by The Nho 2022
 
 #include "KalmanTracker.h"
 
@@ -42,7 +43,7 @@ StateType KalmanTracker::predict()
 	m_time_since_update += 1;
 
 	StateType predictCenter = Point2f(p.at<float>(0, 0), p.at<float>(1, 0));
-
+	// for view results
 	m_history.push_back(predictCenter);
 	return predictCenter;
 }

@@ -1,4 +1,3 @@
-///////////////////////////////////////////////////////////////////////////////
 // KalmanTracker.h: KalmanTracker Class Declaration
 // Code edited by The Nho 2022
 
@@ -63,8 +62,5 @@ private:
 
 	std::vector<StateType> m_history;
 };
-
-
-
 
 #endif

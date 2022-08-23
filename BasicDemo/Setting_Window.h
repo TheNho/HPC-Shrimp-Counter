@@ -76,4 +76,5 @@ public:
 	int setting_max_width;
 	int setting_max_height;
 	CString setting_flip_image;
+	float setting_bsg_learning_rate;
 };

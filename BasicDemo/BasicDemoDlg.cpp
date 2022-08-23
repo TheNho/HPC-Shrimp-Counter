@@ -1,9 +1,10 @@
 // Shrimp Counting Project
 // This code implemented by The Nho 2022
 // Interfacing with Camera HikRobot
-// Sort Tracking
-// Pass line counting
+// SORT Tracking
+// Passing line counting
 // BasicDemoDlg.cpp : implementation file
+
 #include "stdafx.h"
 #include "BasicDemo.h"
 #include "BasicDemoDlg.h"
@@ -12,7 +13,7 @@
 #define new DEBUG_NEW
 #endif
 
-// Global variable
+// Global variables
 // Parameters Setting 
 // using global to load parameters to setting window
 extern CString flip_image;
@@ -23,6 +24,7 @@ extern CString bgs_method;
 extern float bgs_threshold;
 extern CString bgs_shadows;
 extern int bgs_history;
+extern float bsg_learning_rate;
 extern CString adaptiveThreshold_method;
 extern int adaptiveThreshold_KSize;
 extern int adaptiveThreshold_C;
@@ -31,7 +33,7 @@ extern int morphological_kernel;
 extern int morphological_iterations;
 extern int line_position;
 extern float max_distance;
-extern CString couting_method;
+extern CString counting_method;
 extern float  distance_threshold;
 extern int min_hits;
 extern int max_age;
@@ -150,7 +152,7 @@ unsigned int __stdcall GrabThread(void* pUser) {
         return 0;
     }
 
-    return -1;
+    return 1;
 }
 
 // CBasicDemoDlg message handlers
@@ -194,36 +196,38 @@ BOOL CBasicDemoDlg::OnInitDialog() {
 
 void CBasicDemoDlg::SettingInitial() {
     // install the first run variables
-    flip_image = L"None"; // None;X;Y
+    flip_image = L"Y"; // None;X;Y
     blur_method = L"AVG"; //AVG;GAUSS;MEDIAN
-    blur_kernel = 3; //1;3;5;7;9
-    segment_binary_method = L"Background Subtraction"; // ; Adaptive Threshold; Background Subtraction
+    blur_kernel = 1; //1;3;5;7;9
+    segment_binary_method = L"Adaptive Threshold"; //Adaptive Threshold;Background Subtraction
     bgs_method = L"MOG2"; //MOG2;MOG
-    bgs_threshold = 16;
-    bgs_shadows = L"False"; //True
+    bgs_threshold = 25;
+    bgs_shadows = L"False"; //False;True
     bgs_history = 500;
-    adaptiveThreshold_method = L"MEAN_C"; //GAUSSIAN_C
-    adaptiveThreshold_KSize = 25;
-    adaptiveThreshold_C = 5;
-    morphological_method = L"Open"; //Close;Erode;Dilate
-    morphological_kernel = 3;
-    morphological_iterations = 1;
+    bsg_learning_rate = -1; // Negative for auto learning rate
+    adaptiveThreshold_method = L"MEAN_C"; //MEAN_C;GAUSSIAN_C
+    adaptiveThreshold_KSize = 29;
+    adaptiveThreshold_C = 20;
+    morphological_method = L"Open"; //Open;Close;Erode;Dilate
+    morphological_kernel = 5; //1;3;5;7;9
+    morphological_iterations = 2;
     line_position = 400;
-    max_distance = 100; // 20 pixels
-    couting_method = L"SORT"; //L"SORT" ; L"My Simple Tracking"
-    distance_threshold = 50; // 10 pixel
+    max_distance = 100; // max distance between 2 center points in 2 frames
+    counting_method = L"SORT"; //SORT;My Simple Tracking
+    distance_threshold = 50; // distance between predict center and current center
     min_hits = 1;
     max_age = 3;
     tolerance_x = 5;
     avg_area = 100;
     min_area = 10;
     max_area = 1000;
-    min_width = 2;
-    min_height = 2;
+    min_width = 3;
+    min_height = 3;
     max_width = 50;
     max_height = 50;
 
-    // initialize directory global save result file, use global variable in many sub-window
+    // initialize directory global save result file, use global variable to use in many sub-window
+    nFilename = L"C:/Users/ADMIN/Desktop/Larvae Shripm Counting/BasicDemo/Result.result";
     global_filename = nFilename;
 
     // Segmentation
@@ -233,7 +237,7 @@ void CBasicDemoDlg::SettingInitial() {
             gpu_adaptiveThreshold_filter = cuda::createBoxFilter(CV_8U, CV_8U, Adap_size);
         }
         else if (adaptiveThreshold_method == L"GAUSSIAN_C") {
-            gpu_adaptiveThreshold_filter = cuda::createGaussianFilter(CV_8U, CV_8U, Adap_size, 1);
+            gpu_adaptiveThreshold_filter = cuda::createGaussianFilter(CV_8U, CV_8U, Adap_size, float(adaptiveThreshold_KSize)/5.0);
         }
         else {
             AfxMessageBox(L"Adaptive Threshold Initial Error!");
@@ -267,13 +271,13 @@ void CBasicDemoDlg::SettingInitial() {
     }
     // cuda blur image
     if (blur_method == L"MEDIAN") {
-        cuda_filter = createGaussianFilter(CV_8U, CV_8U, Size(blur_kernel, blur_kernel), 1);
+        cuda_filter = cuda::createMedianFilter(CV_8U, blur_kernel);
     }
     else if (blur_method == L"AVG") {
         cuda_filter = cuda::createBoxFilter(CV_8U, CV_8U, Size(blur_kernel, blur_kernel));
     }
     else if (blur_method == L"GAUSS") {
-        cuda_filter = cuda::createMedianFilter(CV_8U, blur_kernel);
+        cuda_filter = cuda::createGaussianFilter(CV_8U, CV_8U, Size(blur_kernel, blur_kernel), float(blur_kernel)/5.0);
     }
     else {
         AfxMessageBox(L"Blur Method Initial Error!");
@@ -626,17 +630,15 @@ int CBasicDemoDlg::SaveImage(enum MV_SAVE_IAMGE_TYPE enSaveImageType) {
     return nRet;
 }
 
-// importance function!
-// grap image from buffer, copy to cv Mat
+// Importance function!
+// Grap image from buffer, copy to cv Mat, processing and counting
 int CBasicDemoDlg::GrabThreadProcess() {
 
     // for debug
-    String dir_file = "C:/Users/ADMIN/Desktop/Data4/";
-    uint idx_img = 0;
-    //VideoCapture cap = VideoCapture(video_file);
+    //String dir_file = "D:/Data14/";
+    //uint idx_img = 0;
 
     MV_FRAME_OUT stImageInfo = {0}; // get image from buffer
-    
     int nRet = MV_OK;
     double start_time_fps = 0;
     // Thread 0
@@ -650,11 +652,10 @@ int CBasicDemoDlg::GrabThreadProcess() {
                     free(m_pSaveImageBuf);
                     m_pSaveImageBuf = NULL;
                 }
-
                 m_pSaveImageBuf = (unsigned char *)malloc(sizeof(unsigned char) * stImageInfo.stFrameInfo.nFrameLen);
                 if (m_pSaveImageBuf == NULL) {
                     LeaveCriticalSection(&m_hSaveImageMux);
-                    return 0;
+                    return -1;
                 }
                 m_nSaveImageBufSize = stImageInfo.stFrameInfo.nFrameLen;
             }
@@ -668,43 +669,27 @@ int CBasicDemoDlg::GrabThreadProcess() {
                 m_pcMyCamera->FreeImageBuffer(&stImageInfo);
                 continue;
             }
-            /*
-            // convert data to cv Mat
-            bool retm = Convert2Mat(&stImageInfo.stFrameInfo, stImageInfo.pBufAddr, &Mat_src);
+            // convert data to cvMat, drop roi and flip image
+            Rect ROI(30, 0, 590, 480);
+            bool retm = Convert2Mat(&stImageInfo.stFrameInfo, stImageInfo.pBufAddr, &Mat_src, ROI, flip_image);
             if (retm == false || Mat_src.empty()) {
                 AfxMessageBox(L"Error while convert data to cv Mat!");
-                return 0;
+                return -1;
             } 
-            // Flip image
-            if (flip_image == L"None") {
-                // do nothing
-            }
-            else if (flip_image == L"X")
-                cuda::flip(Mat_src, Mat_src, 0);
-            else if (flip_image == L"Y")
-                cuda::flip(Mat_src, Mat_src, 1);
-            */
-
-            // for debug
-            //cap >> Mat_src;
-            String img_file = dir_file + to_string(idx_img) + ".bmp";
-            Mat_src = imread(img_file, 0);
             
             // image processing
             ImageProcessing_GPU();
-
             /// Press start count?
             if (b_start_count==true) {
-                
                 // Counting method
-                if (couting_method == L"My Simple Tracking")
+                if (counting_method == L"My Simple Tracking")
                     My_Simple_Counting(tolerance_x, max_distance);
-                else if (couting_method == L"SORT") {
+                else if (counting_method == L"SORT") {
                     SORT(max_age, min_hits, distance_threshold);
                     SORT_Counting();
                 }
                 else
-                    return 0;
+                    return -1;
             }
             
             m_pcMyCamera->FreeImageBuffer(&stImageInfo);
@@ -713,25 +698,39 @@ int CBasicDemoDlg::GrabThreadProcess() {
             real_fps = int(getTickFrequency() / (end_time_fps - start_time_fps));
             start_time_fps = end_time_fps;
 
-            
         }
         else {
             if (MV_TRIGGER_MODE_ON ==  m_nTriggerMode) {
                 Sleep(5);
             }
         }
-        
-        // for debuge
-        if (idx_img >= 2146)
-            break;
+        /*////////////////////////////////////////////////////////////////////////////////////////
+        String img_file = dir_file + to_string(idx_img) + ".bmp";
+        Mat src_img1 = imread(img_file, 0);
+        if (src_img1.empty()) break;
+        Rect ROI(35, 0, 570, 480);
+        Mat_src = src_img1(ROI);
         idx_img++;
+        // image processing
+        ImageProcessing_GPU();
+        /// Press start count?
+        if (b_start_count == true) {
+            SORT(max_age, min_hits, distance_threshold);
+            SORT_Counting();
+        }
         // for debug
-        imshow("dst image", dst);
-        waitKey(100);
+        //imshow("Src Image Before", dst);
+        // press space to pause and continue
+        if (waitKey(1) == 32)
+            waitKey();
+        //Sleep(10);
+        int64 end_time_fps = getTickCount();
+        real_fps = int(getTickFrequency() / (end_time_fps - start_time_fps));
+        start_time_fps = end_time_fps;
+        ////////////////////////////////////////////////////////////////////////////////////*/
     }
-    // end thread, destroy all window
+    // end thread, destroy all windows
     cv::destroyAllWindows();
-
     return MV_OK;
 }
 
@@ -915,7 +914,7 @@ unsigned int __stdcall Display(void* pUser) {
 
         return 0;
     }
-    return -1;
+    return 1;
 }
 void CBasicDemoDlg::DisplayThread() {
 
@@ -927,29 +926,28 @@ void CBasicDemoDlg::DisplayThread() {
         // wait until Mat_src not NULL
         if (Mat_src.empty()) {
             Sleep(5);
-            //AfxMessageBox(L" Mat Display Error!");
             continue;
         }
 
         // copy Mat_src and draw
         //Mat_display = dst.clone();
-        Mat_display = Mat_src.clone(); // Access violation 2 thead-> fixed by waiting the first thread started
-        
+        Mat_display = Mat_src.clone(); // Access violation 2 theads-> fixed by waiting the first thread started
         putText(Mat_display, "FPS: "+ to_string(real_fps), Point(5, 25), FONT_HERSHEY_COMPLEX, 1, 128, 1, 8);
         line(Mat_display, Point(0, line_position), Point(640, line_position), 0, 2, 8, 0);
+        
         // display frame
         stDisplayInfo.hWnd = m_hwndDisplay;
         stDisplayInfo.pData = Mat_display.data;
-        stDisplayInfo.nDataLen = m_stImageInfo.nFrameLen;
-        stDisplayInfo.nWidth = m_stImageInfo.nWidth;
-        stDisplayInfo.nHeight = m_stImageInfo.nHeight;
-        stDisplayInfo.enPixelType = m_stImageInfo.enPixelType;
+        stDisplayInfo.nDataLen = Mat_display.rows * Mat_display.cols;//m_stImageInfo.nFrameLen;
+        stDisplayInfo.nWidth = Mat_display.cols;//m_stImageInfo.nWidth;
+        stDisplayInfo.nHeight = Mat_display.rows;//m_stImageInfo.nHeight;
+        stDisplayInfo.enPixelType = PixelType_Gvsp_Mono8;//m_stImageInfo.enPixelType;
         m_pcMyCamera->DisplayOneFrame(&stDisplayInfo);
 
         UpdateData(FALSE); // update shrimp number and frame count to window
 
         // sleep 15ms/60fps
-        waitKey(15);
+        Sleep(15);
     }
     Mat_display.release();
     return;
@@ -989,7 +987,7 @@ void CBasicDemoDlg::OnBnClickedStartGrabbingButton() {
         ShowErrorMsg(TEXT("Create Display Thread Fail!"), 0);
         return;
     }
-
+    
     m_bStartGrabbing = TRUE;
     EnableControls(TRUE);
 }
@@ -1022,11 +1020,12 @@ void CBasicDemoDlg::OnBnClickedStopGrabbingButton() {
     m_bStartGrabbing = FALSE;
     EnableControls(TRUE);
 
-    // Stop grabbing and stop count but not write to file
+    // Stop grabbing and stop counting but not write to file
     b_start_count = false;
     GetDlgItem(IDC_START_COUNT_BUTTON)->EnableWindow(TRUE);
     GetDlgItem(IDC_STOP_COUNT_BUTTON)->EnableWindow(FALSE);
     trackers.clear();
+    KalmanTracker::kf_count = 0;
     frameTrackingResult.clear();
     previous_frameTrackingResult.clear();
     current_centers.clear();
@@ -1189,13 +1188,11 @@ bool CBasicDemoDlg::RemoveCustomPixelFormats(enum MvGvspPixelType enPixelFormat)
     }
 }
 
-// Apply settings from setting window to main window
+// Apply settings from Setting window to Main window
 void CBasicDemoDlg::OnBnClickedSettingButton() {
-
     Setting_Window* open_setting_windown = new Setting_Window();
     open_setting_windown->DoModal();
-
-    // click ok -> update = true
+    // click ok -> update_setting = true
     if (open_setting_windown->update_setting == true) { // clicked OK
         // get image processing paramerters from setting window
         flip_image = open_setting_windown->setting_flip_image;
@@ -1211,16 +1208,13 @@ void CBasicDemoDlg::OnBnClickedSettingButton() {
                     gpu_adaptiveThreshold_filter = cuda::createBoxFilter(CV_8U, CV_8U, Adap_size);
                 }
                 else if (adaptiveThreshold_method == L"GAUSSIAN_C") {
-                    int sigma = 5;
-                    gpu_adaptiveThreshold_filter = cuda::createGaussianFilter(CV_8U, CV_8U, Adap_size, sigma);
+                    gpu_adaptiveThreshold_filter = cuda::createGaussianFilter(CV_8U, CV_8U, Adap_size, float(adaptiveThreshold_KSize)/5.0);
                 }
                 else {
                     AfxMessageBox(L"Adaptive Threshold Setting Error!");
                     delete open_setting_windown;
                     return;
                 }
-                // for test
-                //AfxMessageBox(L"Adaptive Threshold Success!");
         }
         else if (segment_binary_method == L"Background Subtraction") {
                 // back ground subtraction
@@ -1228,13 +1222,19 @@ void CBasicDemoDlg::OnBnClickedSettingButton() {
                 bgs_threshold = open_setting_windown->setting_bsg_threshold;
                 bgs_shadows = open_setting_windown->setting_bsg_shadow;
                 bgs_history = open_setting_windown->setting_bsg_history;
+                bsg_learning_rate = open_setting_windown->setting_bsg_learning_rate;
                 // change back ground subtraction method
                 if (bgs_method == L"MOG2") {
                     if (bgs_shadows == L"True") {
                         pBackSub = cuda::createBackgroundSubtractorMOG2(bgs_history, bgs_threshold, true);
                     }
-                    else {
+                    else if (bgs_shadows == L"False"){
                         pBackSub = cuda::createBackgroundSubtractorMOG2(bgs_history, bgs_threshold, false);
+                    }
+                    else {
+                        AfxMessageBox(L"Backgruond Subtraction Shadows Setting Error!");
+                        delete open_setting_windown;
+                        return;
                     }
                 }
                 else if (bgs_method == L"MOG") {
@@ -1246,8 +1246,6 @@ void CBasicDemoDlg::OnBnClickedSettingButton() {
                     delete open_setting_windown;
                     return;
                 }
-                // for test
-                //AfxMessageBox(L"BSG Success!");
         }
         else {
             // for debug
@@ -1257,24 +1255,16 @@ void CBasicDemoDlg::OnBnClickedSettingButton() {
         }
 
         // counting method
-        //int MyTracking_check = abs(open_setting_windown->setting_MyTracking_Checked); // use abs because -1 after dont check
-        //int SORTTracking_check = abs(open_setting_windown->setting_SORTTracking_Checked); // checked = 0
-        couting_method = open_setting_windown->setting_counting_method;
-        if (couting_method == L"My Simple Tracking") {
+        counting_method = open_setting_windown->setting_counting_method;
+        if (counting_method == L"My Simple Tracking") {
             // my simple couting
             tolerance_x = open_setting_windown->setting_tolerance_x;
-
-            // for test
-            //AfxMessageBox(L"Simple Success!");
         }
-        else if (couting_method == L"SORT") {
+        else if (counting_method == L"SORT") {
             // SORT Tracking + counting
             distance_threshold = open_setting_windown->setting_distance_threshold;
             min_hits = open_setting_windown->setting_min_hits;
             max_age = open_setting_windown->setting_max_age;
-
-            // for test
-            //AfxMessageBox(L"SORT Success!");
         }
         else {
             AfxMessageBox(L"Counting Method Setting Error!");
@@ -1351,10 +1341,25 @@ void CBasicDemoDlg::OnBnClickedSettingButton() {
     //open_setting_windown->DestroyWindow();
 }
 
-//Opencv convert data to Mat
-bool CBasicDemoDlg::Convert2Mat(MV_FRAME_OUT_INFO_EX* pstImageInfo, unsigned char* pData, Mat *srcImage) {
+//OpenCV convert data to cvMat, drop ROI and flip image
+bool CBasicDemoDlg::Convert2Mat(MV_FRAME_OUT_INFO_EX* pstImageInfo, unsigned char* pData, 
+                                Mat *srcImage, Rect ROI, CString flipimage) {
     if (pstImageInfo->enPixelType == PixelType_Gvsp_Mono8) {
-        *srcImage = Mat(pstImageInfo->nHeight, pstImageInfo->nWidth, CV_8UC1, pData);
+        Mat MatsrcImage = Mat(pstImageInfo->nHeight, pstImageInfo->nWidth, CV_8UC1, pData);
+        // Drop ROI
+        MatsrcImage = MatsrcImage(ROI);
+        if (flipimage == L"None") {
+            // do nothing
+        }
+        else if (flipimage == L"X") {
+
+            cv::flip(MatsrcImage, MatsrcImage, 1);
+        }
+        else if (flipimage == L"Y") {
+            cv::flip(MatsrcImage, MatsrcImage, 0);
+        }
+        *srcImage = MatsrcImage;
+        MatsrcImage.release();
     }
     else {
         printf("unsupported pixel format\n");
@@ -1369,54 +1374,42 @@ bool CBasicDemoDlg::Convert2Mat(MV_FRAME_OUT_INFO_EX* pstImageInfo, unsigned cha
 }
 
 //input: Mat_src in gray scale
-//output1: vector<Trckingbox> detections
+//output1: vector<Trackingbox> detections
 //output2: vector<humoment[7]> HuMoments  // error
 //output3: vector<Point> current_centers
 //This function run in cuda gpu and contours cpu
 void CBasicDemoDlg::ImageProcessing_GPU() {
-
-    frame_count++;
-    // for test
-    //counter++;
-
     // check Mat_src input
     if (Mat_src.empty()) return;
+
+    frame_count++;
+
     gpu_Mat_src.upload(Mat_src);
-    // check Mat input in gray scale, CV_8U?
+    // check Mat input in CV_8U?
     // implement in gpu cuda
-    if (gpu_Mat_src.channels() == 3) {
-        // color image, convert to gray scale image
-        cuda::cvtColor(gpu_Mat_src, gpu_Mat_src, COLOR_BGR2GRAY);
-    }
-    else if (gpu_Mat_src.channels() != 1) {
-        AfxMessageBox(L"Source image error in number of channel!");
-        return;
-    }
     if (gpu_Mat_src.depth() != CV_8U) {
         gpu_Mat_src.convertTo(gpu_Mat_src, CV_8U);
     }
-
     //cuda blur image
-    if (blur_kernel != 1) // kernel == 1 no convolution
+    if (blur_kernel != 1) // kernel == 1 dont apply
         cuda_filter->apply(gpu_Mat_src, gpu_Mat_src);
 
     // Segmentation to binary image
     // Threshold
-    //cuda::threshold(gpu_Mat_src, gpu_Mat_dst, 127, 255, THRESH_BINARY_INV);
-
+    //cuda::threshold(gpu_Mat_src, gpu_Mat_dst, 200, 255, THRESH_BINARY_INV);
     if (segment_binary_method == L"Adaptive Threshold") {
         AdaptiveThreshold_GPU(gpu_Mat_src, gpu_Mat_dst);
     }
     else if (segment_binary_method == L"Background Subtraction") {
-        pBackSub->apply(gpu_Mat_src, gpu_Mat_dst);
+        pBackSub->apply(gpu_Mat_src, gpu_Mat_dst, bsg_learning_rate);
     }
     else{
         AfxMessageBox(L"Image Processing Error Binary Segment Method!");
         return;
     }
-   
+    
     // morphological filter
-    if (morphological_kernel != 1) // kernel == 1 no convolution
+    if (morphological_kernel != 1) // kernel == 1 dont apply
         mo_filter->apply(gpu_Mat_dst, gpu_Mat_dst);
 
     gpu_Mat_dst.download(dst);
@@ -1436,7 +1429,6 @@ void CBasicDemoDlg::ImageProcessing_GPU() {
         if (area < min_area || area > max_area) continue;
 
         Rect_<int> boundRect = boundingRect(contours[i]);
-        // if width > height (vertical) height <- width, width <-height
         // height is a larger number
         int height_Rect, width_Rect;
         if (boundRect.width > boundRect.height) {
@@ -1454,6 +1446,7 @@ void CBasicDemoDlg::ImageProcessing_GPU() {
         // get center point
         Moments M = moments(contours[i]);
         Point2f center_point((M.m10 / M.m00), (M.m01 / M.m00));
+
         current_centers.push_back(center_point);
 
         // get tracking center
@@ -1475,8 +1468,7 @@ void CBasicDemoDlg::AdaptiveThreshold_GPU(GpuMat gsrc, GpuMat &gdst) {
     cuda::compare(gsrc, gdst, gdst, CMP_LE);
 }
 // intput: current centers and previous centers
-// this function find the point
-// below the line in current centers matched with the point
+// This function find the point below the line in current centers matched with the point
 // above the line in previous centers to count
 // output: counter
 void CBasicDemoDlg::My_Simple_Counting(int tolerance_x, float max_distance) {
@@ -1491,8 +1483,8 @@ void CBasicDemoDlg::My_Simple_Counting(int tolerance_x, float max_distance) {
             for (auto pervious_point = begin(previous_centers); pervious_point != end(previous_centers); ++pervious_point) {
                 if (pervious_point->y < line_position) { // previous point above the line
                     if ((current_point->x > pervious_point->x - tolerance_x) && (current_point->x < pervious_point->x + tolerance_x)) {
-                        float distance_ = GetDistance(*current_point, *pervious_point);
-                        if (distance_ < max_distance) { // Check distance
+                        float distance = GetDistance(*current_point, *pervious_point);
+                        if (distance < max_distance) { // Check distance
                             Point matched_point = Point(pervious_point->x, pervious_point->y);
                             matched_points.push_back(matched_point);
                         }
@@ -1501,8 +1493,7 @@ void CBasicDemoDlg::My_Simple_Counting(int tolerance_x, float max_distance) {
             }
             if (matched_points.size() > 0) { // least one point matched
                 counter++;
-                // find matched point by sort y
-                // sort decrease through y value
+                // find matched point by sort decrease through y value
                 // tested -> ok
                 sort(matched_points.begin(), matched_points.end(), sort_point_y); 
                 // remove nearest matched point in previous centers
@@ -1521,13 +1512,12 @@ void CBasicDemoDlg::My_Simple_Counting(int tolerance_x, float max_distance) {
     return;
 }
 void CBasicDemoDlg::MySORTAlgorithmn(int max_age, int min_hits, double distanceThreshold) {
-
     if (trackers.size() == 0) { // the first frame
         for (unsigned int i = 0; i < detections.size(); i++) {
             KalmanTracker trk = KalmanTracker(detections[i].center);
             trackers.push_back(trk);
         }
-        frameTrackingResult.clear();
+        //frameTrackingResult.clear();
         return;
     }
 
@@ -1536,13 +1526,12 @@ void CBasicDemoDlg::MySORTAlgorithmn(int max_age, int min_hits, double distanceT
     predictedCenters.clear();
     for (auto it = trackers.begin(); it != trackers.end();) {
         Point2f pCenter = (*it).predict();
-        if (pCenter.y < Image_Height && pCenter.y > 0) {
-            if (pCenter.x < 0) pCenter.x = 0;
-            if (pCenter.x > Image_Width) pCenter.x = Image_Width;
+        if (pCenter.y > 0 && pCenter.y < Image_Height &&
+            pCenter.x > 0 && pCenter.x < Image_Width) {
             predictedCenters.push_back(pCenter);
             it++;
             // test
-            circle(Mat_src, pCenter, 4, 100, 1, 8, 0);
+            circle(Mat_src, pCenter, 4, 128, 1, 8, 0);
         }
         else { // delete tracker with predict point outside image
             it = trackers.erase(it);
@@ -1594,12 +1583,14 @@ void CBasicDemoDlg::MySORTAlgorithmn(int max_age, int min_hits, double distanceT
             res.id = (*it).m_id + 1; 
             res.frame = frame_count;
             frameTrackingResult.push_back(res);
-            //circle(Mat_src, res.center, 2, 100, 1, 8, 0);
+            // draw matched centers
+            circle(Mat_src, res.center, 2, 255, 1, 8, 0);
         }
-        it++;
         // remove dead tracklet
         if (it != trackers.end() && (*it).m_time_since_update > max_age)
             it = trackers.erase(it);
+        else
+            it++;
         
     }
 
@@ -1610,46 +1601,41 @@ double CBasicDemoDlg::GetDistance(Point2f center_test, Point2f center_gt) {
     float delta_xx = center_test.x - center_gt.x; // center x
     float delta_yy = center_test.y - center_gt.y; // center y
     float un = delta_xx * delta_xx + delta_yy * delta_yy;
-    if (un < DBL_EPSILON)
-        return 0;
-    return sqrt(un);
+    float distance = sqrt(un);
+    if (distance > distance_threshold)
+        return Image_Width;
+    return distance;
 }
-//input: trackers, detection
-//output: vector<Trakingbox> frameTrackingResult
+//input: trackers, detections
+//output: vector<Trackingbox> frameTrackingResult
 void CBasicDemoDlg::SORT(int max_age, int min_hits, double distanceThreshold) {
+
+    // Draw current centers white for view results and debug
+    //for (int i = 0; i < detections.size(); i++) {
+        //circle(Mat_src, detections[i].center, 3, 200, 3, 8, 0);
+    //}
      
     //KalmanTracker::kf_count = 0; // tracking id relies on this, so we have to reset it in each seq.
     
-    if (trackers.size() == 0) { // the first frame
-        // initialize kalman trackers using first detections.
-        for (unsigned int i = 0; i < detections.size(); i++) {
+    if (trackers.size() == 0) { // the first frame // initialize kalman trackers using first detections.
+        for (uint i = 0; i < detections.size(); i++) {
             KalmanTracker trk = KalmanTracker(detections[i].center); //kf_count++ -> id++
             trackers.push_back(trk);
         }
-        frameTrackingResult.clear();
         return;
     }
 
     // 3.1. get predicted locations from existing trackers.
-    vector<Point2f> predictedCenters; //contain predict Centers of Dectections
+    vector<Point2f> predictedCenters; //contain predicted centers of all trackers
     for (auto it = trackers.begin(); it != trackers.end();) {
         Point2f pCenter = (*it).predict();
-        if (pCenter.y < Image_Height && pCenter.y > 0 && pCenter.x > 0 && pCenter.x < Image_Width) {
+        if (pCenter.y > 0 && pCenter.y < Image_Height + 20 && 
+            pCenter.x > 0 && pCenter.x < Image_Width) {
             predictedCenters.push_back(pCenter);
-      
-            // test draw predict centers
-            putText(Mat_src, to_string((*it).m_id), pCenter, FONT_HERSHEY_COMPLEX_SMALL, 1,  150, 1, 8);
-            circle(Mat_src, pCenter, 2, 150, 2, 8, 0);
-            //save predict center with id:"" frame:"" center:""
-            //CStdioFile SavePredictFile;
-            //CFileException exPredict;
-            //if (SavePredictFile.Open(L"SavePredictFile.txt", CFile::modeNoTruncate | CFile::modeWrite, &exPredict)){
-                //CString daataPredict;
-                //daataPredict.Format(_T("id:%lld frame:%lld center:(%f, %f) \n"), (*it).m_id, frame_count, pCenter.x, pCenter.y);
-                //SavePredictFile.SeekToEnd();
-                //SavePredictFile.WriteString(daataPredict);
-                //SavePredictFile.Close();
-            //}
+
+            // Draw predict centers brown to view and debug
+            //putText(Mat_src, to_string((*it).m_id), pCenter, FONT_HERSHEY_COMPLEX_SMALL, 1, 128, 1, 8);
+            //circle(Mat_src, pCenter, 2, 128, 2, 8, 0);
 
             it++;
         }
@@ -1658,15 +1644,13 @@ void CBasicDemoDlg::SORT(int max_age, int min_hits, double distanceThreshold) {
         }
     }
 
-    // 3.2. associate detections to tracked object (both represented as bounding boxes)
-    // dets : detFrameData
+    // 3.2. associate detections to tracked object
     unsigned int trkNum = predictedCenters.size();
     unsigned int detNum = detections.size();
     vector<vector<double>> distanceMatrix;
     distanceMatrix.resize(trkNum, vector<double>(detNum, 0));
-    for (unsigned int i = 0; i < trkNum; i++) {    // compute distance matrix
-        for (unsigned int j = 0; j < detNum; j++) {
-            // assign all elements of distance maxtrix
+    for (unsigned int i = 0; i < trkNum; i++) {    // compute distance matrix and
+        for (unsigned int j = 0; j < detNum; j++) { // fill all elements of distance maxtrix
             distanceMatrix[i][j] = GetDistance(predictedCenters[i], detections[j].center);
         }
     }
@@ -1678,95 +1662,86 @@ void CBasicDemoDlg::SORT(int max_age, int min_hits, double distanceThreshold) {
     HungAlgo.Solve(distanceMatrix, assignment); // solve the assignment problem using hungarian algorithm.
     
     // find matches, unmatched_detections and unmatched_predictions
-    set<int> unmatchedTrajectories;
+    //set<int> unmatchedTrajectories;
     set<int> unmatchedDetections;
     set<int> allItems;
     set<int> matchedItems;
     if (detNum > trkNum) { //	there are unmatched detections
-        for (unsigned int n = 0; n < detNum; n++)
+        for (unsigned int n = 0; n < detNum; n++){
             allItems.insert(n);
-        for (unsigned int i = 0; i < trkNum; ++i)
+        }
+        for (unsigned int i = 0; i < trkNum; ++i){
             matchedItems.insert(assignment[i]);
-        set_difference(allItems.begin(), allItems.end(),
+        }
+        set_difference(allItems.begin(), allItems.end(), // find unmatched detection
                        matchedItems.begin(), matchedItems.end(),
                        insert_iterator<set<int>>(unmatchedDetections, unmatchedDetections.begin()));
-    }
-    else if (detNum < trkNum) {  // there are unmatched trajectory/predictions
-        for (unsigned int i = 0; i < trkNum; ++i) {
-            if (assignment[i] == -1) // unassigned label will be set as -1 in the assignment algorithm
-                unmatchedTrajectories.insert(i);
-            else
-                matchedItems.insert(i);
-        }
-    }
-    else { // detNum = trkNum
-        for (unsigned int i = 0; i < trkNum; ++i)
-            matchedItems.insert(assignment[i]);
-    }
-        
-    // filter out matched with large distance
-    vector<Point> matchedPairs;
-    for (unsigned int i = 0; i < trkNum; ++i) {
-        if (assignment[i] == -1) // pass over invalid values
-            continue;
-        
-        /* // Save matched distance
-        CStdioFile SaveDistanceMatched;
-        CFileException exDistanceMatched;
-        if (SaveDistanceMatched.Open(L"SaveDistanceMatched.txt", CFile::modeNoTruncate | CFile::modeWrite, &exDistanceMatched)) {
-            CString daata_;
-            daata_.Format(_T("distance:%f \n"), distanceMatrix[i][assignment[i]]);
-            SaveDistanceMatched.SeekToEnd();
-            SaveDistanceMatched.WriteString(daata_);
-            SaveDistanceMatched.Close();
-        } */
+    }   
 
-        if (distanceMatrix[i][assignment[i]] > distanceThreshold) {
-            unmatchedTrajectories.insert(i);
+    // filter out matched with large distance
+    for (unsigned int i = 0; i < trkNum; ++i) {
+        if (assignment[i] == -1) {
+            // update unmatchced tracker with it's predicted point
+            trackers[i].update(predictedCenters[i]);
+            trackers[i].m_hits = 0;
+            continue;
+        }
+        if (distanceMatrix[i][assignment[i]] == Image_Width) { // filter out with large distance
+            //cv::waitKey(); // stop this time to view 2 points matched with large distance for debug
+            // update unmathced tracker with it's predicted point
+            trackers[i].update(predictedCenters[i]);
+            trackers[i].m_hits = 0;
             unmatchedDetections.insert(assignment[i]);
         }
-        else
-            matchedPairs.push_back(Point(i, assignment[i]));
-    }
-    // 3.3. updating trackers
-    // update matched trackers with assigned detections.
-    // each prediction is corresponding to a tracker
-    for (unsigned int i = 0; i < matchedPairs.size(); i++) {
-        int trkIdx = matchedPairs[i].x;
-        int detIdx = matchedPairs[i].y;
-        trackers[trkIdx].update(detections[detIdx].center);
+        else { 
+            // 3.3 Update tracker with matched detection
+            trackers[i].update(detections[assignment[i]].center);
+            trackers[i].m_age = 0;
+            /*
+            // draw line between 2 matched points and save distance to file txt
+            line(Mat_src, predictedCenters[i], detections[assignment[i]].center, 128, 2, 8, 0);
+            CStdioFile StdFile;
+            CFileException ex;
+            StdFile.Open(L"C:/Users/ADMIN/Desktop/SaveDistance.txt", CFile::modeNoTruncate | CFile::modeWrite, &ex);
+            CString text;
+            text.Format(L"%f", distanceMatrix[i][assignment[i]]);
+            text = text + L"\n";
+            StdFile.SeekToEnd();
+            StdFile.WriteString(text);
+            StdFile.Close();
+            */
+        }
     }
 
-    // create and initialise new trackers for unmatched detections
+    // Create and initialise new trackers for unmatched detections
     for (auto umd : unmatchedDetections) {
         KalmanTracker tracker = KalmanTracker(detections[umd].center);
         trackers.push_back(tracker);
     }
 
-    // get trackers' output
+    // Get trackers' output
     frameTrackingResult.clear();
     for (auto it = trackers.begin(); it != trackers.end();) {
-        if (((*it).m_time_since_update < 1) && // < 1 -> updated
+        if (((*it).m_time_since_update < 1) && // == 0 -> tracker updated in current frame
             ((*it).m_hits >= min_hits || frame_count <= min_hits)) { // m_hit_streak time from tracker predict
             TrackingCenter res;
             res.center = (*it).get_state();
-            res.id = (*it).m_id + 1; //??? m_id = kf_count
+            res.id = (*it).m_id; // m_id = kf_count
             res.frame = frame_count;
             frameTrackingResult.push_back(res);
             it++;
         }
         else{
-            // remove dead track
-            if (it != trackers.end() && (*it).m_time_since_update > max_age)
+            // remove dead tracker
+            if (it != trackers.end() && (*it).m_age >= max_age){
                 it = trackers.erase(it);
+            }
             else
                 it++;
         }
-        
-        
     }
 }
-// counting function
+// Counting function
 // input: previous_tracking and current_tracking
 // ouput: counter
 void CBasicDemoDlg::SORT_Counting() {
@@ -1784,8 +1759,8 @@ void CBasicDemoDlg::SORT_Counting() {
                     continue;
                 } // previous point above the line this time with the same id
                 else {
-                    float distance_ = GetDistance(frameTrackingResult[i].center, previous_frameTrackingResult[k].center);
-                    if (distance_ > max_distance) { // check distance
+                    float distance = GetDistance(frameTrackingResult[i].center, previous_frameTrackingResult[k].center);
+                    if (distance > max_distance) { // check distance 2 frames
                         continue;
                     }
                     else {
@@ -1799,8 +1774,8 @@ void CBasicDemoDlg::SORT_Counting() {
     // copy frame tracking results to previous tracking result
     previous_frameTrackingResult.clear();
     copy(frameTrackingResult.begin(), frameTrackingResult.end(), back_inserter(previous_frameTrackingResult));
-    // clear frame tracking result
-    //frameTrackingResult.clear();
+    //clear frame tracking result
+    frameTrackingResult.clear();
     return;
 }
 
@@ -1825,6 +1800,7 @@ void CBasicDemoDlg::OnBnClickedStopCountButton() {
     GetDlgItem(IDC_STOP_COUNT_BUTTON)->EnableWindow(FALSE);
     // Reset Kalman tracking
     trackers.clear();
+    KalmanTracker::kf_count = 0;
     // Reset tracking box
     frameTrackingResult.clear();
     previous_frameTrackingResult.clear();
@@ -1840,7 +1816,7 @@ void CBasicDemoDlg::OnBnClickedStopCountButton() {
         CString error;
         error.Format(L"Error when open file to write result!\nCause = %d", ex.m_cause);
         AfxMessageBox(error);
-        int message = AfxMessageBox(L"Create new file Result.result?", MB_YESNO);
+        int message = AfxMessageBox(L"Create new file " + global_filename + L"?", MB_YESNO);
         if (message == IDYES)
             StdFile.Open(global_filename, CFile::modeCreate | CFile::modeWrite, &ex);
         else 

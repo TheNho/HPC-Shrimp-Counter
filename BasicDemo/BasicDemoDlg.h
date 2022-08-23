@@ -15,6 +15,7 @@
 #include <opencv2/core/cuda.hpp>
 #include <opencv2/cudafilters.hpp>
 #include <opencv2/dnn.hpp>
+#include <opencv2/cudawarping.hpp>
 // sort tracking
 #include "KalmanTracker.h"
 #include "Hungarian.h"
@@ -140,7 +141,7 @@ public:
     virtual BOOL PreTranslateMessage(MSG* pMsg);
     int GrabThreadProcess();
     //opencv convert buffer data to Mat
-    bool Convert2Mat(MV_FRAME_OUT_INFO_EX* pstImageInfo, unsigned char* pData, cv::Mat *srcImage);
+    bool Convert2Mat(MV_FRAME_OUT_INFO_EX* pstImageInfo, unsigned char* pData, cv::Mat *srcImage, Rect ROI, CString flipimage);
     void SORT(int max_age, int min_hits, double iouThreshold);
     double GetDistance(Point2f center_test, Point2f center_gt);
     void ImageProcessing_GPU();
@@ -190,5 +191,5 @@ public:
     // define save directory
     CString FilenameSave_Sort_data = L"Data_SORT.txt";
     CStdioFile fileSortdaata;
-    CString nFilename = L"Result.result";
+    CString nFilename;
 };

@@ -1,4 +1,3 @@
-
 // BasicDemo.h : PROJECT_NAME
 
 #pragma once

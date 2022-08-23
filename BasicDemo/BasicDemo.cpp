@@ -1,6 +1,5 @@
 
-// BasicDemo.cpp :
-//
+// BasicDemo.cpp: implementation file
 
 #include "stdafx.h"
 #include "BasicDemo.h"
@@ -43,6 +42,7 @@ CString bgs_method;
 float bgs_threshold;
 CString bgs_shadows;
 int bgs_history;
+float bsg_learning_rate;
 // Adaptive Threshold Parameters
 CString adaptiveThreshold_method;
 int adaptiveThreshold_KSize;
@@ -55,7 +55,7 @@ int morphological_iterations;
 // Counting
 int line_position;
 float max_distance;
-CString couting_method;
+CString counting_method;
 // SORT parameters
 float  distance_threshold;
 int min_hits;

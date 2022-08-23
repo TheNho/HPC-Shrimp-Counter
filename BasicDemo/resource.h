@@ -123,8 +123,9 @@
 #define ID_MAX_HEIGHT                   1061
 #define ID_LOG_CANCLE                   1062
 #define ID_LOG_CLEAR_DATA               1062
-#define ID_BLUR_KERNEL2                 1062
 #define ID_FLIP_IMAGE                   1062
+#define ID_BSG_HISTORY2                 1063
+#define ID_BSG_LEARNING_RATE            1063
 #define IDC_MORPHO_ITERATIONS           1071
 
 // Next default values for new objects
