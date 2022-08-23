@@ -215,8 +215,8 @@ void CBasicDemoDlg::SettingInitial() {
     max_distance = 100; // max distance between 2 center points in 2 frames
     counting_method = L"SORT"; //SORT;My Simple Tracking
     distance_threshold = 50; // distance between predict center and current center
-    min_hits = 1;
-    max_age = 3;
+    min_hits = 3;
+    max_age = 10;
     tolerance_x = 5;
     avg_area = 100;
     min_area = 10;
@@ -634,16 +634,16 @@ int CBasicDemoDlg::SaveImage(enum MV_SAVE_IAMGE_TYPE enSaveImageType) {
 // Grap image from buffer, copy to cv Mat, processing and counting
 int CBasicDemoDlg::GrabThreadProcess() {
 
-    // for debug
-    //String dir_file = "D:/Data14/";
-    //uint idx_img = 0;
+    //For debug
+    String dir_file = "D:/Data1/";
+    uint idx_img = 0;
 
     MV_FRAME_OUT stImageInfo = {0}; // get image from buffer
     int nRet = MV_OK;
     double start_time_fps = 0;
     // Thread 0
     while(m_bThreadState) {
-        nRet = m_pcMyCamera->GetImageBuffer(&stImageInfo, 1000);
+        /*nRet = m_pcMyCamera->GetImageBuffer(&stImageInfo, 1000);
         if (nRet == MV_OK) {
             //Enter Critical Thread get save image buffer
             EnterCriticalSection(&m_hSaveImageMux);
@@ -682,14 +682,8 @@ int CBasicDemoDlg::GrabThreadProcess() {
             /// Press start count?
             if (b_start_count==true) {
                 // Counting method
-                if (counting_method == L"My Simple Tracking")
-                    My_Simple_Counting(tolerance_x, max_distance);
-                else if (counting_method == L"SORT") {
-                    SORT(max_age, min_hits, distance_threshold);
-                    SORT_Counting();
-                }
-                else
-                    return -1;
+                SORT(max_age, min_hits, distance_threshold);
+                SORT_Counting();
             }
             
             m_pcMyCamera->FreeImageBuffer(&stImageInfo);
@@ -703,8 +697,8 @@ int CBasicDemoDlg::GrabThreadProcess() {
             if (MV_TRIGGER_MODE_ON ==  m_nTriggerMode) {
                 Sleep(5);
             }
-        }
-        /*////////////////////////////////////////////////////////////////////////////////////////
+        } */
+        ////////////////////////////////////////////////////////////////////////////////////////
         String img_file = dir_file + to_string(idx_img) + ".bmp";
         Mat src_img1 = imread(img_file, 0);
         if (src_img1.empty()) break;
@@ -719,11 +713,10 @@ int CBasicDemoDlg::GrabThreadProcess() {
             SORT_Counting();
         }
         // for debug
-        //imshow("Src Image Before", dst);
+        imshow("Src Image Before", dst);
         // press space to pause and continue
-        if (waitKey(1) == 32)
+        if (waitKey(200) == 32)
             waitKey();
-        //Sleep(10);
         int64 end_time_fps = getTickCount();
         real_fps = int(getTickFrequency() / (end_time_fps - start_time_fps));
         start_time_fps = end_time_fps;
@@ -1375,8 +1368,6 @@ bool CBasicDemoDlg::Convert2Mat(MV_FRAME_OUT_INFO_EX* pstImageInfo, unsigned cha
 
 //input: Mat_src in gray scale
 //output1: vector<Trackingbox> detections
-//output2: vector<humoment[7]> HuMoments  // error
-//output3: vector<Point> current_centers
 //This function run in cuda gpu and contours cpu
 void CBasicDemoDlg::ImageProcessing_GPU() {
     // check Mat_src input
@@ -1447,8 +1438,6 @@ void CBasicDemoDlg::ImageProcessing_GPU() {
         Moments M = moments(contours[i]);
         Point2f center_point((M.m10 / M.m00), (M.m01 / M.m00));
 
-        current_centers.push_back(center_point);
-
         // get tracking center
         TrackingCenter detect_center;
         detect_center.id = -1;
@@ -1467,137 +1456,8 @@ void CBasicDemoDlg::AdaptiveThreshold_GPU(GpuMat gsrc, GpuMat &gdst) {
     cuda::subtract(gdst, adaptiveThreshold_C, gdst);
     cuda::compare(gsrc, gdst, gdst, CMP_LE);
 }
-// intput: current centers and previous centers
-// This function find the point below the line in current centers matched with the point
-// above the line in previous centers to count
-// output: counter
-void CBasicDemoDlg::My_Simple_Counting(int tolerance_x, float max_distance) {
-    if (current_centers.size() == 0)
-        return; // the first frame
-    
-    // find the same x point
-    for (auto current_point = begin(current_centers); current_point != end(current_centers); ++current_point) {
-        if (current_point->y >= line_position) { //current point below the line
-            vector<Point> matched_points;
-            matched_points.clear();
-            for (auto pervious_point = begin(previous_centers); pervious_point != end(previous_centers); ++pervious_point) {
-                if (pervious_point->y < line_position) { // previous point above the line
-                    if ((current_point->x > pervious_point->x - tolerance_x) && (current_point->x < pervious_point->x + tolerance_x)) {
-                        float distance = GetDistance(*current_point, *pervious_point);
-                        if (distance < max_distance) { // Check distance
-                            Point matched_point = Point(pervious_point->x, pervious_point->y);
-                            matched_points.push_back(matched_point);
-                        }
-                    }
-                }
-            }
-            if (matched_points.size() > 0) { // least one point matched
-                counter++;
-                // find matched point by sort decrease through y value
-                // tested -> ok
-                sort(matched_points.begin(), matched_points.end(), sort_point_y); 
-                // remove nearest matched point in previous centers
-                auto position_ = find(previous_centers.begin(), previous_centers.end(), matched_points[0]);
-                //if (position_ != previous_centers.end())
-                previous_centers.erase(position_);
-                matched_points.clear();
-            }
-        }
-    }
-    // copy current centers to previous centers
-    previous_centers.clear();
-    std::copy(current_centers.begin(), current_centers.end(), back_inserter(previous_centers));
-    //clear current centers
-    current_centers.clear();
-    return;
-}
-void CBasicDemoDlg::MySORTAlgorithmn(int max_age, int min_hits, double distanceThreshold) {
-    if (trackers.size() == 0) { // the first frame
-        for (unsigned int i = 0; i < detections.size(); i++) {
-            KalmanTracker trk = KalmanTracker(detections[i].center);
-            trackers.push_back(trk);
-        }
-        //frameTrackingResult.clear();
-        return;
-    }
 
-    // 1. Predict with existing trackers save in predictedCenters
-    vector<Point2f> predictedCenters; //contain predict Centers of Dectections
-    predictedCenters.clear();
-    for (auto it = trackers.begin(); it != trackers.end();) {
-        Point2f pCenter = (*it).predict();
-        if (pCenter.y > 0 && pCenter.y < Image_Height &&
-            pCenter.x > 0 && pCenter.x < Image_Width) {
-            predictedCenters.push_back(pCenter);
-            it++;
-            // test
-            circle(Mat_src, pCenter, 4, 128, 1, 8, 0);
-        }
-        else { // delete tracker with predict point outside image
-            it = trackers.erase(it);
-        }
-    }
-
-    // 2. Calculate distance between predict points and dectection points
-    // asosiate detection for tracker
-    unsigned int trkNum = predictedCenters.size();
-    unsigned int detNum = detections.size();
-    vector<double> distanceMatrix;
-    distanceMatrix.clear();
-    for (size_t i = 0; i < trkNum; i++) {
-        if (detections.size() == 0) break;
-        for (size_t j = 0; j < detections.size(); j++){ // calculate distance
-            double distance_ = GetDistance(predictedCenters[i], detections[j].center);
-            distanceMatrix.push_back(distance_);
-        }
-        // find index and value of the nearest point, min element
-        size_t index = min_element(distanceMatrix.begin(), distanceMatrix.end()) - distanceMatrix.begin();
-        double min_distance = distanceMatrix[index];
-        if (min_distance < distanceThreshold) { // matched point
-            // update tracker
-            trackers[i].update(detections[index].center);
-            // remove matched detection
-            detections.erase(detections.begin() + index);
-        }
-        else { // tracker dont match with any detection
-            // will be predict in step 1
-        }
-        distanceMatrix.clear();
-    }
-    // there are unmatched detections and tracker this time
-    // get new tracker with unmatched detections
-    if (detections.size() > 0) {
-        for (size_t k = 0; k < detections.size(); k++){
-            KalmanTracker trk = KalmanTracker(detections[k].center);
-            trackers.push_back(trk);
-        }
-    }
-   
-    // 3. get output
-    frameTrackingResult.clear();
-    for (auto it = trackers.begin(); it != trackers.end();) {
-        if (((*it).m_time_since_update < 1) && // updated
-            ((*it).m_hit_streak >= min_hits || frame_count <= min_hits)) {
-            TrackingCenter res;
-            res.center = (*it).get_state();
-            res.id = (*it).m_id + 1; 
-            res.frame = frame_count;
-            frameTrackingResult.push_back(res);
-            // draw matched centers
-            circle(Mat_src, res.center, 2, 255, 1, 8, 0);
-        }
-        // remove dead tracklet
-        if (it != trackers.end() && (*it).m_time_since_update > max_age)
-            it = trackers.erase(it);
-        else
-            it++;
-        
-    }
-
-    return;
-}
-
-double CBasicDemoDlg::GetDistance(Point2f center_test, Point2f center_gt) {
+double CBasicDemoDlg::GetDistance(Point2f center_test, Point2f center_gt, float distance_threshold) {
     float delta_xx = center_test.x - center_gt.x; // center x
     float delta_yy = center_test.y - center_gt.y; // center y
     float un = delta_xx * delta_xx + delta_yy * delta_yy;
@@ -1614,9 +1474,9 @@ void CBasicDemoDlg::SORT(int max_age, int min_hits, double distanceThreshold) {
     //for (int i = 0; i < detections.size(); i++) {
         //circle(Mat_src, detections[i].center, 3, 200, 3, 8, 0);
     //}
-     
+
     //KalmanTracker::kf_count = 0; // tracking id relies on this, so we have to reset it in each seq.
-    
+
     if (trackers.size() == 0) { // the first frame // initialize kalman trackers using first detections.
         for (uint i = 0; i < detections.size(); i++) {
             KalmanTracker trk = KalmanTracker(detections[i].center); //kf_count++ -> id++
@@ -1629,13 +1489,13 @@ void CBasicDemoDlg::SORT(int max_age, int min_hits, double distanceThreshold) {
     vector<Point2f> predictedCenters; //contain predicted centers of all trackers
     for (auto it = trackers.begin(); it != trackers.end();) {
         Point2f pCenter = (*it).predict();
-        if (pCenter.y > 0 && pCenter.y < Image_Height + 20 && 
-            pCenter.x > 0 && pCenter.x < Image_Width) {
+        if (pCenter.y > 0 && pCenter.y < Image_Height + 20 &&
+            pCenter.x > -10 && pCenter.x < Image_Width + 10) {
             predictedCenters.push_back(pCenter);
 
-            // Draw predict centers brown to view and debug
-            //putText(Mat_src, to_string((*it).m_id), pCenter, FONT_HERSHEY_COMPLEX_SMALL, 1, 128, 1, 8);
-            //circle(Mat_src, pCenter, 2, 128, 2, 8, 0);
+            //Draw predict centers brown to view and debug
+            putText(Mat_src, to_string((*it).m_id), pCenter, FONT_HERSHEY_COMPLEX_SMALL, 1, 128, 1, 8);
+            circle(Mat_src, pCenter, 2, 128, 2, 8, 0);
 
             it++;
         }
@@ -1651,56 +1511,49 @@ void CBasicDemoDlg::SORT(int max_age, int min_hits, double distanceThreshold) {
     distanceMatrix.resize(trkNum, vector<double>(detNum, 0));
     for (unsigned int i = 0; i < trkNum; i++) {    // compute distance matrix and
         for (unsigned int j = 0; j < detNum; j++) { // fill all elements of distance maxtrix
-            distanceMatrix[i][j] = GetDistance(predictedCenters[i], detections[j].center);
+            distanceMatrix[i][j] = GetDistance(predictedCenters[i], detections[j].center, distanceThreshold);
         }
     }
     // fix bug//note this
     if (distanceMatrix.size() == 0) return;
 
-    HungarianAlgorithm HungAlgo; 
+    HungarianAlgorithm HungAlgo;
     vector<int> assignment; // the resulting assignment is [track(prediction) : detection], with len=predict Number
     HungAlgo.Solve(distanceMatrix, assignment); // solve the assignment problem using hungarian algorithm.
-    
+
     // find matches, unmatched_detections and unmatched_predictions
-    //set<int> unmatchedTrajectories;
     set<int> unmatchedDetections;
     set<int> allItems;
     set<int> matchedItems;
-    if (detNum > trkNum) { //	there are unmatched detections
-        for (unsigned int n = 0; n < detNum; n++){
+    if (detNum > trkNum) { //there are unmatched detections
+        for (unsigned int n = 0; n < detNum; n++) {
             allItems.insert(n);
         }
-        for (unsigned int i = 0; i < trkNum; ++i){
+        for (unsigned int i = 0; i < trkNum; ++i) {
             matchedItems.insert(assignment[i]);
         }
         set_difference(allItems.begin(), allItems.end(), // find unmatched detection
-                       matchedItems.begin(), matchedItems.end(),
-                       insert_iterator<set<int>>(unmatchedDetections, unmatchedDetections.begin()));
-    }   
+            matchedItems.begin(), matchedItems.end(),
+            insert_iterator<set<int>>(unmatchedDetections, unmatchedDetections.begin()));
+    }
 
-    // filter out matched with large distance
     for (unsigned int i = 0; i < trkNum; ++i) {
         if (assignment[i] == -1) {
-            // update unmatchced tracker with it's predicted point
-            trackers[i].update(predictedCenters[i]);
-            trackers[i].m_hits = 0;
+            trackers[i].updateWithPredictCenter(predictedCenters[i]);
             continue;
         }
         if (distanceMatrix[i][assignment[i]] == Image_Width) { // filter out with large distance
             //cv::waitKey(); // stop this time to view 2 points matched with large distance for debug
-            // update unmathced tracker with it's predicted point
-            trackers[i].update(predictedCenters[i]);
-            trackers[i].m_hits = 0;
+            trackers[i].updateWithPredictCenter(predictedCenters[i]);
             unmatchedDetections.insert(assignment[i]);
         }
-        else { 
+        else {
             // 3.3 Update tracker with matched detection
-            trackers[i].update(detections[assignment[i]].center);
-            trackers[i].m_age = 0;
-            /*
-            // draw line between 2 matched points and save distance to file txt
+            trackers[i].updateWithMatchedDetection(detections[assignment[i]].center, min_hits);
+
+            //Draw line between 2 matched points and save distance to file txt
             line(Mat_src, predictedCenters[i], detections[assignment[i]].center, 128, 2, 8, 0);
-            CStdioFile StdFile;
+            /*CStdioFile StdFile;
             CFileException ex;
             StdFile.Open(L"C:/Users/ADMIN/Desktop/SaveDistance.txt", CFile::modeNoTruncate | CFile::modeWrite, &ex);
             CString text;
@@ -1708,8 +1561,7 @@ void CBasicDemoDlg::SORT(int max_age, int min_hits, double distanceThreshold) {
             text = text + L"\n";
             StdFile.SeekToEnd();
             StdFile.WriteString(text);
-            StdFile.Close();
-            */
+            StdFile.Close();*/
         }
     }
 
@@ -1722,22 +1574,22 @@ void CBasicDemoDlg::SORT(int max_age, int min_hits, double distanceThreshold) {
     // Get trackers' output
     frameTrackingResult.clear();
     for (auto it = trackers.begin(); it != trackers.end();) {
-        if (((*it).m_time_since_update < 1) && // == 0 -> tracker updated in current frame
-            ((*it).m_hits >= min_hits || frame_count <= min_hits)) { // m_hit_streak time from tracker predict
+        if (((*it).m_time_since_update < 1) // tracker updated in current frame
+          &&((*it).confirmed_tracker == true)) { 
             TrackingCenter res;
             res.center = (*it).get_state();
             res.id = (*it).m_id; // m_id = kf_count
             res.frame = frame_count;
             frameTrackingResult.push_back(res);
-            it++;
+
+            //Draw Point getted by white
+            circle(Mat_src, res.center, 3, 200, 3, 8, 0);
         }
-        else{
-            // remove dead tracker
-            if (it != trackers.end() && (*it).m_age >= max_age){
-                it = trackers.erase(it);
-            }
-            else
-                it++;
+        if (it != trackers.end() && (*it).m_age >= max_age) {  // remove dead tracker
+            it = trackers.erase(it);
+        }
+        else {
+            it++;
         }
     }
 }
@@ -1759,7 +1611,7 @@ void CBasicDemoDlg::SORT_Counting() {
                     continue;
                 } // previous point above the line this time with the same id
                 else {
-                    float distance = GetDistance(frameTrackingResult[i].center, previous_frameTrackingResult[k].center);
+                    float distance = GetDistance(frameTrackingResult[i].center, previous_frameTrackingResult[k].center, distance_threshold);
                     if (distance > max_distance) { // check distance 2 frames
                         continue;
                     }

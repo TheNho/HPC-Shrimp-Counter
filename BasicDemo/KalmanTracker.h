@@ -28,26 +28,28 @@ public:
 	KalmanTracker(StateType initCenter)
 	{
 		init_kf(initCenter);
-		m_time_since_update = 0;
-		m_hits = 0;
-		m_hit_streak = 0;
-		m_age = 0;
+		m_time_since_update = 0; // number of predict after update
+		m_hits = 0; // number of continuous hit with detections
+		m_hit_streak = 0; // number of update of after predict
+		m_age = 0;  // number of update after confirm real tracker
+		confirmed_tracker = false;
 		m_id = kf_count;
 		kf_count++;
 	}
 
 	~KalmanTracker()
 	{
-		m_history.clear();
+		//m_history.clear();
 	}
 
 	StateType predict();
-	void update(StateType stateMat);
+	void updateWithMatchedDetection(StateType stateMat, int min_hits);
+	void updateWithPredictCenter(StateType stateMat);
 	
 	StateType get_state();
 
 	static uint64 kf_count;
-
+	bool confirmed_tracker;
 	int m_time_since_update;
 	int m_hits;
 	int m_hit_streak;
@@ -60,7 +62,7 @@ private:
 	cv::KalmanFilter kf;
 	cv::Mat measurement;
 
-	std::vector<StateType> m_history;
+	//std::vector<StateType> m_history;
 };
 
 #endif

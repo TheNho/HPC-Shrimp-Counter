@@ -143,14 +143,12 @@ public:
     //opencv convert buffer data to Mat
     bool Convert2Mat(MV_FRAME_OUT_INFO_EX* pstImageInfo, unsigned char* pData, cv::Mat *srcImage, Rect ROI, CString flipimage);
     void SORT(int max_age, int min_hits, double iouThreshold);
-    double GetDistance(Point2f center_test, Point2f center_gt);
+    double GetDistance(Point2f center_test, Point2f center_gt, float distance_threshold);
     void ImageProcessing_GPU();
     void AdaptiveThreshold_GPU(GpuMat gsrc, GpuMat &gdst);
-    void My_Simple_Counting(int tolerance_x, float max_distance);
     void SORT_Counting();
     void DisplayThread();
     void SettingInitial();
-    void MySORTAlgorithmn(int max_age, int min_hits, double distanceThreshold);
     afx_msg void OnBnClickedSettingButton();
 
 private:

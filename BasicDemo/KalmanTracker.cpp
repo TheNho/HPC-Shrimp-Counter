@@ -32,38 +32,46 @@ void KalmanTracker::init_kf(StateType initial_center)
 }
 
 // Predict the estimated Center.
-StateType KalmanTracker::predict()
-{
+StateType KalmanTracker::predict(){
 	// predict
 	Mat p = kf.predict();
-	m_age += 1;
-
-	if (m_time_since_update > 0)
-		m_hit_streak = 0;
+	m_hit_streak = 0;
 	m_time_since_update += 1;
 
 	StateType predictCenter = Point2f(p.at<float>(0, 0), p.at<float>(1, 0));
 	// for view results
-	m_history.push_back(predictCenter);
+	//m_history.push_back(predictCenter);
 	return predictCenter;
 }
 
 // Update the state vector with observed Center.
-void KalmanTracker::update(StateType stateMat)
-{
-	m_time_since_update = 0;
-	m_history.clear();
+void KalmanTracker::updateWithMatchedDetection(StateType stateMat, int min_hits){
+	//m_history.clear();
+	m_time_since_update = 0; 
+	m_hit_streak += 1; 
 	m_hits += 1;
-	m_hit_streak += 1; // steak -> vết/vệt
-
+	if (m_hits > min_hits) { // hit in many continuous frame -> confirm real tracker
+		m_age = 0; //reset age=0 to avoid delete
+		confirmed_tracker = true;
+	}
 	// measurement is a cv::Mat
 	measurement.at<float>(0, 0) = stateMat.x;
 	measurement.at<float>(1, 0) = stateMat.y;
-
-	// update //function of opencv
+	// update -- function of opencv
 	kf.correct(measurement);
 }
-
+void KalmanTracker::updateWithPredictCenter(StateType stateMat) {
+	//m_history.clear();
+	m_time_since_update = 0;
+	m_hit_streak += 1;
+	m_age += 1;
+	m_hits = 0; // reset number hit if dont match with anny detection
+	
+	measurement.at<float>(0, 0) = stateMat.x;
+	measurement.at<float>(1, 0) = stateMat.y;
+	
+	kf.correct(measurement);
+}
 // Return the current state vector
 StateType KalmanTracker::get_state()
 {
