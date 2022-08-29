@@ -24,7 +24,7 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	CString setting_segment_binary_method;
-	CString setting_counting_method;
+	//CString setting_counting_method;
 	bool update_setting = false;
 	CString setting_blur_method;
 	int setting_blur_kernel;
@@ -53,23 +53,17 @@ private:
 	bool Setting_Window::CheckFloat(CString text);
 	void Setting_Window::EnableBackgroundSubtraction(BOOL CHECKED);
 	void Setting_Window::EnableAdaptiveThreshold(BOOL CHECKED);
-	void Setting_Window::EnableMyTracking(BOOL CHECKED);
-	void Setting_Window::EnableSORTTracking(BOOL CHECKED);
+	
 public:
 	CString setting_adaptiveThreshold_method;
 	int setting_adaptiveThreshold_KSize;
 	int setting_adaptiveThreshold_C;
-	int setting_tolerance_x;
 	BOOL setting_adaptiveThreshold_Checked;
 	BOOL setting_bsg_Checked;
-	BOOL setting_MyTracking_Checked;
-	BOOL setting_SORTTracking_Checked;
 	BOOL get_parameters_from_file(CString setting_filename);
 	CString get_parameters_from_window();
 	afx_msg void OnBnClickedRadioBackgroundsubtraction();
 	afx_msg void OnBnClickedRadioAdaptivethreshold();
-	afx_msg void OnBnClickedRadioMyTracking();
-	afx_msg void OnBnClickedRadioSortTracking();
 	afx_msg void OnBnClickedSave();
 	afx_msg void OnBnClickedLoad();
 	
@@ -77,4 +71,8 @@ public:
 	int setting_max_height;
 	CString setting_flip_image;
 	float setting_bsg_learning_rate;
+	unsigned int setting_ROI_X0;
+	unsigned int setting_ROI_Y0;
+	unsigned int setting_ROI_Width;
+	unsigned int setting_ROI_Height;
 };

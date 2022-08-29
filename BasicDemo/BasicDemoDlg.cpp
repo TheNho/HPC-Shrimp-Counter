@@ -1,9 +1,9 @@
-// Shrimp Counting Project
-// This code implemented by The Nho 2022
+// Shrimps Counting Project
+// This code is implemented by The Nho 2022
 // Interfacing with Camera HikRobot
 // SORT Tracking
 // Passing line counting
-// BasicDemoDlg.cpp : implementation file
+// BasicDemoDlg.cpp : Implementation file
 
 #include "stdafx.h"
 #include "BasicDemo.h"
@@ -15,29 +15,35 @@
 
 // Global variables
 // Parameters Setting 
-// using global to load parameters to setting window
+// Using global to load current parameters to Setting window
 extern CString flip_image;
+
 extern CString blur_method;
 extern int blur_kernel;
+
 extern CString segment_binary_method;
+
 extern CString bgs_method;
 extern float bgs_threshold;
 extern CString bgs_shadows;
 extern int bgs_history;
 extern float bsg_learning_rate;
+
 extern CString adaptiveThreshold_method;
 extern int adaptiveThreshold_KSize;
 extern int adaptiveThreshold_C;
+
 extern CString morphological_method;
 extern int morphological_kernel;
 extern int morphological_iterations;
+
 extern int line_position;
 extern float max_distance;
-extern CString counting_method;
-extern float  distance_threshold;
+
+extern float distance_threshold;
 extern int min_hits;
 extern int max_age;
-extern int tolerance_x;
+
 extern double avg_area;
 extern double min_area;
 extern double max_area;
@@ -45,6 +51,11 @@ extern int min_width;
 extern int min_height;
 extern int max_width;
 extern int max_height;
+
+extern unsigned int ROI_X0;
+extern unsigned int ROI_Y0;
+extern unsigned int ROI_Width;
+extern unsigned int ROI_Height;
 
 // global filename, used in all windows
 extern CString global_filename;
@@ -149,10 +160,10 @@ unsigned int __stdcall GrabThread(void* pUser) {
 
         pCam->GrabThreadProcess();
         
-        return 0;
+        return 1;
     }
 
-    return 1;
+    return 0;
 }
 
 // CBasicDemoDlg message handlers
@@ -195,12 +206,17 @@ BOOL CBasicDemoDlg::OnInitDialog() {
 }
 
 void CBasicDemoDlg::SettingInitial() {
-    // install the first run variables
+    // Install the first run variables
+    // local variables
+    default_frame_rate = 200;
+    default_expose_time = 2000;
+    default_gain = 10;
+    // global variables
     flip_image = L"Y"; // None;X;Y
-    blur_method = L"AVG"; //AVG;GAUSS;MEDIAN
+    blur_method = L"AVG"; //AVG;GAUSS
     blur_kernel = 1; //1;3;5;7;9
     segment_binary_method = L"Adaptive Threshold"; //Adaptive Threshold;Background Subtraction
-    bgs_method = L"MOG2"; //MOG2;MOG
+    bgs_method = L"MOG2"; //MOG2
     bgs_threshold = 25;
     bgs_shadows = L"False"; //False;True
     bgs_history = 500;
@@ -212,12 +228,10 @@ void CBasicDemoDlg::SettingInitial() {
     morphological_kernel = 5; //1;3;5;7;9
     morphological_iterations = 2;
     line_position = 400;
-    max_distance = 100; // max distance between 2 center points in 2 frames
-    counting_method = L"SORT"; //SORT;My Simple Tracking
-    distance_threshold = 50; // distance between predict center and current center
+    max_distance = 100; // max distance between 2 center points in 2 continuous frames
+    distance_threshold = 50; // distance threshold between predict center and current center
     min_hits = 3;
     max_age = 10;
-    tolerance_x = 5;
     avg_area = 100;
     min_area = 10;
     max_area = 1000;
@@ -225,40 +239,31 @@ void CBasicDemoDlg::SettingInitial() {
     min_height = 3;
     max_width = 50;
     max_height = 50;
+    ROI_X0 = 30;
+    ROI_Y0 = 0;
+    ROI_Width = 590;
+    ROI_Height = 480;
 
-    // initialize directory global save result file, use global variable to use in many sub-window
-    nFilename = L"C:/Users/ADMIN/Desktop/Larvae Shripm Counting/BasicDemo/Result.result";
+    // Initialize global directory to save result file
+    nFilename = L"Result.result";
     global_filename = nFilename;
 
     // Segmentation
     if (segment_binary_method == L"Adaptive Threshold") {
-        Size Adap_size = Size(adaptiveThreshold_KSize, adaptiveThreshold_KSize);
-        if (adaptiveThreshold_method == L"MEAN_C") {
-            gpu_adaptiveThreshold_filter = cuda::createBoxFilter(CV_8U, CV_8U, Adap_size);
-        }
-        else if (adaptiveThreshold_method == L"GAUSSIAN_C") {
-            gpu_adaptiveThreshold_filter = cuda::createGaussianFilter(CV_8U, CV_8U, Adap_size, float(adaptiveThreshold_KSize)/5.0);
-        }
-        else {
-            AfxMessageBox(L"Adaptive Threshold Initial Error!");
-            return;
-        }
+        // do nothing
     }
     else if (segment_binary_method == L"Background Subtraction") {
         if (bgs_method == L"MOG2") {
             if (bgs_shadows == L"True") {
-                pBackSub = cuda::createBackgroundSubtractorMOG2(bgs_history, bgs_threshold, true);
+                pBackSub = createBackgroundSubtractorMOG2(bgs_history, bgs_threshold, true);
             }
             else if (bgs_shadows == L"False") {
-                pBackSub = cuda::createBackgroundSubtractorMOG2(bgs_history, bgs_threshold, false);
+                pBackSub = createBackgroundSubtractorMOG2(bgs_history, bgs_threshold, false);
             }
             else {
                 AfxMessageBox(L"Shadow Error!");
                 return;
             }
-        }
-        else if (bgs_method == L"MOG") {
-            pBackSub = cuda::createBackgroundSubtractorMOG(bgs_history, 5, 0.7);
         }
         else {
             AfxMessageBox(L"Backgruond Subtraction Initail Error!");
@@ -266,41 +271,15 @@ void CBasicDemoDlg::SettingInitial() {
         }
     }
     else {
-        AfxMessageBox(L"Segmentation Initial to Binary Error!");
+        AfxMessageBox(L"Segmentation to Binary method Initail Error!");
         return;
     }
-    // cuda blur image
-    if (blur_method == L"MEDIAN") {
-        cuda_filter = cuda::createMedianFilter(CV_8U, blur_kernel);
-    }
-    else if (blur_method == L"AVG") {
-        cuda_filter = cuda::createBoxFilter(CV_8U, CV_8U, Size(blur_kernel, blur_kernel));
-    }
-    else if (blur_method == L"GAUSS") {
-        cuda_filter = cuda::createGaussianFilter(CV_8U, CV_8U, Size(blur_kernel, blur_kernel), float(blur_kernel)/5.0);
-    }
-    else {
-        AfxMessageBox(L"Blur Method Initial Error!");
-        return;
-    }
+    //Blur image
+    
     // Morphological filter
     mo_kernel = getStructuringElement(MORPH_RECT, Size(morphological_kernel, morphological_kernel));
-    if (morphological_method == L"Dilate") {
-        mo_filter = cuda::createMorphologyFilter(MORPH_DILATE, CV_8U, mo_kernel, Point(-1, -1), morphological_iterations);
-    }
-    else if (morphological_method == L"Erode") {
-        mo_filter = cuda::createMorphologyFilter(MORPH_ERODE, CV_8U, mo_kernel, Point(-1, -1), morphological_iterations);
-    }
-    else if (morphological_method == L"Open") {
-        mo_filter = cuda::createMorphologyFilter(MORPH_OPEN, CV_8U, mo_kernel, Point(-1, -1), morphological_iterations);
-    }
-    else if (morphological_method == L"Close") {
-        mo_filter = cuda::createMorphologyFilter(MORPH_CLOSE, CV_8U, mo_kernel, Point(-1, -1), morphological_iterations);
-    }
-    else {
-        AfxMessageBox(L"Morphological method Initail Error!");
-        return;
-    }
+
+    return;
 
 }
 
@@ -315,8 +294,8 @@ void CBasicDemoDlg::OnSysCommand(UINT nID, LPARAM lParam) {
 }
 
 // If you add a minimize button to your dialog, you will need the code below
-//  to draw the icon.  For MFC applications using the document/view model,
-//  this is automatically done for you by the framework.
+// to draw the icon.  For MFC applications using the document/view model,
+// this is automatically done for you by the framework.
 void CBasicDemoDlg::OnPaint() {
 	if (IsIconic()) {
 		CPaintDC dc(this); // device context for painting
@@ -635,15 +614,15 @@ int CBasicDemoDlg::SaveImage(enum MV_SAVE_IAMGE_TYPE enSaveImageType) {
 int CBasicDemoDlg::GrabThreadProcess() {
 
     //For debug
-    String dir_file = "D:/Data1/";
-    uint idx_img = 0;
-
+    //String dir_file = "Data/Data14/";
+    //uint idx_img = 0;
+    
     MV_FRAME_OUT stImageInfo = {0}; // get image from buffer
     int nRet = MV_OK;
     double start_time_fps = 0;
     // Thread 0
     while(m_bThreadState) {
-        /*nRet = m_pcMyCamera->GetImageBuffer(&stImageInfo, 1000);
+        nRet = m_pcMyCamera->GetImageBuffer(&stImageInfo, 1000);
         if (nRet == MV_OK) {
             //Enter Critical Thread get save image buffer
             EnterCriticalSection(&m_hSaveImageMux);
@@ -669,19 +648,18 @@ int CBasicDemoDlg::GrabThreadProcess() {
                 m_pcMyCamera->FreeImageBuffer(&stImageInfo);
                 continue;
             }
-            // convert data to cvMat, drop roi and flip image
-            Rect ROI(30, 0, 590, 480);
+            // Convert data to cvMat, drop roi and flip image
+            Rect ROI(ROI_X0, ROI_Y0, ROI_Width, ROI_Height);
             bool retm = Convert2Mat(&stImageInfo.stFrameInfo, stImageInfo.pBufAddr, &Mat_src, ROI, flip_image);
             if (retm == false || Mat_src.empty()) {
                 AfxMessageBox(L"Error while convert data to cv Mat!");
                 return -1;
-            } 
-            
-            // image processing
-            ImageProcessing_GPU();
+            }
+            // Image processing
+            ImageProcessing();
             /// Press start count?
             if (b_start_count==true) {
-                // Counting method
+                // SORT tracking and counting
                 SORT(max_age, min_hits, distance_threshold);
                 SORT_Counting();
             }
@@ -697,8 +675,8 @@ int CBasicDemoDlg::GrabThreadProcess() {
             if (MV_TRIGGER_MODE_ON ==  m_nTriggerMode) {
                 Sleep(5);
             }
-        } */
-        ////////////////////////////////////////////////////////////////////////////////////////
+        } 
+        /*////////////////////////////////////////////////////////////////////////////////////////
         String img_file = dir_file + to_string(idx_img) + ".bmp";
         Mat src_img1 = imread(img_file, 0);
         if (src_img1.empty()) break;
@@ -713,9 +691,9 @@ int CBasicDemoDlg::GrabThreadProcess() {
             SORT_Counting();
         }
         // for debug
-        imshow("Src Image Before", dst);
+        //imshow("Src Image Before", dst);
         // press space to pause and continue
-        if (waitKey(200) == 32)
+        if (waitKey(20) == 32)
             waitKey();
         int64 end_time_fps = getTickCount();
         real_fps = int(getTickFrequency() / (end_time_fps - start_time_fps));
@@ -723,7 +701,7 @@ int CBasicDemoDlg::GrabThreadProcess() {
         ////////////////////////////////////////////////////////////////////////////////////*/
     }
     // end thread, destroy all windows
-    cv::destroyAllWindows();
+    //cv::destroyAllWindows();
     return MV_OK;
 }
 
@@ -853,6 +831,25 @@ void CBasicDemoDlg::OnBnClickedOpenButton() {
             ShowErrorMsg(TEXT("Warning: Get Packet Size fail!"), nRet);
         }
     }
+    // Set default camera parameters
+    // Frame rate
+    nRet = m_pcMyCamera->SetBoolValue("AcquisitionFrameRateEnable", true);
+    if (MV_OK != nRet) {
+        AfxMessageBox(L"Cannot set Initail Frame Rate!");
+        return;
+    }
+    m_pcMyCamera->SetFloatValue("AcquisitionFrameRate", default_frame_rate);
+    // Gain
+    m_pcMyCamera->SetEnumValue("GainAuto", 0);
+    m_pcMyCamera->SetFloatValue("Gain", default_gain);
+    // Expose time
+    nRet = m_pcMyCamera->SetEnumValue("ExposureMode", MV_EXPOSURE_MODE_TIMED);
+    if (MV_OK != nRet) {
+        AfxMessageBox(L"Cannot set Initail Expose Time!");
+        return;
+    }
+    m_pcMyCamera->SetEnumValue("ExposureAuto", MV_EXPOSURE_AUTO_MODE_OFF);
+    m_pcMyCamera->SetFloatValue("ExposureTime", default_expose_time);
 
     m_bOpenDevice = TRUE;
     EnableControls(TRUE);
@@ -905,9 +902,9 @@ unsigned int __stdcall Display(void* pUser) {
 
         display_Cam->DisplayThread();
 
-        return 0;
+        return 1;
     }
-    return 1;
+    return 0;
 }
 void CBasicDemoDlg::DisplayThread() {
 
@@ -924,7 +921,9 @@ void CBasicDemoDlg::DisplayThread() {
 
         // copy Mat_src and draw
         //Mat_display = dst.clone();
-        Mat_display = Mat_src.clone(); // Access violation 2 theads-> fixed by waiting the first thread started
+        Mat_display = Mat_src.clone(); 
+        // Access are in conflict between 2 theads
+        // -> fixed by waiting the first thread started
         putText(Mat_display, "FPS: "+ to_string(real_fps), Point(5, 25), FONT_HERSHEY_COMPLEX, 1, 128, 1, 8);
         line(Mat_display, Point(0, line_position), Point(640, line_position), 0, 2, 8, 0);
         
@@ -956,7 +955,7 @@ void CBasicDemoDlg::OnBnClickedStartGrabbingButton() {
 
     m_bThreadState = TRUE;
 
-    // start get image and processing thread
+    // Start geting and processing image thread
     unsigned int nThreadID_0 = 0;
     m_hGrabThread = (void*)_beginthreadex( NULL , 0 , GrabThread , this, 0 , &nThreadID_0 );
     if (NULL == m_hGrabThread) {
@@ -971,7 +970,7 @@ void CBasicDemoDlg::OnBnClickedStartGrabbingButton() {
         return;
     }
 
-    // start display thread must be after camera start grabbing
+    // Start display thread must be after camera start grabbing
     Sleep(200); // 200ms wait for image proceesing thread started, avoid conflict
     unsigned int dThreadID_1 = 1;
     d_hGrabThread = (void*)_beginthreadex(NULL, 0, Display, this, 0, &dThreadID_1);
@@ -1013,7 +1012,7 @@ void CBasicDemoDlg::OnBnClickedStopGrabbingButton() {
     m_bStartGrabbing = FALSE;
     EnableControls(TRUE);
 
-    // Stop grabbing and stop counting but not write to file
+    // Stop grabbing and stop counting but not write result to file
     b_start_count = false;
     GetDlgItem(IDC_START_COUNT_BUTTON)->EnableWindow(TRUE);
     GetDlgItem(IDC_STOP_COUNT_BUTTON)->EnableWindow(FALSE);
@@ -1021,8 +1020,6 @@ void CBasicDemoDlg::OnBnClickedStopGrabbingButton() {
     KalmanTracker::kf_count = 0;
     frameTrackingResult.clear();
     previous_frameTrackingResult.clear();
-    current_centers.clear();
-    previous_centers.clear();
 }
 
 //en:Click Get Parameter button / SDK function
@@ -1186,7 +1183,7 @@ void CBasicDemoDlg::OnBnClickedSettingButton() {
     Setting_Window* open_setting_windown = new Setting_Window();
     open_setting_windown->DoModal();
     // click ok -> update_setting = true
-    if (open_setting_windown->update_setting == true) { // clicked OK
+    if (open_setting_windown->update_setting == true) {
         // get image processing paramerters from setting window
         flip_image = open_setting_windown->setting_flip_image;
         segment_binary_method = open_setting_windown->setting_segment_binary_method;
@@ -1195,13 +1192,10 @@ void CBasicDemoDlg::OnBnClickedSettingButton() {
                 adaptiveThreshold_method = open_setting_windown->setting_adaptiveThreshold_method;
                 adaptiveThreshold_KSize = open_setting_windown->setting_adaptiveThreshold_KSize;
                 adaptiveThreshold_C = open_setting_windown->setting_adaptiveThreshold_C;
-                // change adaptive threshod point filter
-                Size Adap_size = Size(adaptiveThreshold_KSize, adaptiveThreshold_KSize);
-                if (adaptiveThreshold_method == L"MEAN_C") {
-                    gpu_adaptiveThreshold_filter = cuda::createBoxFilter(CV_8U, CV_8U, Adap_size);
-                }
-                else if (adaptiveThreshold_method == L"GAUSSIAN_C") {
-                    gpu_adaptiveThreshold_filter = cuda::createGaussianFilter(CV_8U, CV_8U, Adap_size, float(adaptiveThreshold_KSize)/5.0);
+                // Check again
+                if (adaptiveThreshold_method == L"MEAN_C" ||
+                    adaptiveThreshold_method == L"GAUSSIAN_C") {
+                    // do nothing
                 }
                 else {
                     AfxMessageBox(L"Adaptive Threshold Setting Error!");
@@ -1219,19 +1213,16 @@ void CBasicDemoDlg::OnBnClickedSettingButton() {
                 // change back ground subtraction method
                 if (bgs_method == L"MOG2") {
                     if (bgs_shadows == L"True") {
-                        pBackSub = cuda::createBackgroundSubtractorMOG2(bgs_history, bgs_threshold, true);
+                        pBackSub = createBackgroundSubtractorMOG2(bgs_history, bgs_threshold, true);
                     }
                     else if (bgs_shadows == L"False"){
-                        pBackSub = cuda::createBackgroundSubtractorMOG2(bgs_history, bgs_threshold, false);
+                        pBackSub = createBackgroundSubtractorMOG2(bgs_history, bgs_threshold, false);
                     }
                     else {
                         AfxMessageBox(L"Backgruond Subtraction Shadows Setting Error!");
                         delete open_setting_windown;
                         return;
                     }
-                }
-                else if (bgs_method == L"MOG") {
-                    pBackSub = cuda::createBackgroundSubtractorMOG(bgs_history, 5, 0.7);
                 }
                 else {
                     // for debug
@@ -1246,24 +1237,11 @@ void CBasicDemoDlg::OnBnClickedSettingButton() {
             delete open_setting_windown;
             return;
         }
-
-        // counting method
-        counting_method = open_setting_windown->setting_counting_method;
-        if (counting_method == L"My Simple Tracking") {
-            // my simple couting
-            tolerance_x = open_setting_windown->setting_tolerance_x;
-        }
-        else if (counting_method == L"SORT") {
-            // SORT Tracking + counting
-            distance_threshold = open_setting_windown->setting_distance_threshold;
-            min_hits = open_setting_windown->setting_min_hits;
-            max_age = open_setting_windown->setting_max_age;
-        }
-        else {
-            AfxMessageBox(L"Counting Method Setting Error!");
-            delete open_setting_windown;
-            return;
-        }
+        
+        // SORT Tracking
+        distance_threshold = open_setting_windown->setting_distance_threshold;
+        min_hits = open_setting_windown->setting_min_hits;
+        max_age = open_setting_windown->setting_max_age;
 
         // counting parameters
         line_position = open_setting_windown->setting_line_position;
@@ -1278,18 +1256,19 @@ void CBasicDemoDlg::OnBnClickedSettingButton() {
         min_height = open_setting_windown->setting_min_height;
         max_height = open_setting_windown->setting_max_height;
         
-        // cuda blur image
+        //ROI
+        ROI_X0 = open_setting_windown->setting_ROI_X0;
+        ROI_Y0 = open_setting_windown->setting_ROI_Y0;
+        ROI_Width = open_setting_windown->setting_ROI_Width;
+        ROI_Height = open_setting_windown->setting_ROI_Height;
+
+        // Blur image
         blur_method = open_setting_windown->setting_blur_method;
         blur_kernel = open_setting_windown->setting_blur_kernel;
         if (blur_kernel != 1) { // blur kernel = 1 dont use blur
-            if (blur_method == L"GAUSS") {
-                cuda_filter = createGaussianFilter(CV_8U, CV_8U, Size(blur_kernel, blur_kernel), 1);
-            }
-            else if (blur_method == L"AVG") {
-                cuda_filter = cuda::createBoxFilter(CV_8U, CV_8U, Size(blur_kernel, blur_kernel));
-            }
-            else if (blur_method == L"MEDIAN"){
-                cuda_filter = cuda::createMedianFilter(CV_8U, blur_kernel);
+            if (blur_method == L"GAUSS" ||
+                blur_method == L"AVG") {
+                // do nothing
             }
             else {
                 AfxMessageBox(L"Blur Method Setting Error!");
@@ -1303,17 +1282,11 @@ void CBasicDemoDlg::OnBnClickedSettingButton() {
         morphological_iterations = open_setting_windown->setting_morpho_iterations;
         if (morphological_kernel != 1) { // = 1 dont use
             mo_kernel = getStructuringElement(MORPH_RECT, Size(morphological_kernel, morphological_kernel));
-            if (morphological_method == L"Dilate") {
-                mo_filter = cuda::createMorphologyFilter(MORPH_DILATE, CV_8U, mo_kernel, Point(-1, -1), morphological_iterations);
-            }
-            else if (morphological_method == L"Erode") {
-                mo_filter = cuda::createMorphologyFilter(MORPH_ERODE, CV_8U, mo_kernel, Point(-1, -1), morphological_iterations);
-            }
-            else if (morphological_method == L"Open") {
-                mo_filter = cuda::createMorphologyFilter(MORPH_OPEN, CV_8U, mo_kernel, Point(-1, -1), morphological_iterations);
-            }
-            else if (morphological_method == L"Close") {
-                mo_filter = cuda::createMorphologyFilter(MORPH_CLOSE, CV_8U, mo_kernel, Point(-1, -1), morphological_iterations);
+            if (morphological_method == L"Dilate" ||
+                morphological_method == L"Erode"  ||
+                morphological_method == L"Open"   ||
+                morphological_method == L"Close") {
+                // do nothing
             }
             else {
                 AfxMessageBox(L"Morphological Method Setting Error!");
@@ -1345,7 +1318,6 @@ bool CBasicDemoDlg::Convert2Mat(MV_FRAME_OUT_INFO_EX* pstImageInfo, unsigned cha
             // do nothing
         }
         else if (flipimage == L"X") {
-
             cv::flip(MatsrcImage, MatsrcImage, 1);
         }
         else if (flipimage == L"Y") {
@@ -1366,33 +1338,34 @@ bool CBasicDemoDlg::Convert2Mat(MV_FRAME_OUT_INFO_EX* pstImageInfo, unsigned cha
     return true;
 }
 
-//input: Mat_src in gray scale
-//output1: vector<Trackingbox> detections
+//Input: Mat_src in gray scale
+//Output1: vector<Trackingbox> detections
 //This function run in cuda gpu and contours cpu
-void CBasicDemoDlg::ImageProcessing_GPU() {
+void CBasicDemoDlg::ImageProcessing() {
     // check Mat_src input
     if (Mat_src.empty()) return;
 
     frame_count++;
+    
+    Mat src_processing = Mat_src.clone();
 
-    gpu_Mat_src.upload(Mat_src);
-    // check Mat input in CV_8U?
-    // implement in gpu cuda
-    if (gpu_Mat_src.depth() != CV_8U) {
-        gpu_Mat_src.convertTo(gpu_Mat_src, CV_8U);
+    //Blur image
+    if (blur_kernel != 1) { // kernel == 1 dont apply
+        if (blur_method == L"AVG")
+            blur(src_processing, src_processing, Size(blur_kernel, blur_kernel));
+        else if (blur_method == L"GAUSS")
+            GaussianBlur(src_processing, src_processing, Size(blur_kernel, blur_kernel), float(blur_kernel / 5.0));
     }
-    //cuda blur image
-    if (blur_kernel != 1) // kernel == 1 dont apply
-        cuda_filter->apply(gpu_Mat_src, gpu_Mat_src);
-
     // Segmentation to binary image
-    // Threshold
-    //cuda::threshold(gpu_Mat_src, gpu_Mat_dst, 200, 255, THRESH_BINARY_INV);
+    //threshold(gpu_Mat_src, gpu_Mat_dst, 200, 255, THRESH_BINARY_INV);
     if (segment_binary_method == L"Adaptive Threshold") {
-        AdaptiveThreshold_GPU(gpu_Mat_src, gpu_Mat_dst);
+        if (adaptiveThreshold_method == L"MEAN_C")
+            adaptiveThreshold(src_processing, dst, 255, ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY_INV, adaptiveThreshold_KSize, adaptiveThreshold_C);
+        else if (adaptiveThreshold_method == L"GAUSSIAN_C")
+            adaptiveThreshold(src_processing, dst, 255, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY_INV, adaptiveThreshold_KSize, adaptiveThreshold_C);
     }
     else if (segment_binary_method == L"Background Subtraction") {
-        pBackSub->apply(gpu_Mat_src, gpu_Mat_dst, bsg_learning_rate);
+        pBackSub->apply(src_processing, dst, bsg_learning_rate);
     }
     else{
         AfxMessageBox(L"Image Processing Error Binary Segment Method!");
@@ -1400,11 +1373,21 @@ void CBasicDemoDlg::ImageProcessing_GPU() {
     }
     
     // morphological filter
-    if (morphological_kernel != 1) // kernel == 1 dont apply
-        mo_filter->apply(gpu_Mat_dst, gpu_Mat_dst);
-
-    gpu_Mat_dst.download(dst);
-
+    if (morphological_kernel != 1) {// kernel == 1 dont apply
+        if (morphological_method == L"Open")
+            morphologyEx(dst, dst, MORPH_OPEN, mo_kernel, Point(-1, -1), morphological_iterations);
+        else if (morphological_method == L"Close")
+            morphologyEx(dst, dst, MORPH_CLOSE, mo_kernel, Point(-1, -1), morphological_iterations);
+        else if (morphological_method == L"Dilate")
+            morphologyEx(dst, dst, MORPH_DILATE, mo_kernel, Point(-1, -1), morphological_iterations);
+        else if (morphological_method == L"Erode")
+            morphologyEx(dst, dst, MORPH_ERODE, mo_kernel, Point(-1, -1), morphological_iterations);
+        else {
+            AfxMessageBox(L"Image Processing Error Binary Segment Method!");
+            return;
+        }
+    }
+    
     // Distance transform
     //distanceTransform(dst, dst, DIST_L2, 3);
     //cv::threshold(dst, dst, 100, 255, THRESH_BINARY);
@@ -1413,7 +1396,6 @@ void CBasicDemoDlg::ImageProcessing_GPU() {
     vector<vector<Point>> contours;
     vector<Vec4i> hierarchy;
     detections.clear();
-    current_centers.clear();
     cv::findContours(dst, contours, hierarchy, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
     for (size_t i = 0; i < contours.size(); i++) {
         double area = contourArea(contours[i]);
@@ -1447,16 +1429,6 @@ void CBasicDemoDlg::ImageProcessing_GPU() {
     }
 }
 
-//input: gpu_mat_src in gray scale CV_8U after blur
-//output: gpu_mat_dst in binary
-void CBasicDemoDlg::AdaptiveThreshold_GPU(GpuMat gsrc, GpuMat &gdst) {
-
-    gpu_adaptiveThreshold_filter->apply(gsrc, gdst);
-
-    cuda::subtract(gdst, adaptiveThreshold_C, gdst);
-    cuda::compare(gsrc, gdst, gdst, CMP_LE);
-}
-
 double CBasicDemoDlg::GetDistance(Point2f center_test, Point2f center_gt, float distance_threshold) {
     float delta_xx = center_test.x - center_gt.x; // center x
     float delta_yy = center_test.y - center_gt.y; // center y
@@ -1466,18 +1438,11 @@ double CBasicDemoDlg::GetDistance(Point2f center_test, Point2f center_gt, float 
         return Image_Width;
     return distance;
 }
-//input: trackers, detections
-//output: vector<Trackingbox> frameTrackingResult
+//Input: trackers, detections
+//Output: vector<Trackingbox> frameTrackingResult
 void CBasicDemoDlg::SORT(int max_age, int min_hits, double distanceThreshold) {
 
-    // Draw current centers white for view results and debug
-    //for (int i = 0; i < detections.size(); i++) {
-        //circle(Mat_src, detections[i].center, 3, 200, 3, 8, 0);
-    //}
-
-    //KalmanTracker::kf_count = 0; // tracking id relies on this, so we have to reset it in each seq.
-
-    if (trackers.size() == 0) { // the first frame // initialize kalman trackers using first detections.
+    if (trackers.size() == 0) { // the first frame
         for (uint i = 0; i < detections.size(); i++) {
             KalmanTracker trk = KalmanTracker(detections[i].center); //kf_count++ -> id++
             trackers.push_back(trk);
@@ -1486,7 +1451,7 @@ void CBasicDemoDlg::SORT(int max_age, int min_hits, double distanceThreshold) {
     }
 
     // 3.1. get predicted locations from existing trackers.
-    vector<Point2f> predictedCenters; //contain predicted centers of all trackers
+    vector<Point2f> predictedCenters;
     for (auto it = trackers.begin(); it != trackers.end();) {
         Point2f pCenter = (*it).predict();
         if (pCenter.y > 0 && pCenter.y < Image_Height + 20 &&
@@ -1509,8 +1474,8 @@ void CBasicDemoDlg::SORT(int max_age, int min_hits, double distanceThreshold) {
     unsigned int detNum = detections.size();
     vector<vector<double>> distanceMatrix;
     distanceMatrix.resize(trkNum, vector<double>(detNum, 0));
-    for (unsigned int i = 0; i < trkNum; i++) {    // compute distance matrix and
-        for (unsigned int j = 0; j < detNum; j++) { // fill all elements of distance maxtrix
+    for (unsigned int i = 0; i < trkNum; i++) { // compute distance matrix
+        for (unsigned int j = 0; j < detNum; j++) { 
             distanceMatrix[i][j] = GetDistance(predictedCenters[i], detections[j].center, distanceThreshold);
         }
     }
@@ -1519,9 +1484,9 @@ void CBasicDemoDlg::SORT(int max_age, int min_hits, double distanceThreshold) {
 
     HungarianAlgorithm HungAlgo;
     vector<int> assignment; // the resulting assignment is [track(prediction) : detection], with len=predict Number
-    HungAlgo.Solve(distanceMatrix, assignment); // solve the assignment problem using hungarian algorithm.
+    HungAlgo.Solve(distanceMatrix, assignment); 
 
-    // find matches, unmatched_detections and unmatched_predictions
+    // find matched, unmatched_detections and unmatched_predictions
     set<int> unmatchedDetections;
     set<int> allItems;
     set<int> matchedItems;
@@ -1537,8 +1502,9 @@ void CBasicDemoDlg::SORT(int max_age, int min_hits, double distanceThreshold) {
             insert_iterator<set<int>>(unmatchedDetections, unmatchedDetections.begin()));
     }
 
+    // 3.3. update tracker
     for (unsigned int i = 0; i < trkNum; ++i) {
-        if (assignment[i] == -1) {
+        if (assignment[i] == -1) { // update unmatched tracker
             trackers[i].updateWithPredictCenter(predictedCenters[i]);
             continue;
         }
@@ -1547,8 +1513,7 @@ void CBasicDemoDlg::SORT(int max_age, int min_hits, double distanceThreshold) {
             trackers[i].updateWithPredictCenter(predictedCenters[i]);
             unmatchedDetections.insert(assignment[i]);
         }
-        else {
-            // 3.3 Update tracker with matched detection
+        else { // update tracker with matched point
             trackers[i].updateWithMatchedDetection(detections[assignment[i]].center, min_hits);
 
             //Draw line between 2 matched points and save distance to file txt
@@ -1582,7 +1547,7 @@ void CBasicDemoDlg::SORT(int max_age, int min_hits, double distanceThreshold) {
             res.frame = frame_count;
             frameTrackingResult.push_back(res);
 
-            //Draw Point getted by white
+            //Draw Point output by white
             circle(Mat_src, res.center, 3, 200, 3, 8, 0);
         }
         if (it != trackers.end() && (*it).m_age >= max_age) {  // remove dead tracker
@@ -1594,8 +1559,8 @@ void CBasicDemoDlg::SORT(int max_age, int min_hits, double distanceThreshold) {
     }
 }
 // Counting function
-// input: previous_tracking and current_tracking
-// ouput: counter
+// Input: previous_tracking and current_tracking
+// Ouput: counter
 void CBasicDemoDlg::SORT_Counting() {
 
     if (frameTrackingResult.size() == 0)
@@ -1626,7 +1591,6 @@ void CBasicDemoDlg::SORT_Counting() {
     // copy frame tracking results to previous tracking result
     previous_frameTrackingResult.clear();
     copy(frameTrackingResult.begin(), frameTrackingResult.end(), back_inserter(previous_frameTrackingResult));
-    //clear frame tracking result
     frameTrackingResult.clear();
     return;
 }
@@ -1635,9 +1599,7 @@ void CBasicDemoDlg::OnBnClickedStartCountButton() {
     
     b_start_count = true;
     //EnableControls(TRUE);
-    // Disable start count button
     GetDlgItem(IDC_START_COUNT_BUTTON)->EnableWindow(FALSE);
-    // Enable stop count button
     GetDlgItem(IDC_STOP_COUNT_BUTTON)->EnableWindow(TRUE);
     
     return;
@@ -1646,22 +1608,14 @@ void CBasicDemoDlg::OnBnClickedStopCountButton() {
     
     b_start_count = false;
     //EnableControls(TRUE);
-    // Enable start count button
     GetDlgItem(IDC_START_COUNT_BUTTON)->EnableWindow(TRUE);
-    // Disable stop count button
     GetDlgItem(IDC_STOP_COUNT_BUTTON)->EnableWindow(FALSE);
-    // Reset Kalman tracking
+    // Reset vector
     trackers.clear();
     KalmanTracker::kf_count = 0;
-    // Reset tracking box
     frameTrackingResult.clear();
     previous_frameTrackingResult.clear();
-    // Reset centers
-    current_centers.clear();
-    previous_centers.clear();
-
-    // write result to file
-    // open save file mode write
+    // write result to file, open save file mode write
     CStdioFile StdFile;
     CFileException ex;
     if (!StdFile.Open(global_filename, CFile::modeNoTruncate | CFile::modeWrite, &ex)) {

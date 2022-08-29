@@ -6,17 +6,8 @@
 #include "MvCamera.h"
 //opencv core
 #include <opencv2/core.hpp>
-#include <opencv2/imgcodecs.hpp>
+//#include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
-//cuda gpu opencv
-#include <opencv2/cudaarithm.hpp>
-#include <opencv2/cudaimgproc.hpp >
-#include <opencv2/cudabgsegm.hpp>
-#include <opencv2/core/cuda.hpp>
-#include <opencv2/cudafilters.hpp>
-#include <opencv2/dnn.hpp>
-#include <opencv2/cudawarping.hpp>
-// sort tracking
 #include "KalmanTracker.h"
 #include "Hungarian.h"
 #include <set>
@@ -144,14 +135,16 @@ public:
     bool Convert2Mat(MV_FRAME_OUT_INFO_EX* pstImageInfo, unsigned char* pData, cv::Mat *srcImage, Rect ROI, CString flipimage);
     void SORT(int max_age, int min_hits, double iouThreshold);
     double GetDistance(Point2f center_test, Point2f center_gt, float distance_threshold);
-    void ImageProcessing_GPU();
-    void AdaptiveThreshold_GPU(GpuMat gsrc, GpuMat &gdst);
+    void ImageProcessing();
     void SORT_Counting();
     void DisplayThread();
     void SettingInitial();
     afx_msg void OnBnClickedSettingButton();
 
 private:
+    float default_frame_rate;
+    float default_expose_time;
+    float default_gain;
     int real_fps = 0;
     bool b_start_count = false;
     uint64 frame_count = 0;
@@ -159,21 +152,10 @@ private:
     // Opencv variables
     Mat Mat_src;
     Mat dst; // dst is a binary image
-
-    GpuMat gpu_Mat_src, gpu_Mat_dst;
-    // blur
-    Ptr<cuda::Filter> cuda_filter;
-    // Adaptive threshold
-    Ptr<cuda::Filter> gpu_adaptiveThreshold_filter;
-    // morphological
     Mat mo_kernel;
-    Ptr<cuda::Filter> mo_filter;
-    // Backgruond subtraction
     Ptr<BackgroundSubtractor> pBackSub;
 
     // Detection
-    vector<Point> current_centers;
-    vector<Point> previous_centers;
     vector<TrackingCenter> detections; // detection in one frame
     vector<array<float, 7>> HuMoments; // contain stack [humoment] of 2->4 shirmps in one detection , pop up after classify
     vector<KalmanTracker> trackers;  // reset this in stop count
@@ -187,7 +169,5 @@ public:
     afx_msg void OnBnClickedLogButton();
 public:
     // define save directory
-    CString FilenameSave_Sort_data = L"Data_SORT.txt";
-    CStdioFile fileSortdaata;
     CString nFilename;
 };

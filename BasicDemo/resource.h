@@ -56,6 +56,7 @@
 #define IDC_EDIT1                       1032
 #define IDC_F1_EDIT                     1032
 #define IDC_TOLERANCE_X                 1032
+#define IDC_ROI_X0                      1032
 #define IDC_EDIT2                       1033
 #define ID_AVG_AREA                     1033
 #define IDC_EDIT3                       1034
@@ -114,8 +115,10 @@
 #define IDC_RADIO_BACKGROUNDSUBTRACTION 1055
 #define IDC_RADIO_ADAPTIVETHRESHOLD     1056
 #define IDC_RADIO_My_Tracking           1057
+#define IDC_ROI_WIDTH                   1057
 #define ID_MAX_AREA                     1058
 #define IDC_RADIO_SORT_TRACKING         1059
+#define IDC_ROI_Y0                      1059
 #define IDC_LIST3                       1060
 #define IDC_LOG_HISTORY_LIST            1060
 #define ID_MAX_WIDTH                    1060
@@ -126,6 +129,8 @@
 #define ID_FLIP_IMAGE                   1062
 #define ID_BSG_HISTORY2                 1063
 #define ID_BSG_LEARNING_RATE            1063
+#define IDC_EDIT18                      1064
+#define IDC_ROI_HEIGHT                  1064
 #define IDC_MORPHO_ITERATIONS           1071
 
 // Next default values for new objects

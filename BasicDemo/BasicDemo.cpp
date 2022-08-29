@@ -51,17 +51,13 @@ int adaptiveThreshold_C;
 CString morphological_method;
 int morphological_kernel;
 int morphological_iterations;
-
 // Counting
 int line_position;
 float max_distance;
-CString counting_method;
 // SORT parameters
 float  distance_threshold;
 int min_hits;
 int max_age;
-// my simple tracking parameter
-int tolerance_x;
 // Detection parameters
 double avg_area;
 double min_area;
@@ -70,6 +66,12 @@ int min_width;
 int min_height;
 int max_width;
 int max_height;
+// ROI
+unsigned int ROI_X0;
+unsigned int ROI_Y0;
+unsigned int ROI_Width;
+unsigned int ROI_Height;
+
 
 // CBasicDemoApp 
 BOOL CBasicDemoApp::InitInstance()

@@ -26,5 +26,3 @@ public:
 };
 
 extern CBasicDemoApp theApp;
-
-//extern CString global_save_filename = L"C:/Users/ADMIN/Desktop/Result.txt"; //error

@@ -93,8 +93,8 @@
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
     <EmbedManifest>true</EmbedManifest>
-    <IncludePath>C:\OpenCV\opencv460\build\install\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\OpenCV\opencv460\build\install\x64\vc16\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Users\Admin\Desktop\Hao Phuong Shrimp Counting CPU\BasicDemo\Camera_Includes;C:\OpenCV460CPU\opencv\build\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\OpenCV460CPU\opencv\build\x64\vc15\lib;C:\Users\Admin\Desktop\Hao Phuong Shrimp Counting CPU\BasicDemo\Camera_Libraries\win64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Midl>

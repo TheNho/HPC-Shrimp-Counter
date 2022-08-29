@@ -29,11 +29,11 @@ extern int morphological_iterations;
 
 extern int line_position;
 extern float max_distance;
-extern CString counting_method;
+//extern CString counting_method;
 extern float  distance_threshold;
 extern int min_hits;
 extern int max_age;
-extern int tolerance_x;
+//extern int tolerance_x;
 extern double avg_area;
 extern double min_area;
 extern double max_area;
@@ -41,6 +41,11 @@ extern int min_width;
 extern int min_height;
 extern int max_width;
 extern int max_height;
+// ROI
+extern unsigned int ROI_X0;
+extern unsigned int ROI_Y0;
+extern unsigned int ROI_Width;
+extern unsigned int ROI_Height;
 
 Setting_Window::Setting_Window(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_Setting_DIALOG, pParent)
@@ -68,15 +73,15 @@ Setting_Window::Setting_Window(CWnd* pParent /*=nullptr*/)
 	, setting_adaptiveThreshold_method(adaptiveThreshold_method)
 	, setting_adaptiveThreshold_KSize(adaptiveThreshold_KSize)
 	, setting_adaptiveThreshold_C(adaptiveThreshold_C)
-	, setting_tolerance_x(tolerance_x)
 	, setting_adaptiveThreshold_Checked(TRUE) // FALSE -> checked
 	, setting_bsg_Checked(TRUE)
-	, setting_MyTracking_Checked(TRUE)
-	, setting_SORTTracking_Checked(TRUE)
 	, setting_max_width(max_width)
 	, setting_max_height(max_height)
 	, setting_flip_image(flip_image)
-	
+	, setting_ROI_X0(ROI_X0)
+	, setting_ROI_Y0(ROI_Y0)
+	, setting_ROI_Width(ROI_Width)
+	, setting_ROI_Height(ROI_Height)
 {
 		
 }
@@ -109,16 +114,17 @@ void Setting_Window::DoDataExchange(CDataExchange* pDX) {
 	DDX_Text(pDX, ID_ADAPTIVETHRESHOLD_KSIZE, setting_adaptiveThreshold_KSize);
 	DDX_Text(pDX, ID_ADAPTIVETHRESHOLD_C, setting_adaptiveThreshold_C);
 	DDX_Text(pDX, ID_MAX_AREA, setting_max_area);
-	DDX_Text(pDX, IDC_TOLERANCE_X, setting_tolerance_x);
 	DDX_Radio(pDX, IDC_RADIO_ADAPTIVETHRESHOLD, setting_adaptiveThreshold_Checked);
 	DDX_Radio(pDX, IDC_RADIO_BACKGROUNDSUBTRACTION, setting_bsg_Checked);
-	DDX_Radio(pDX, IDC_RADIO_My_Tracking, setting_MyTracking_Checked);
-	DDX_Radio(pDX, IDC_RADIO_SORT_TRACKING, setting_SORTTracking_Checked);
 	DDX_Text(pDX, IDC_MORPHO_ITERATIONS, setting_morpho_iterations);
 	DDX_Text(pDX, ID_MAX_WIDTH, setting_max_width);
 	DDX_Text(pDX, ID_MAX_HEIGHT, setting_max_height);
 	DDX_CBString(pDX, ID_FLIP_IMAGE, setting_flip_image);
 	DDX_Text(pDX, ID_BSG_LEARNING_RATE, setting_bsg_learning_rate);
+	DDX_Text(pDX, IDC_ROI_X0, setting_ROI_X0);
+	DDX_Text(pDX, IDC_ROI_Y0, setting_ROI_Y0);
+	DDX_Text(pDX, IDC_ROI_WIDTH, setting_ROI_Width);
+	DDX_Text(pDX, IDC_ROI_HEIGHT, setting_ROI_Height);
 }
 
 // initial window
@@ -138,19 +144,6 @@ BOOL Setting_Window::OnInitDialog() {
 		EnableAdaptiveThreshold(FALSE);
 		EnableBackgroundSubtraction(TRUE);
 	}
-	setting_counting_method = counting_method;
-	if (setting_counting_method == L"My Simple Tracking"){
-		setting_MyTracking_Checked = FALSE;
-		setting_SORTTracking_Checked = TRUE;
-		EnableMyTracking(TRUE);
-		EnableSORTTracking(FALSE);
-	}
-	else if (setting_counting_method == L"SORT"){
-		setting_MyTracking_Checked = TRUE;
-		setting_SORTTracking_Checked = FALSE;
-		EnableMyTracking(FALSE);
-		EnableSORTTracking(TRUE);
-	}
 	HICON hIconS = AfxGetApp()->LoadIcon(IDI_SETTING_ICON);
 	SetIcon(hIconS, TRUE);
 	SetIcon(hIconS, FALSE);
@@ -165,8 +158,6 @@ BEGIN_MESSAGE_MAP(Setting_Window, CDialogEx)
 	ON_BN_CLICKED(ID_CANCEL, &Setting_Window::OnBnClickedCancel)
 	ON_BN_CLICKED(IDC_RADIO_BACKGROUNDSUBTRACTION, &Setting_Window::OnBnClickedRadioBackgroundsubtraction)
 	ON_BN_CLICKED(IDC_RADIO_ADAPTIVETHRESHOLD, &Setting_Window::OnBnClickedRadioAdaptivethreshold)
-	ON_BN_CLICKED(IDC_RADIO_My_Tracking, &Setting_Window::OnBnClickedRadioMyTracking)
-	ON_BN_CLICKED(IDC_RADIO_SORT_TRACKING, &Setting_Window::OnBnClickedRadioSortTracking)
 	ON_BN_CLICKED(ID_SAVE, &Setting_Window::OnBnClickedSave)
 	ON_BN_CLICKED(ID_LOAD, &Setting_Window::OnBnClickedLoad)
 END_MESSAGE_MAP()
@@ -207,7 +198,7 @@ bool Setting_Window::CheckParameters() { // Check parameters in current window
 		return false;
 	}
 	// Check image processing parameters
-	vector<CString> cblur_method = { L"MEDIAN", L"AVG", L"GAUSS" };
+	vector<CString> cblur_method = { L"AVG", L"GAUSS" };
 	vector<CString> cblur_kernel = { L"1", L"3", L"5", L"7", L"9" };
 	vector<CString> cmorpho_method = { L"Dilate", L"Erode", L"Open", L"Close" };
 	vector<CString> cmorpho_kernel = { L"1", L"3", L"5", L"7", L"9" };
@@ -251,7 +242,7 @@ bool Setting_Window::CheckParameters() { // Check parameters in current window
 	// sementation to binary
 	if (IsDlgButtonChecked(IDC_RADIO_BACKGROUNDSUBTRACTION)) {
 		// Check Background Subtraction Parameters
-		vector<CString> cbsg_method = { L"MOG2", L"MOG"};
+		vector<CString> cbsg_method = { L"MOG2"};
 		vector<CString> cbsg_shadow = { L"True", L"False"};
 		CString get_bsg_method, get_bsg_shadow, get_bsg_threshold,  get_bsg_history, get_bsg_learning_rate;
 		GetDlgItem(ID_BSG_METHOD)->GetWindowTextW(get_bsg_method);
@@ -304,7 +295,6 @@ bool Setting_Window::CheckParameters() { // Check parameters in current window
 		}
 	}
 	else if (IsDlgButtonChecked(IDC_RADIO_ADAPTIVETHRESHOLD)) {
-		
 		// check adaptive threshold
 		vector<CString> adaptiveThreshold_method = { L"MEAN_C", L"GAUSSIAN_C" };
 		CString get_adaptiveThreshold_method, get_adaptiveThreshold_KSize, get_adaptiveThreshold_C;
@@ -347,66 +337,51 @@ bool Setting_Window::CheckParameters() { // Check parameters in current window
 		return false;
 	}
 	
-	// tracking
-	if (IsDlgButtonChecked(IDC_RADIO_SORT_TRACKING)) {
-		
-		//Check SORT Tracking Parameters
-		CString get_distance_threshold, get_min_hits, get_max_age;
-		GetDlgItem(ID_DISTANCE_THRESHOLD)->GetWindowTextW(get_distance_threshold);
-		GetDlgItem(ID_MIN_HITS)->GetWindowTextW(get_min_hits);
-		GetDlgItem(ID_MAX_AGE)->GetWindowTextW(get_max_age);
-		// Sort Distance threshold
-		if (CheckFloat(get_distance_threshold) == true) {
-			if (_ttof(get_distance_threshold) <= 0) {
-				AfxMessageBox(L"Distance Threshold must be Positive!");
-				return false;
-			}
-		}
-		else {
-			AfxMessageBox(L"Distance Threshold Error!");
-			return false;
-		}
-		// sort min hits
-		if (CheckInt(get_min_hits) == false) {
-			AfxMessageBox(L"Min Hits must be Int!");
-			return false;
-		}
-		if (_ttoi(get_min_hits) <= 0) {
-			AfxMessageBox(L"Min Hits must be Positive!");
-			return false;
-		}
-		// sort max age
-		if (CheckInt(get_max_age) == false) {
-			AfxMessageBox(L"Max Age must be Int!");
-			return false;
-		}
-		if (_ttoi(get_max_age) <= 0) {
-			AfxMessageBox(L"Max Age must be Positive!");
-			return false;
-		}
-	}
-	else if (IsDlgButtonChecked(IDC_RADIO_My_Tracking)) {
-		
-		CString get_tolerrance_x;
-		GetDlgItem(IDC_TOLERANCE_X)->GetWindowTextW(get_tolerrance_x);
-		if (CheckInt(get_tolerrance_x) == false) {
-			AfxMessageBox(L"Tolerance X must be Int!");
+	//Check SORT Tracking Parameters
+	CString get_distance_threshold, get_min_hits, get_max_age;
+	GetDlgItem(ID_DISTANCE_THRESHOLD)->GetWindowTextW(get_distance_threshold);
+	GetDlgItem(ID_MIN_HITS)->GetWindowTextW(get_min_hits);
+	GetDlgItem(ID_MAX_AGE)->GetWindowTextW(get_max_age);
+	// Sort Distance threshold
+	if (CheckFloat(get_distance_threshold) == true) {
+		if (_ttof(get_distance_threshold) <= 0) {
+			AfxMessageBox(L"Distance Threshold must be Positive!");
 			return false;
 		}
 	}
 	else {
-		AfxMessageBox(L"Tracking Method Error!");
+		AfxMessageBox(L"Distance Threshold must be Float!");
+		return false;
+	}
+	// Sort min hits
+	if (CheckInt(get_min_hits) == false) {
+		AfxMessageBox(L"Min Hits must be Int!");
+		return false;
+	}
+	if (_ttoi(get_min_hits) <= 0) {
+		AfxMessageBox(L"Min Hits must be Positive!");
+		return false;
+	}
+	// sort max age
+	if (CheckInt(get_max_age) == false) {
+		AfxMessageBox(L"Max Age must be Int!");
+		return false;
+	}
+	if (_ttoi(get_max_age) <= 0) {
+		AfxMessageBox(L"Max Age must be Positive!");
 		return false;
 	}
 	
 	//Check counting parameters
-	CString get_line_position, get_max_square_distance;
+	CString get_line_position, get_max_distance;
 	GetDlgItem(ID_LINE_POSITION)->GetWindowTextW(get_line_position);
-	GetDlgItem(ID_MAX_DISTANCE)->GetWindowTextW(get_max_square_distance);
+	GetDlgItem(ID_MAX_DISTANCE)->GetWindowTextW(get_max_distance);
 	// line position
 	if (CheckInt(get_line_position) == true) {
-		if (_ttoi(get_line_position) <= 0 || _ttoi(get_line_position) >= 480) {
-			AfxMessageBox(L"Line Position must be Int (0, 480)!");
+		if (_ttoi(get_line_position) <= 0 || _ttoi(get_line_position) >= Image_Height) {
+			CString message;
+			message.Format(L"Line Position must be Int (0, %d)!", Image_Height);
+			AfxMessageBox(message);
 			return false;
 		}
 	}
@@ -414,12 +389,12 @@ bool Setting_Window::CheckParameters() { // Check parameters in current window
 		AfxMessageBox(L"Line Position must be Int!");
 		return false;
 	}
-	// max square distance
-	if (CheckFloat(get_max_square_distance) == false) {
+	// max distance
+	if (CheckFloat(get_max_distance) == false) {
 		AfxMessageBox(L"Max Square Distance must be float!");
 		return false;
 	}
-	if (_ttof(get_max_square_distance) <=0) {
+	if (_ttof(get_max_distance) <=0) {
 		AfxMessageBox(L"Max Square Distance must be Positive!");
 		return false;
 	}
@@ -495,6 +470,61 @@ bool Setting_Window::CheckParameters() { // Check parameters in current window
 		AfxMessageBox(L"Max Height must be Postitive!");
 		return false;
 	}
+	// Check ROI
+	// Check Detection parameters
+	CString get_ROI_X0, get_ROI_Y0, get_ROI_Width, get_ROI_Height;
+	GetDlgItem(IDC_ROI_X0)->GetWindowTextW(get_ROI_X0);
+	GetDlgItem(IDC_ROI_Y0)->GetWindowTextW(get_ROI_Y0);
+	GetDlgItem(IDC_ROI_WIDTH)->GetWindowTextW(get_ROI_Width);
+	GetDlgItem(IDC_ROI_HEIGHT)->GetWindowTextW(get_ROI_Height);
+	// X0
+	if (CheckInt(get_ROI_X0) == false) {
+		AfxMessageBox(L"ROI X0 must be Int!");
+		return false;
+	}
+	if (_ttoi(get_ROI_X0) < 0 || _ttoi(get_ROI_X0) >= Image_Width) {
+		CString message;
+		message.Format(L"ROI X0 must be Postitive and smaller than %d!", Image_Width);
+		AfxMessageBox(message);
+		return false;
+	}
+	// Y0
+	if (CheckInt(get_ROI_Y0) == false) {
+		AfxMessageBox(L"ROI Y0 must be Int!");
+		return false;
+	}
+	if (_ttoi(get_ROI_Y0) < 0 || _ttoi(get_ROI_Y0) >= Image_Height) {
+		CString message;
+		message.Format(L"ROI Y0 must be Postitive and smaller than %d!", Image_Height);
+		AfxMessageBox(message);
+		return false;
+	}
+	// Width
+	if (CheckInt(get_ROI_Width) == false) {
+		AfxMessageBox(L"ROI Width must be Int!");
+		return false;
+	}
+	if (_ttoi(get_ROI_Width)<=0) {
+		AfxMessageBox(L"ROI Width must be Postitive!");
+		return false;
+	}
+	if (_ttoi(get_ROI_Width)+_ttoi(get_ROI_X0) > Image_Width) {
+		AfxMessageBox(L"ROI Width or X0 must be smaller!");
+		return false;
+	}
+	// Height
+	if (CheckInt(get_ROI_Height) == false) {
+		AfxMessageBox(L"ROI Height must be Int!");
+		return false;
+	}
+	if (_ttoi(get_ROI_Height)<=0) {
+		AfxMessageBox(L"ROI Height must be Postitive!");
+		return false;
+	}
+	if (_ttoi(get_ROI_Height) + _ttoi(get_ROI_Y0) > Image_Height) {
+		AfxMessageBox(L"ROI Height or Y0 must be smaller!");
+		return false;
+	}
 	// all check done!
 	return true;
 }
@@ -529,14 +559,6 @@ void Setting_Window::EnableAdaptiveThreshold(BOOL CHECKED) {
 	GetDlgItem(ID_ADAPTIVETHRESHOLD_KSIZE)->EnableWindow(CHECKED);
 	GetDlgItem(ID_ADAPTIVETHRESHOLD_C)->EnableWindow(CHECKED);
 }
-void Setting_Window::EnableMyTracking(BOOL CHECKED) {
-	GetDlgItem(IDC_TOLERANCE_X)->EnableWindow(CHECKED);
-}
-void Setting_Window::EnableSORTTracking(BOOL CHECKED) {
-	GetDlgItem(ID_DISTANCE_THRESHOLD)->EnableWindow(CHECKED);
-	GetDlgItem(ID_MIN_HITS)->EnableWindow(CHECKED);
-	GetDlgItem(ID_MAX_AGE)->EnableWindow(CHECKED);
-}
 
 void Setting_Window::OnBnClickedRadioBackgroundsubtraction()
 {
@@ -552,23 +574,9 @@ void Setting_Window::OnBnClickedRadioAdaptivethreshold()
 	EnableBackgroundSubtraction(FALSE);
 	setting_segment_binary_method = L"Adaptive Threshold";
 }
-void Setting_Window::OnBnClickedRadioMyTracking()
-{
-	// TODO: Add your control notification handler code here
-	EnableMyTracking(TRUE);
-	EnableSORTTracking(FALSE);
-	setting_counting_method = L"My Simple Tracking";
-}
-void Setting_Window::OnBnClickedRadioSortTracking()
-{
-	// TODO: Add your control notification handler code here
-	EnableSORTTracking(TRUE);
-	EnableMyTracking(FALSE);
-	setting_counting_method = L"SORT";
-}
 
 CString Setting_Window::get_parameters_from_window() {
-	// get parameters to file
+	// Get parameters to file
 	CString data;
 	data = data + L"Hao Phuong - Parameters File" + L"\n"; // signature // line 0
 	// Blur
@@ -621,22 +629,26 @@ CString Setting_Window::get_parameters_from_window() {
 	data = data + L"KSize:" + data_detection_method + L"\n"; // line 22
 	data_detection_method.Format(L"%d", setting_adaptiveThreshold_C);
 	data = data + L"C:" + data_detection_method + L"\n"; // line 23
-	// Counting method
-	data = data + L"Tracking_Method:" + setting_counting_method + L"\n";
-	CString data_counting_method;
-	// SORT counting
-	data_counting_method.Format(L"%f", setting_distance_threshold);
-	data = data + L"Distance_Threshold:" + data_counting_method + L"\n"; // line 24
-	data_counting_method.Format(L"%d", setting_min_hits);
-	data = data + L"Min_Hits:" + data_counting_method + L"\n"; // line 25
-	data_counting_method.Format(L"%d", setting_max_age);
-	data = data + L"Max_Age:" + data_counting_method + L"\n"; // line 27
-	// Distance counting
-	data_counting_method.Format(L"%d", setting_tolerance_x);
-	data = data + L"Tolerance_X:" + data_counting_method + L"\n"; // line 28
+	// SORT tracking
+	CString SORT_data;
+	SORT_data.Format(L"%f", setting_distance_threshold);
+	data = data + L"Distance_Threshold:" + SORT_data + L"\n"; // line 24
+	SORT_data.Format(L"%d", setting_min_hits);
+	data = data + L"Min_Hits:" + SORT_data + L"\n"; // line 25
+	SORT_data.Format(L"%d", setting_max_age);
+	data = data + L"Max_Age:" + SORT_data + L"\n"; // line 26
 	// Flip image
-	data = data + L"Flip_Image:" + setting_flip_image + L"\n"; // line 29
-
+	data = data + L"Flip_Image:" + setting_flip_image + L"\n"; // line 27
+	// ROI parameters
+	CString ROI_data;
+	ROI_data.Format(L"%d", setting_ROI_X0);
+	data = data + L"ROI_X0:" + ROI_data + L"\n"; // line 28
+	ROI_data.Format(L"%d", setting_ROI_Y0);
+	data = data + L"ROI_Y0:" + ROI_data + L"\n"; // line 29
+	ROI_data.Format(L"%d", setting_ROI_Width);
+	data = data + L"ROI_Width:" + ROI_data + L"\n"; // line 30
+	ROI_data.Format(L"%d", setting_ROI_Height);
+	data = data + L"ROI_Height:" + ROI_data + L"\n"; // line 31
 	return data;
 }
 void Setting_Window::OnBnClickedSave() {
@@ -673,7 +685,7 @@ BOOL Setting_Window::get_parameters_from_file(CString setting_filename) {
 	// get all line text save to vector
 	if (!Paras_File.Open(setting_filename, CFile::modeNoTruncate | CFile::modeRead, &Log_ex)) { 
 		CString error;
-		error.Format(L"Cannot open file Setting.txt!\nCause = %d! ", Log_ex.m_cause);
+		error.Format(L"Cannot open file Setting!\nCause = %d!", Log_ex.m_cause);
 		AfxMessageBox(error);
 		return FALSE;
 	}
@@ -697,13 +709,13 @@ BOOL Setting_Window::get_parameters_from_file(CString setting_filename) {
 		}
 		Paras_File.Close();
 	}
-	// check signature
+	// Check signature
 	CString data_ = vector_get_parameters[0];
 	if (data_ != L"Hao Phuong - Parameters File") {
-		AfxMessageBox(L"File is not parameters file!");
+		AfxMessageBox(L"File is not Hao Phuong parameters file!");
 		return FALSE;
 	}
-
+	// Get all parameters
 	data_ = vector_get_parameters[1];
 	data_.Replace(L"Blur_Method:", L"");
 	setting_blur_method = data_;
@@ -807,58 +819,61 @@ BOOL Setting_Window::get_parameters_from_file(CString setting_filename) {
 		data_AT.Replace(L"C:", L"");
 		setting_adaptiveThreshold_C = _ttoi(data_AT);
 	}
-
-	data_ = vector_get_parameters[24];
-	data_.Replace(L"Tracking_Method:", L"");
-	setting_counting_method = data_;
-	if (setting_counting_method == L"SORT") {
-		setting_MyTracking_Checked = TRUE;
-		setting_SORTTracking_Checked = FALSE;
-		EnableMyTracking(FALSE);
-		EnableSORTTracking(TRUE);
-
-		CString data_SORT = vector_get_parameters[25];
-		data_SORT.Replace(L"Distance_Threshold:", L"");
-		setting_distance_threshold = _ttof(data_SORT);
-
-		data_SORT = vector_get_parameters[26];
-		data_SORT.Replace(L"Min_Hits:", L"");
-		setting_min_hits = _ttoi(data_SORT);
-
-		data_SORT = vector_get_parameters[27];
-		data_SORT.Replace(L"Max_Age:", L"");
-		setting_max_age = _ttoi(data_SORT);
+	else {
+		AfxMessageBox(L"Segment to Binary Method in Setting File Error!");
+		return FALSE;
 	}
-	else if (setting_counting_method == L"My Simple Tracking") {
-		setting_MyTracking_Checked = FALSE;
-		setting_SORTTracking_Checked = TRUE;
-		EnableMyTracking(TRUE);
-		EnableSORTTracking(FALSE);
-		
-		CString data_TX = vector_get_parameters[28];
-		data_TX.Replace(L"Tolerance_X:", L"");
-		setting_tolerance_x = _ttoi(data_TX);
-	}
+
+	CString data_SORT = vector_get_parameters[24];
+	data_SORT.Replace(L"Distance_Threshold:", L"");
+	setting_distance_threshold = _ttof(data_SORT);
+
+	data_SORT = vector_get_parameters[25];
+	data_SORT.Replace(L"Min_Hits:", L"");
+	setting_min_hits = _ttoi(data_SORT);
+
+	data_SORT = vector_get_parameters[26];
+	data_SORT.Replace(L"Max_Age:", L"");
+	setting_max_age = _ttoi(data_SORT);
 	
 	CString data_flip_image;
-	data_flip_image = vector_get_parameters[29];
+	data_flip_image = vector_get_parameters[27];
 	data_flip_image.Replace(L"Flip_Image:", L"");
 	setting_flip_image = data_flip_image;
+
+	CString ROI_data;
+	ROI_data = vector_get_parameters[28];
+	ROI_data.Replace(L"ROI_X0:", L"");
+	setting_ROI_X0 = _ttoi(ROI_data);
+	ROI_data = vector_get_parameters[29];
+	ROI_data.Replace(L"ROI_Y0:", L"");
+	setting_ROI_Y0 = _ttoi(ROI_data);
+	ROI_data = vector_get_parameters[30];
+	ROI_data.Replace(L"ROI_Width:", L"");
+	setting_ROI_Width = _ttoi(ROI_data);
+	ROI_data = vector_get_parameters[31];
+	ROI_data.Replace(L"ROI_Height:", L"");
+	setting_ROI_Height = _ttoi(ROI_data);
 
 	return TRUE;
 }
 void Setting_Window::OnBnClickedLoad() {
-	UpdateData(TRUE); //update wintext to parameters to save current window
+	
 	LPCTSTR pszFilter = _T("Parameters(*.parameters)|*.parameters||");
 	CFileDialog parasFile(TRUE, _T("parameters"), NULL, OFN_HIDEREADONLY | OFN_FILEMUSTEXIST, pszFilter);
 	if (IDOK == parasFile.DoModal()) {
 		//CStdioFile file(parasFile.GetFileName(), CFile::modeRead);
 		if (parasFile.GetFileExt() == _T("parameters")) {
 			BOOL ret1 = get_parameters_from_file(parasFile.GetFolderPath() + L"/" + parasFile.GetFileName());
-			UpdateData(FALSE); // update parameters to window
-			bool ret2 = CheckParameters();
-			if (TRUE == ret1&&ret2) {
-				AfxMessageBox(L"Load Setting Success!!!!");
+			if (TRUE == ret1) {
+				UpdateData(FALSE); // update parameters to window
+				bool ret2 = CheckParameters();
+				if (true == ret2) {
+					AfxMessageBox(L"Load Setting Success!!!!");
+				}
+			}
+			else {
+				UpdateData(TRUE); //update wintext to parameters to save current window
 			}
 		}
 		else {

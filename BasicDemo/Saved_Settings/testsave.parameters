@@ -1,6 +1,6 @@
 Hao Phuong - Parameters File
 Blur_Method:AVG
-Blur_Kernel:3
+Blur_Kernel:1
 Mopho_Method:Open
 Morpho_Kernel:5
 Morpho_iterations:2
@@ -13,7 +13,7 @@ Min_Height:3
 Max_Height:50
 Line_Position:400
 Max_Distance:100.000000
-Segment_To_Binary_Method:Adaptive Threshold
+Segment_To_Binary_Method:Background Subtraction
 Background_Subtraction_Method:MOG2
 Background_Subtraction_Shadow:False
 Background_Subtraction_Threshold:25.000000
@@ -22,9 +22,11 @@ Background_Subtraction_Learning_Rate:-1.000000
 Adaptive_Threshod_Method:MEAN_C
 KSize:29
 C:20
-Tracking_Method:SORT
 Distance_Threshold:50.000000
-Min_Hits:1
-Max_Age:3
-Tolerance_X:5
+Min_Hits:3
+Max_Age:10
 Flip_Image:Y
+ROI_X0:30
+ROI_Y0:0
+ROI_Width:590
+ROI_Height:480
