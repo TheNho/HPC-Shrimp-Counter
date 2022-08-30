@@ -9,10 +9,6 @@
 #include "BasicDemo.h"
 #include "BasicDemoDlg.h"
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#endif
-
 // Global variables
 // Parameters Setting 
 // Using global to load current parameters to Setting window
@@ -109,7 +105,7 @@ CBasicDemoDlg::CBasicDemoDlg(CWnd* pParent /*=NULL*/)
     // Load icon
 	//m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
     m_hIcon = AfxGetApp()->LoadIcon(IDI_HPC_ICON);
-    memset(&m_stImageInfo, 0, sizeof(MV_FRAME_OUT_INFO_EX));
+    std::memset(&m_stImageInfo, 0, sizeof(MV_FRAME_OUT_INFO_EX));
 }
 
 void CBasicDemoDlg::DoDataExchange(CDataExchange* pDX) {
@@ -204,6 +200,7 @@ BOOL CBasicDemoDlg::OnInitDialog() {
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
+
 
 void CBasicDemoDlg::SettingInitial() {
     // Install the first run variables
@@ -566,7 +563,7 @@ int CBasicDemoDlg::SetTriggerSource() {
 //en:Save Image / SDK function
 int CBasicDemoDlg::SaveImage(enum MV_SAVE_IAMGE_TYPE enSaveImageType) {
     MV_SAVE_IMG_TO_FILE_PARAM stSaveFileParam;
-    memset(&stSaveFileParam, 0, sizeof(MV_SAVE_IMG_TO_FILE_PARAM));
+    std::memset(&stSaveFileParam, 0, sizeof(MV_SAVE_IMG_TO_FILE_PARAM));
 
     EnterCriticalSection(&m_hSaveImageMux);
     if (m_pSaveImageBuf == NULL || m_stImageInfo.enPixelType == 0) {
@@ -589,18 +586,18 @@ int CBasicDemoDlg::SaveImage(enum MV_SAVE_IAMGE_TYPE enSaveImageType) {
 
     //en:jpg image nQuality range is (50-99], png image nQuality range is [0-9]
     if (MV_Image_Bmp == stSaveFileParam.enImageType) {
-        sprintf_s(stSaveFileParam.pImagePath, 256, "Image_w%d_h%d_fn%03d.bmp", stSaveFileParam.nWidth, stSaveFileParam.nHeight, m_stImageInfo.nFrameNum);
+        sprintf_s(stSaveFileParam.pImagePath, 256, "Saved_Image/Image_w%d_h%d_fn%03d.bmp", stSaveFileParam.nWidth, stSaveFileParam.nHeight, m_stImageInfo.nFrameNum);
     }
     else if (MV_Image_Jpeg == stSaveFileParam.enImageType) {
         stSaveFileParam.nQuality = 80;
-        sprintf_s(stSaveFileParam.pImagePath, 256, "Image_w%d_h%d_fn%03d.jpg", stSaveFileParam.nWidth, stSaveFileParam.nHeight, m_stImageInfo.nFrameNum);
+        sprintf_s(stSaveFileParam.pImagePath, 256, "Saved_Image/Image_w%d_h%d_fn%03d.jpg", stSaveFileParam.nWidth, stSaveFileParam.nHeight, m_stImageInfo.nFrameNum);
     }
     else if (MV_Image_Tif == stSaveFileParam.enImageType) {
-        sprintf_s(stSaveFileParam.pImagePath, 256, "Image_w%d_h%d_fn%03d.tif", stSaveFileParam.nWidth, stSaveFileParam.nHeight, m_stImageInfo.nFrameNum);
+        sprintf_s(stSaveFileParam.pImagePath, 256, "Saved_Image/Image_w%d_h%d_fn%03d.tif", stSaveFileParam.nWidth, stSaveFileParam.nHeight, m_stImageInfo.nFrameNum);
     }
     else if (MV_Image_Png == stSaveFileParam.enImageType) {
         stSaveFileParam.nQuality = 8;
-        sprintf_s(stSaveFileParam.pImagePath, 256, "Image_w%d_h%d_fn%03d.png", stSaveFileParam.nWidth, stSaveFileParam.nHeight, m_stImageInfo.nFrameNum);
+        sprintf_s(stSaveFileParam.pImagePath, 256, "Saved_Image/Image_w%d_h%d_fn%03d.png", stSaveFileParam.nWidth, stSaveFileParam.nHeight, m_stImageInfo.nFrameNum);
     }
 
     int nRet = m_pcMyCamera->SaveImageToFile(&stSaveFileParam);
@@ -705,15 +702,42 @@ int CBasicDemoDlg::GrabThreadProcess() {
     return MV_OK;
 }
 
-//en:Click Find Device button:Enumeration / SDK function
+//en:Click Find Device button:Enumeration
 void CBasicDemoDlg::OnBnClickedEnumButton() {
+    // Check if camera driver installed
+    bool driver_installed = false;
+    LPVOID drivers[ARRAY_SIZE];
+    DWORD cbNeeded;
+    int cDrivers, i;
+    if (EnumDeviceDrivers(drivers, sizeof(drivers), &cbNeeded) && cbNeeded < sizeof(drivers)){
+        TCHAR szDriver[ARRAY_SIZE];
+        cDrivers = cbNeeded / sizeof(drivers[0]);
+        for (i = 0; i < cDrivers; i++) {
+            if (GetDeviceDriverBaseName(drivers[i], szDriver, sizeof(szDriver) / sizeof(szDriver[0]))) {
+                if (_tcscmp(szDriver, driver_name) == 0) {
+                    driver_installed = true;
+                    break;
+                }
+            }
+        }
+    }
+    if (driver_installed == false) {
+        int message = AfxMessageBox(L"Install Camera Driver???", MB_YESNO);
+        if (message == IDYES) {
+            system(dir_driver_install); // install driver
+            return;
+        }
+        else
+            return;
+    }
+    
     CString strMsg;
 
     m_ctrlDeviceCombo.ResetContent();
-    memset(&m_stDevList, 0, sizeof(MV_CC_DEVICE_INFO_LIST));
+    std::memset(&m_stDevList, 0, sizeof(MV_CC_DEVICE_INFO_LIST));
 
     //en:Enumerate all devices within subnet
-    int nRet = CMvCamera::EnumDevices(MV_GIGE_DEVICE | MV_USB_DEVICE, &m_stDevList);
+    int nRet = CMvCamera::EnumDevices(MV_USB_DEVICE, &m_stDevList);
     if (MV_OK != nRet) {
         return;
     }
@@ -724,31 +748,8 @@ void CBasicDemoDlg::OnBnClickedEnumButton() {
         if (NULL == pDeviceInfo) {
             continue;
         }
-
         wchar_t* pUserName = NULL;
-        if (pDeviceInfo->nTLayerType == MV_GIGE_DEVICE) {
-            int nIp1 = ((m_stDevList.pDeviceInfo[i]->SpecialInfo.stGigEInfo.nCurrentIp & 0xff000000) >> 24);
-            int nIp2 = ((m_stDevList.pDeviceInfo[i]->SpecialInfo.stGigEInfo.nCurrentIp & 0x00ff0000) >> 16);
-            int nIp3 = ((m_stDevList.pDeviceInfo[i]->SpecialInfo.stGigEInfo.nCurrentIp & 0x0000ff00) >> 8);
-            int nIp4 = (m_stDevList.pDeviceInfo[i]->SpecialInfo.stGigEInfo.nCurrentIp & 0x000000ff);
-
-            if (strcmp("", (LPCSTR)(pDeviceInfo->SpecialInfo.stGigEInfo.chUserDefinedName)) != 0) {
-                DWORD dwLenUserName = MultiByteToWideChar(CP_ACP, 0, (LPCSTR)(pDeviceInfo->SpecialInfo.stGigEInfo.chUserDefinedName), -1, NULL, 0);
-                pUserName = new wchar_t[dwLenUserName];
-                MultiByteToWideChar(CP_ACP, 0, (LPCSTR)(pDeviceInfo->SpecialInfo.stGigEInfo.chUserDefinedName), -1, pUserName, dwLenUserName);
-            }
-            else {
-                char strUserName[256] = {0};
-                sprintf_s(strUserName, 256, "%s %s (%s)", pDeviceInfo->SpecialInfo.stGigEInfo.chManufacturerName,
-                    pDeviceInfo->SpecialInfo.stGigEInfo.chModelName,
-                    pDeviceInfo->SpecialInfo.stGigEInfo.chSerialNumber);
-                DWORD dwLenUserName = MultiByteToWideChar(CP_ACP, 0, (LPCSTR)(strUserName), -1, NULL, 0);
-                pUserName = new wchar_t[dwLenUserName];
-                MultiByteToWideChar(CP_ACP, 0, (LPCSTR)(strUserName), -1, pUserName, dwLenUserName);
-            }
-            strMsg.Format(_T("[%d]GigE:    %s  (%d.%d.%d.%d)"), i, pUserName, nIp1, nIp2, nIp3, nIp4);
-        }
-        else if (pDeviceInfo->nTLayerType == MV_USB_DEVICE) {
+        if (pDeviceInfo->nTLayerType == MV_USB_DEVICE) {
             if (strcmp("", (char*)pDeviceInfo->SpecialInfo.stUsb3VInfo.chUserDefinedName) != 0) {
                 DWORD dwLenUserName = MultiByteToWideChar(CP_ACP, 0, (LPCSTR)(pDeviceInfo->SpecialInfo.stUsb3VInfo.chUserDefinedName), -1, NULL, 0);
                 pUserName = new wchar_t[dwLenUserName];
@@ -783,6 +784,7 @@ void CBasicDemoDlg::OnBnClickedEnumButton() {
     m_ctrlDeviceCombo.SetCurSel(0);
 
     EnableControls(TRUE);
+
 }
 
 // en:Click Open button: Open Device / SDK function
@@ -951,7 +953,7 @@ void CBasicDemoDlg::OnBnClickedStartGrabbingButton() {
         return;
     }
 
-    memset(&m_stImageInfo, 0, sizeof(MV_FRAME_OUT_INFO_EX));
+    std::memset(&m_stImageInfo, 0, sizeof(MV_FRAME_OUT_INFO_EX));
 
     m_bThreadState = TRUE;
 

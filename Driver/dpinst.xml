@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<dpinst>
+  <suppressWizard/>
+  <legacyMode/>
+  <forceIfDriverIsNotBetter/>
+  <deleteBinaries/>
+</dpinst>

@@ -95,6 +95,7 @@
     <EmbedManifest>true</EmbedManifest>
     <IncludePath>C:\Users\Admin\Desktop\Hao Phuong Shrimp Counting CPU\BasicDemo\Camera_Includes;C:\OpenCV460CPU\opencv\build\include;$(IncludePath)</IncludePath>
     <LibraryPath>C:\OpenCV460CPU\opencv\build\x64\vc15\lib;C:\Users\Admin\Desktop\Hao Phuong Shrimp Counting CPU\BasicDemo\Camera_Libraries\win64;$(LibraryPath)</LibraryPath>
+    <CopyLocalProjectReference>true</CopyLocalProjectReference>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Midl>
@@ -216,7 +217,7 @@
       <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>MvCameraControl.lib;opencv_world460.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>MvCameraControl.lib;opencv_world460.lib;Psapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)$(ProjectName).exe</OutputFile>
       <AdditionalLibraryDirectories>$(MVCAM_COMMON_RUNENV)\Libraries\win64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -224,6 +225,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <TargetMachine>MachineX64</TargetMachine>
+      <UACExecutionLevel>AsInvoker</UACExecutionLevel>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

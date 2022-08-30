@@ -14,6 +14,15 @@
 // sub window
 #include "Setting_Window.h"
 #include "LogHistory.h"
+#include <psapi.h> // for check if camera driver installed
+
+#define ARRAY_SIZE 1024
+#define PSAPI_VERSION 1
+
+#ifdef _DEBUG
+#define new DEBUG_NEW
+#endif
+
 
 using namespace std;
 using namespace cv;
@@ -170,4 +179,8 @@ public:
 public:
     // define save directory
     CString nFilename;
+private:
+    // variable of driver installing
+    char dir_driver_install[ARRAY_SIZE] = "Driver\\install.bat";
+    TCHAR driver_name[ARRAY_SIZE] = TEXT("mvu3v.sys");
 };
