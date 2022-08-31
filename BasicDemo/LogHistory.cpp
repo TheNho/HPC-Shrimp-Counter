@@ -7,7 +7,6 @@
 #include "LogHistory.h"
 //#include "afxdialogex.h"
 
-
 // LogHistory dialog
 
 IMPLEMENT_DYNAMIC(LogHistory, CDialogEx)

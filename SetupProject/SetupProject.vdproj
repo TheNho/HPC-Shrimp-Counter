@@ -525,7 +525,7 @@
             "SourcePath" = "8:..\\BasicDemo\\res\\HPCl_logo1.ico"
             "TargetName" = "8:HPCl_logo1.ico"
             "Tag" = "8:"
-            "Folder" = "8:_5DD99C1DA0894FCFB49D7E8FB9E05713"
+            "Folder" = "8:_FE34A9369DE44E0EBA1164A13988FEF7"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
@@ -920,13 +920,13 @@
                         {
                         }
                     }
-                    "{9EF0B969-E518-4E46-987F-47570745A589}:_5DD99C1DA0894FCFB49D7E8FB9E05713"
+                    "{9EF0B969-E518-4E46-987F-47570745A589}:_FE34A9369DE44E0EBA1164A13988FEF7"
                     {
-                    "Name" = "8:Saved_Image"
+                    "Name" = "8:icoin"
                     "AlwaysCreate" = "11:FALSE"
                     "Condition" = "8:"
                     "Transitive" = "11:FALSE"
-                    "Property" = "8:_0D4AF7BBF9E347C38AF5680454B84877"
+                    "Property" = "8:_4A798E150D7C41DD94BC6EC85C03F4DD"
                         "Folders"
                         {
                         }
@@ -967,7 +967,7 @@
         "Keywords" = "8:"
         "ARPCOMMENTS" = "8:"
         "ARPURLINFOABOUT" = "8:"
-        "ARPPRODUCTICON" = "8:"
+        "ARPPRODUCTICON" = "8:_72D11607D3AC496CBB03BBB5B2A5D73E"
         "ARPIconIndex" = "3:0"
         "SearchPath" = "8:..\\..\\..\\..\\..\\Hao Phuong Coporation\\Hao Phuong Shrimps Counting\\Driver;..\\..\\..\\..\\..\\Hao Phuong Coporation\\Hao Phuong Shrimps Counting\\Libraries"
         "UseSystemSearchPath" = "11:TRUE"
@@ -1499,7 +1499,7 @@
         {
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_4E33BAB6B9404F2FB11E2800A50974BB"
             {
-            "SourcePath" = "8:..\\BasicDemo\\x64\\Release\\Shrimp Counting.exe"
+            "SourcePath" = "8:..\\BasicDemo\\x64\\Release\\Shrimps Counting.exe"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_B345541E344D427C95A826AE8346DE97"

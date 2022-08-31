@@ -19,6 +19,7 @@ typedef struct _TrackingCenter
 	int64 frame;
 	int64 id;
 	Point2f center;
+	vector<double> hu_moments;
 }TrackingCenter;
 
 // This class represents the internel state of individual tracked objects observed as bounding box.
@@ -55,7 +56,6 @@ public:
 	int m_hit_streak;
 	int m_age;
 	uint64 m_id;
-
 private:
 	void init_kf(StateType stateMat);
 

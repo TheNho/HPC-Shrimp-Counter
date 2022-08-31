@@ -1,4 +1,4 @@
-REM --add the following to the top of your bat file to run as admin--
+REM -- Running file as admin --
 @echo off
 :: BatchGotAdmin
 :-------------------------------------

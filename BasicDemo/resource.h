@@ -10,7 +10,6 @@
 #define IDD_ABOUTBOX                    100
 #define IDS_ABOUTBOX                    101
 #define IDD_BasicDemo_DIALOG            102
-#define IDR_MAINFRAME                   128
 #define IDD_DIALOG1                     130
 #define IDD_Setting_DIALOG              130
 #define IDI_HPC_ICON                    140

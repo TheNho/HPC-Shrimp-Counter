@@ -19,7 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectName>Shrimp Counting</ProjectName>
+    <ProjectName>Shrimps Counting</ProjectName>
     <ProjectGuid>{96B023D7-3943-460A-B18D-4BFAF9C60F39}</ProjectGuid>
     <RootNamespace>BasicDemo</RootNamespace>
     <Keyword>MFCProj</Keyword>
@@ -260,7 +260,6 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="res\BasicDemo.ico" />
     <Image Include="res\HPCl_logo.ico" />
     <Image Include="res\log_history.ico" />
     <Image Include="res\settings2.ico" />

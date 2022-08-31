@@ -53,10 +53,10 @@ extern unsigned int ROI_Y0;
 extern unsigned int ROI_Width;
 extern unsigned int ROI_Height;
 
-// global filename, used in all windows
+//Global filename, used in all windows
 extern CString global_filename;
 
-// CAboutDlg dialog used for App About
+//CAboutDlg dialog used for App About
 class CAboutDlg : public CDialog {
 public:
 	CAboutDlg();
@@ -82,7 +82,7 @@ void CAboutDlg::DoDataExchange(CDataExchange* pDX) {
 BEGIN_MESSAGE_MAP(CAboutDlg, CDialog)
 END_MESSAGE_MAP()
 
-// CBasicDemoDlg dialog
+//CBasicDemoDlg dialog
 CBasicDemoDlg::CBasicDemoDlg(CWnd* pParent /*=NULL*/)
     : CDialog(CBasicDemoDlg::IDD, pParent)
     , m_pcMyCamera(NULL)
@@ -162,7 +162,7 @@ unsigned int __stdcall GrabThread(void* pUser) {
     return 0;
 }
 
-// CBasicDemoDlg message handlers
+//CBasicDemoDlg message handlers
 BOOL CBasicDemoDlg::OnInitDialog() {
 	CDialog::OnInitDialog();
 
@@ -181,7 +181,7 @@ BOOL CBasicDemoDlg::OnInitDialog() {
 			pSysMenu->AppendMenu(MF_STRING, IDM_ABOUTBOX, strAboutMenu);
 		}
 	}
-    // Set font for shrimp number in dialog
+    // Set font for shrimps number in dialog
     Font_big.CreatePointFont(400, _T("Microsoft Sans Serif"));
     GetDlgItem(IDC_SHIRMP_NUMBER_STATIC)->SetFont(&Font_big);
     
@@ -201,13 +201,13 @@ BOOL CBasicDemoDlg::OnInitDialog() {
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
 
-
 void CBasicDemoDlg::SettingInitial() {
     // Install the first run variables
     // local variables
     default_frame_rate = 200;
     default_expose_time = 2000;
     default_gain = 10;
+    SVM = ml::SVM::load(SVM_dir);
     // global variables
     flip_image = L"Y"; // None;X;Y
     blur_method = L"AVG"; //AVG;GAUSS
@@ -242,7 +242,6 @@ void CBasicDemoDlg::SettingInitial() {
     ROI_Height = 480;
 
     // Initialize global directory to save result file
-    nFilename = L"Result.result";
     global_filename = nFilename;
 
     // Segmentation
@@ -315,8 +314,8 @@ void CBasicDemoDlg::OnPaint() {
 	}
 }
 
-// The system calls this function to obtain the cursor to display while the user drags
-//  the minimized window.
+//The system calls this function to obtain the cursor to display while the user drags
+//the minimized window.
 HCURSOR CBasicDemoDlg::OnQueryDragIcon() {
 	return static_cast<HCURSOR>(m_hIcon);
 }
@@ -365,7 +364,7 @@ void CBasicDemoDlg::ShowErrorMsg(CString csMessage, int nErrorNum) {
     else {
         CString nE;
         nE.Format(L"%d", nErrorNum);
-        errorMsg = csMessage + L": Error=" + nE + L"\n";
+        errorMsg = csMessage + L"Error=" + nE + L"\n";
     }
 
     switch(nErrorNum) {
@@ -386,6 +385,7 @@ void CBasicDemoDlg::ShowErrorMsg(CString csMessage, int nErrorNum) {
     case MV_E_ACCESS_DENIED:	errorMsg += "No permission ";                                                   break;
     case MV_E_BUSY:             errorMsg += "Device is busy, or network disconnected ";                         break;
     case MV_E_NETER:            errorMsg += "Network error ";                                                   break;
+    case MV_E_INVALID_ADDRESS:  errorMsg += "Folder not found";                                                break;
     }
 
     MessageBox(errorMsg, TEXT("PROMPT"), MB_OK | MB_ICONWARNING);
@@ -439,7 +439,7 @@ int CBasicDemoDlg::GetTriggerMode() {
     return MV_OK;
 }
 
-// en:Set Trigger Mode / SDK function
+//en:Set Trigger Mode / SDK function
 int CBasicDemoDlg::SetTriggerMode()
 {
     return m_pcMyCamera->SetEnumValue("TriggerMode", m_nTriggerMode);
@@ -459,7 +459,7 @@ int CBasicDemoDlg::GetExposureTime() {
     return MV_OK;
 }
 
-// en:Set Exposure Time / SDK function
+//en:Set Exposure Time / SDK function
 int CBasicDemoDlg::SetExposureTime() {
     // en:Adjust these two exposure mode to allow exposure time effective
     int nRet = m_pcMyCamera->SetEnumValue("ExposureMode", MV_EXPOSURE_MODE_TIMED);
@@ -472,7 +472,7 @@ int CBasicDemoDlg::SetExposureTime() {
     return m_pcMyCamera->SetFloatValue("ExposureTime", (float)m_dExposureEdit);
 }
 
-// en:Get Gain / SDK function
+//en:Get Gain / SDK function
 int CBasicDemoDlg::GetGain() {
     MVCC_FLOATVALUE stFloatValue = {0};
 
@@ -562,6 +562,13 @@ int CBasicDemoDlg::SetTriggerSource() {
 
 //en:Save Image / SDK function
 int CBasicDemoDlg::SaveImage(enum MV_SAVE_IAMGE_TYPE enSaveImageType) {
+    // check folder Saved_Image existing, if not create folder
+    DWORD fileAttr = GetFileAttributes(L"Saved_Image");
+    if (fileAttr == INVALID_FILE_ATTRIBUTES && (fileAttr & FILE_ATTRIBUTE_DIRECTORY)) {
+        //create folder
+         int code = _wmkdir(L"Saved_Image");
+         return MV_E_INVALID_ADDRESS;
+    }
     MV_SAVE_IMG_TO_FILE_PARAM stSaveFileParam;
     std::memset(&stSaveFileParam, 0, sizeof(MV_SAVE_IMG_TO_FILE_PARAM));
 
@@ -722,7 +729,7 @@ void CBasicDemoDlg::OnBnClickedEnumButton() {
         }
     }
     if (driver_installed == false) {
-        int message = AfxMessageBox(L"Install Camera Driver???", MB_YESNO);
+        int message = AfxMessageBox(L"Install Camera's Driver???", MB_YESNO);
         if (message == IDYES) {
             system(dir_driver_install); // install driver
             return;
@@ -787,7 +794,7 @@ void CBasicDemoDlg::OnBnClickedEnumButton() {
 
 }
 
-// en:Click Open button: Open Device / SDK function
+//en:Click Open button: Open Device / SDK function
 void CBasicDemoDlg::OnBnClickedOpenButton() {
     if (TRUE == m_bOpenDevice || NULL != m_pcMyCamera) {
         return;
@@ -897,7 +904,7 @@ void CBasicDemoDlg::OnBnClickedTriggerModeRadio() {
     }
 }
 
-// Thread Display
+//Thread Display
 unsigned int __stdcall Display(void* pUser) {
     if (pUser) {
         CBasicDemoDlg* display_Cam = (CBasicDemoDlg*)pUser;
@@ -947,7 +954,7 @@ void CBasicDemoDlg::DisplayThread() {
     return;
 }
 
-// en:Click Start button
+//en:Click Start button
 void CBasicDemoDlg::OnBnClickedStartGrabbingButton() {
     if (FALSE == m_bOpenDevice || TRUE == m_bStartGrabbing || NULL == m_pcMyCamera) {
         return;
@@ -957,7 +964,7 @@ void CBasicDemoDlg::OnBnClickedStartGrabbingButton() {
 
     m_bThreadState = TRUE;
 
-    // Start geting and processing image thread
+    // Start getting and processing image thread
     unsigned int nThreadID_0 = 0;
     m_hGrabThread = (void*)_beginthreadex( NULL , 0 , GrabThread , this, 0 , &nThreadID_0 );
     if (NULL == m_hGrabThread) {
@@ -986,7 +993,7 @@ void CBasicDemoDlg::OnBnClickedStartGrabbingButton() {
     EnableControls(TRUE);
 }
 
-// en:Click Stop button
+//en:Click Stop button
 void CBasicDemoDlg::OnBnClickedStopGrabbingButton() {
     if (FALSE == m_bOpenDevice || FALSE == m_bStartGrabbing || NULL == m_pcMyCamera) {
         return;
@@ -1100,7 +1107,7 @@ void CBasicDemoDlg::OnBnClickedSoftwareTriggerCheck() {
     }
 }
 
-// en:Click Execute button / SDK function
+//en:Click Execute button / SDK function
 void CBasicDemoDlg::OnBnClickedSoftwareOnceButton() {
     if (TRUE != m_bStartGrabbing)
     {
@@ -1110,9 +1117,13 @@ void CBasicDemoDlg::OnBnClickedSoftwareOnceButton() {
     m_pcMyCamera->CommandExecute("TriggerSoftware");
 }
 
-//en:Click Save BMP button / SDK function
+//en:Click Save BMP button 
 void CBasicDemoDlg::OnBnClickedSaveBmpButton() {
     int nRet = SaveImage(MV_Image_Bmp);
+    if (nRet == MV_E_INVALID_ADDRESS) {
+        ShowErrorMsg(TEXT("Create new folder Saved_Image\n"), nRet);
+        return;
+    }
     if (MV_OK != nRet)
     {
         ShowErrorMsg(TEXT("Save bmp fail"), nRet);
@@ -1121,9 +1132,12 @@ void CBasicDemoDlg::OnBnClickedSaveBmpButton() {
     ShowErrorMsg(TEXT("Save bmp succeed"), nRet);
 }
 
-//en:Click Save JPG button / SDK function
 void CBasicDemoDlg::OnBnClickedSaveJpgButton() {
     int nRet = SaveImage(MV_Image_Jpeg);
+    if (nRet == MV_E_INVALID_ADDRESS) {
+        ShowErrorMsg(TEXT("Create new folder Saved_Image\n"), nRet);
+        return;
+    }
     if (MV_OK != nRet) {
         ShowErrorMsg(TEXT("Save jpg fail"), nRet);
         return;
@@ -1133,6 +1147,10 @@ void CBasicDemoDlg::OnBnClickedSaveJpgButton() {
 
 void CBasicDemoDlg::OnBnClickedSaveTiffButton() {
     int nRet = SaveImage(MV_Image_Tif);
+    if (nRet == MV_E_INVALID_ADDRESS) {
+        ShowErrorMsg(TEXT("Create new folder Saved_Image\n"), nRet);
+        return;
+    }
     if (MV_OK != nRet) {
         ShowErrorMsg(TEXT("Save tiff fail"), nRet);
         return;
@@ -1142,6 +1160,10 @@ void CBasicDemoDlg::OnBnClickedSaveTiffButton() {
 
 void CBasicDemoDlg::OnBnClickedSavePngButton() {
     int nRet = SaveImage(MV_Image_Png);
+    if (nRet == MV_E_INVALID_ADDRESS) {
+        ShowErrorMsg(TEXT("Create new folder Saved_Image\n"), nRet);
+        return;
+    }
     if (MV_OK != nRet) {
         ShowErrorMsg(TEXT("Save png fail"), nRet);
         return;
@@ -1149,7 +1171,7 @@ void CBasicDemoDlg::OnBnClickedSavePngButton() {
     ShowErrorMsg(TEXT("Save png succeed"), nRet);
 }
 
-// en:Exit from upper right corner / SDK function
+//en:Exit from upper right corner / SDK function
 void CBasicDemoDlg::OnClose() {
     PostQuitMessage(0);
     CloseDevice();
@@ -1369,7 +1391,7 @@ void CBasicDemoDlg::ImageProcessing() {
     else if (segment_binary_method == L"Background Subtraction") {
         pBackSub->apply(src_processing, dst, bsg_learning_rate);
     }
-    else{
+    else {
         AfxMessageBox(L"Image Processing Error Binary Segment Method!");
         return;
     }
@@ -1419,15 +1441,22 @@ void CBasicDemoDlg::ImageProcessing() {
             continue;
        
         // get center point
-        Moments M = moments(contours[i]);
-        Point2f center_point((M.m10 / M.m00), (M.m01 / M.m00));
-
+        M = moments(contours[i]);
+        center_point = Point2f((M.m10 / M.m00), (M.m01 / M.m00));
+        // get hu-moments
+        hu.clear(); // maybe bug this line
+        cv::HuMoments(M, hu);
+        // Log scale hu moments
+        for (int i = 0; i < hu.size(); i++) {
+            hu[i] = -1 * copysign(1.0, hu[i]) * log10(abs(hu[i]));
+        }
         // get tracking center
         TrackingCenter detect_center;
         detect_center.id = -1;
         detect_center.frame = frame_count;
         detect_center.center = center_point;
-        detections.push_back(detect_center); // push rectangle box to detection
+        detect_center.hu_moments = hu;
+        detections.push_back(detect_center);
     }
 }
 
@@ -1583,8 +1612,8 @@ void CBasicDemoDlg::SORT_Counting() {
                         continue;
                     }
                     else {
-                        counter++;
-                        
+                        int response = round(SVM->predict(previous_frameTrackingResult[i].hu_moments));
+                        counter += response; 
                     }
                 }
             }
@@ -1617,7 +1646,7 @@ void CBasicDemoDlg::OnBnClickedStopCountButton() {
     KalmanTracker::kf_count = 0;
     frameTrackingResult.clear();
     previous_frameTrackingResult.clear();
-    // write result to file, open save file mode write
+    // write result to file, open and save file mode write
     CStdioFile StdFile;
     CFileException ex;
     if (!StdFile.Open(global_filename, CFile::modeNoTruncate | CFile::modeWrite, &ex)) {
@@ -1639,7 +1668,7 @@ void CBasicDemoDlg::OnBnClickedStopCountButton() {
     CString text_counter;
     text_counter.Format(L"%lld", counter);
     CString text_result = text_date + L" " + text_time + L" " + text_counter + L"\n";
-    // set pointer to the end file
+    // set pointer to the end of file
     StdFile.SeekToEnd();
     // write result
     StdFile.WriteString(text_result);

@@ -9,30 +9,24 @@
 #define new DEBUG_NEW
 #endif
 
-
-// CBasicDemoApp
-
 BEGIN_MESSAGE_MAP(CBasicDemoApp, CWinAppEx)
 	ON_COMMAND(ID_HELP, &CWinApp::OnHelp)
 END_MESSAGE_MAP()
 
-
 // CBasicDemoApp
-
 CBasicDemoApp::CBasicDemoApp()
 {
-	// TODO: 
-	// InitInstance 
+	// TODO: InitInstance 
 }
 
 // CBasicDemoApp global
 CBasicDemoApp theApp;
 
-// global filename variable using in all window
+// global filename variable using in all windows
 CString global_filename;
 CString flip_image;
 // Parameters Setting default in the first run
-	// blur image
+// blur image
 CString blur_method;
 int blur_kernel;
 // segmentation to binary
@@ -72,17 +66,14 @@ unsigned int ROI_Y0;
 unsigned int ROI_Width;
 unsigned int ROI_Height;
 
-
-// CBasicDemoApp 
 BOOL CBasicDemoApp::InitInstance()
 {
-	//  Windows XP 
+	//Windows XP 
 	//ComCtl32.dll 
 	//InitCommonControlsEx()
 	INITCOMMONCONTROLSEX InitCtrls;
 	InitCtrls.dwSize = sizeof(InitCtrls);
-	// 
-	// 
+	
 	InitCtrls.dwICC = ICC_WIN95_CLASSES;
 	InitCommonControlsEx(&InitCtrls);
 
@@ -90,8 +81,7 @@ BOOL CBasicDemoApp::InitInstance()
 
 	AfxEnableControlContainer();
 
-
-	SetRegistryKey(_T("HPC SHRIMP COUNTER APP"));
+	SetRegistryKey(_T("HPC SHRIMPS COUNTER APP"));
 	
 	// Open Main windown
 	CBasicDemoDlg dlg;
@@ -99,17 +89,14 @@ BOOL CBasicDemoApp::InitInstance()
 	INT_PTR nResponse = dlg.DoModal();
 	if (nResponse == IDOK)
 	{
-		// TODO: 
+		// TODO: Press OK
 		 
 	}
 	else if (nResponse == IDCANCEL)
 	{
-		// TODO: 
+		// TODO: Press Cancel
 		 
 	}
 
-	//  FALSE 
-	  
-	
 	return FALSE;
 }

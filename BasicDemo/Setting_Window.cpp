@@ -29,11 +29,11 @@ extern int morphological_iterations;
 
 extern int line_position;
 extern float max_distance;
-//extern CString counting_method;
+
 extern float  distance_threshold;
 extern int min_hits;
 extern int max_age;
-//extern int tolerance_x;
+
 extern double avg_area;
 extern double min_area;
 extern double max_area;
@@ -64,7 +64,7 @@ Setting_Window::Setting_Window(CWnd* pParent /*=nullptr*/)
 	, setting_min_hits(min_hits)
 	, setting_max_age(max_age)
 	, setting_line_position(line_position)
-	, setting_max_distance(max_distance) // square (distance^2)
+	, setting_max_distance(max_distance)
 	, setting_avg_area(avg_area)
 	, setting_min_area(min_area)
 	, setting_max_area(max_area)

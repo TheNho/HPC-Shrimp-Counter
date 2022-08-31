@@ -8,6 +8,7 @@
 #include <opencv2/core.hpp>
 //#include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
+#include <opencv2/ml.hpp>
 #include "KalmanTracker.h"
 #include "Hungarian.h"
 #include <set>
@@ -23,11 +24,8 @@
 #define new DEBUG_NEW
 #endif
 
-
 using namespace std;
 using namespace cv;
-using namespace cv::cuda;
-using namespace cuda;
 
 // CBasicDemoDlg dialog
 class CBasicDemoDlg : public CDialog
@@ -106,12 +104,6 @@ private:
     void*                   d_hGrabThread;           // display thread handle, to call thread 2 display
     BOOL                    m_bThreadState;
 
-    // for sort y value
-    struct _sort_point_y_ {
-        bool operator() (Point pt1, Point pt2) { 
-            return (pt1.y > pt2.y); }
-    } sort_point_y;
-
 public:
     /*en:Initialization*/
     afx_msg void OnBnClickedEnumButton();               //en:Find Devices
@@ -165,6 +157,11 @@ private:
     Ptr<BackgroundSubtractor> pBackSub;
 
     // Detection
+    vector<double> hu;
+    Moments M;
+    Point2f center_point;
+    Ptr<ml::SVM> SVM;
+    String SVM_dir = "SVM.xml";
     vector<TrackingCenter> detections; // detection in one frame
     vector<array<float, 7>> HuMoments; // contain stack [humoment] of 2->4 shirmps in one detection , pop up after classify
     vector<KalmanTracker> trackers;  // reset this in stop count
@@ -178,8 +175,9 @@ public:
     afx_msg void OnBnClickedLogButton();
 public:
     // define save directory
-    CString nFilename;
+    CString nFilename = L"Result.result";
 private:
+    //char dir_save_image[ARRAY_SIZE] = "Saved_Image/";
     // variable of driver installing
     char dir_driver_install[ARRAY_SIZE] = "Driver\\install.bat";
     TCHAR driver_name[ARRAY_SIZE] = TEXT("mvu3v.sys");
