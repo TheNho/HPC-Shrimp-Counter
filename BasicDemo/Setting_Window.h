@@ -1,6 +1,8 @@
 #pragma once
 #include <vector>
+#include <opencv2/ml.hpp>
 
+using namespace cv;
 using namespace std;
 // Setting_Window dialog
 
@@ -53,6 +55,7 @@ private:
 	bool Setting_Window::CheckFloat(CString text);
 	void Setting_Window::EnableBackgroundSubtraction(BOOL CHECKED);
 	void Setting_Window::EnableAdaptiveThreshold(BOOL CHECKED);
+	bool Setting_Window::load_data_to_train_SVM(CString direction);
 	
 public:
 	CString setting_adaptiveThreshold_method;
@@ -75,4 +78,8 @@ public:
 	unsigned int setting_ROI_Y0;
 	unsigned int setting_ROI_Width;
 	unsigned int setting_ROI_Height;
+private:
+	CString setting_dir_data_train_svm;
+public:
+	afx_msg void OnBnClickedButtonTrainSvm();
 };

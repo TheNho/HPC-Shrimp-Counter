@@ -204,10 +204,10 @@ BOOL CBasicDemoDlg::OnInitDialog() {
 void CBasicDemoDlg::SettingInitial() {
     // Install the first run variables
     // local variables
+    SVM = ml::SVM::load(SVM_dir);
     default_frame_rate = 200;
     default_expose_time = 2000;
     default_gain = 10;
-    SVM = ml::SVM::load(SVM_dir);
     // global variables
     flip_image = L"Y"; // None;X;Y
     blur_method = L"AVG"; //AVG;GAUSS
@@ -1208,6 +1208,8 @@ void CBasicDemoDlg::OnBnClickedSettingButton() {
     open_setting_windown->DoModal();
     // click ok -> update_setting = true
     if (open_setting_windown->update_setting == true) {
+        // reload SVM
+        SVM = ml::SVM::load(SVM_dir);
         // get image processing paramerters from setting window
         flip_image = open_setting_windown->setting_flip_image;
         segment_binary_method = open_setting_windown->setting_segment_binary_method;

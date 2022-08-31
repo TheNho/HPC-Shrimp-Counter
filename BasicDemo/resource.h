@@ -47,6 +47,7 @@
 #define IDC_SHIRMP_NUMBER_STATIC        1028
 #define IDC_BUTTON1                     1029
 #define IDC_STOP_COUNT_BUTTON           1029
+#define IDC_BUTTON_TRAIN_SVM            1029
 #define IDC_BUTTON2                     1030
 #define IDC_BUTTON                      1030
 #define IDC_START_COUNT_BUTTON          1030
@@ -131,6 +132,8 @@
 #define IDC_EDIT18                      1064
 #define IDC_ROI_HEIGHT                  1064
 #define IDC_MORPHO_ITERATIONS           1071
+#define IDC_EDIT16                      1072
+#define IDC_EDIT_DIR_DATA_TRAIN_SVM     1072
 
 // Next default values for new objects
 // 
@@ -138,7 +141,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        147
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1072
+#define _APS_NEXT_CONTROL_VALUE         1073
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

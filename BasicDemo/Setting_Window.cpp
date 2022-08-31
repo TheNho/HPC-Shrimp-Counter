@@ -82,6 +82,7 @@ Setting_Window::Setting_Window(CWnd* pParent /*=nullptr*/)
 	, setting_ROI_Y0(ROI_Y0)
 	, setting_ROI_Width(ROI_Width)
 	, setting_ROI_Height(ROI_Height)
+	, setting_dir_data_train_svm(_T(""))
 {
 		
 }
@@ -125,6 +126,7 @@ void Setting_Window::DoDataExchange(CDataExchange* pDX) {
 	DDX_Text(pDX, IDC_ROI_Y0, setting_ROI_Y0);
 	DDX_Text(pDX, IDC_ROI_WIDTH, setting_ROI_Width);
 	DDX_Text(pDX, IDC_ROI_HEIGHT, setting_ROI_Height);
+	DDX_Text(pDX, IDC_EDIT_DIR_DATA_TRAIN_SVM, setting_dir_data_train_svm);
 }
 
 // initial window
@@ -160,6 +162,7 @@ BEGIN_MESSAGE_MAP(Setting_Window, CDialogEx)
 	ON_BN_CLICKED(IDC_RADIO_ADAPTIVETHRESHOLD, &Setting_Window::OnBnClickedRadioAdaptivethreshold)
 	ON_BN_CLICKED(ID_SAVE, &Setting_Window::OnBnClickedSave)
 	ON_BN_CLICKED(ID_LOAD, &Setting_Window::OnBnClickedLoad)
+	ON_BN_CLICKED(IDC_BUTTON_TRAIN_SVM, &Setting_Window::OnBnClickedButtonTrainSvm)
 END_MESSAGE_MAP()
 
 void Setting_Window::OnBnClickedOk() {
@@ -883,7 +886,76 @@ void Setting_Window::OnBnClickedLoad() {
 	return;
 }
 
+bool Setting_Window::load_data_to_train_SVM(CString direction) {
+	// format in file
+	// label hu[0] hu[1] hu[2] hu[3] hu[4] hu[5] hu[6]
+	CStdioFile Paras_File;
+	CFileException Log_ex;
+	if (!Paras_File.Open(direction, CFile::modeNoTruncate | CFile::modeRead, &Log_ex)) {
+		CString error;
+		error.Format(L"Cannot open file SVM data!\nCause = %d!", Log_ex.m_cause);
+		AfxMessageBox(error);
+		return false;
+	}
+	// check empty file
+	if (Paras_File.GetLength() == 0) {
+		AfxMessageBox(L"File is empty!");
+		return false;
+	}
+	vector<CString> vector_line_text;
+	CString lineText;
+	while (Paras_File.ReadString(lineText)) {
+		if (lineText == L"") {
+			continue;
+		}
+		else {
+			vector_line_text.push_back(lineText);
+		}
+	}
+	Paras_File.Close();
+	vector<int> label;
+	vector<vector<double>> data;
+	for (int j = 0; j < vector_line_text.size(); j++) {
+		int i = 0; // substring index to extract
+		CString sToken = _T("");
+		vector<double> line_data;
+		while (AfxExtractSubString(sToken, vector_line_text[j], i, ' '))
+		{
+			if (sToken != L"" &&
+				sToken != L" " &&
+				sToken != L"\n") {
+				if (i == 0)
+					label.push_back(_ttoi(sToken));
+				else
+					line_data.push_back(_ttof(sToken));
+			}
+			i++;
+		}
+		data.push_back(line_data);
+	}
+	Mat trainingDataMat(data.size(), data[0].size(), CV_32F, data.data());
+	Mat labelsMat(label.size(), 1, CV_32SC1, label.data());
+	// Train the SVM
+	Ptr<ml::SVM> svm = ml::SVM::create();
+	svm->setType(ml::SVM::C_SVC);
+	svm->setKernel(ml::SVM::LINEAR);
+	svm->setTermCriteria(TermCriteria(TermCriteria::MAX_ITER, 100, 1e-6));
+	bool ret = svm->train(trainingDataMat, ml::ROW_SAMPLE, labelsMat);
+	if (ret) {
+		svm->save("SVM.xml");
+		AfxMessageBox(L"Trainning SVM Success");
+		return true;
+	}
+	return false;
+}
 // BOOL radio button bi loi
 // ban dau khoi tao nhan gia tri TRUE -> khong check
 // nhan bo check nhan gia tri -1, checked nhan gia tri 1
 // khong check, nhan gia tri 0 = FALSE
+
+void Setting_Window::OnBnClickedButtonTrainSvm()
+{
+	UpdateData(TRUE);
+	load_data_to_train_SVM(setting_dir_data_train_svm);
+	// TODO: Add your control notification handler code here
+}
