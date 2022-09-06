@@ -1366,7 +1366,6 @@ bool CBasicDemoDlg::Convert2Mat(MV_FRAME_OUT_INFO_EX* pstImageInfo, unsigned cha
 
 //Input: Mat_src in gray scale
 //Output1: vector<Trackingbox> detections
-//This function run in cuda gpu and contours cpu
 void CBasicDemoDlg::ImageProcessing() {
     // check Mat_src input
     if (Mat_src.empty()) return;
@@ -1448,10 +1447,6 @@ void CBasicDemoDlg::ImageProcessing() {
         // get hu-moments
         hu.clear(); // maybe bug this line
         cv::HuMoments(M, hu);
-        // Log scale hu moments
-        for (int h = 0; h < hu.size(); h++) {
-            hu[h] = -1 * copysign(1.0, hu[h]) * log10(abs(hu[h]));
-        }
         // get tracking center
         TrackingCenter detect_center;
         detect_center.id = -1;
@@ -1614,7 +1609,12 @@ void CBasicDemoDlg::SORT_Counting() {
                         continue;
                     }
                     else {
-                        int response = round(SVM->predict(previous_frameTrackingResult[i].hu_moments));
+                        // Log scale hu-moments
+                        for (int h = 0; h < 7; h++) {
+                            huMat.at<float>(h) = -1 * copysign(1.0, previous_frameTrackingResult[i].hu_moments[h]) 
+                                                    * log10(abs(previous_frameTrackingResult[i].hu_moments[h]));
+                        }
+                        int response = round(SVM->predict(huMat));
                         counter += response; 
                     }
                 }

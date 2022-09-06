@@ -51,6 +51,8 @@
 #define IDC_BUTTON2                     1030
 #define IDC_BUTTON                      1030
 #define IDC_START_COUNT_BUTTON          1030
+#define IDC_BUTTON_TRAIN_SVM2           1030
+#define IDC_BUTTON_LOAD_FILE_TRAIN_SVM  1030
 #define IDC_BUTTON3                     1031
 #define IDC_RESET_NUMBER_BUTTON         1031
 #define IDC_EDIT1                       1032
@@ -132,7 +134,6 @@
 #define IDC_EDIT18                      1064
 #define IDC_ROI_HEIGHT                  1064
 #define IDC_MORPHO_ITERATIONS           1071
-#define IDC_EDIT16                      1072
 #define IDC_EDIT_DIR_DATA_TRAIN_SVM     1072
 
 // Next default values for new objects

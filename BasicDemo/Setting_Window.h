@@ -82,4 +82,5 @@ private:
 	CString setting_dir_data_train_svm;
 public:
 	afx_msg void OnBnClickedButtonTrainSvm();
+	afx_msg void OnBnClickedButtonLoadFileTrainSvm();
 };

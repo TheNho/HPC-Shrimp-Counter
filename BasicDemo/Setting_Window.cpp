@@ -1,7 +1,7 @@
 // Setting_Window.cpp : implementation file
-// This code implemented by The Nho 2022
+// This code is implemented by The Nho 2022
 
-//#include "pch.h" // error, replace by stdafx.h
+//#include "pch.h" // error, replaced by stdafx.h
 //#include "afxdialogex.h"
 #include "stdafx.h"
 #include "BasicDemo.h"
@@ -10,7 +10,7 @@
 // Setting_Window dialog
 IMPLEMENT_DYNAMIC(Setting_Window, CDialogEx)
 
-// Global variable getting current parameters when initial window
+// Global variables getting current parameters on the first initial window
 extern CString flip_image;
 extern CString blur_method;
 extern int blur_kernel;
@@ -163,6 +163,7 @@ BEGIN_MESSAGE_MAP(Setting_Window, CDialogEx)
 	ON_BN_CLICKED(ID_SAVE, &Setting_Window::OnBnClickedSave)
 	ON_BN_CLICKED(ID_LOAD, &Setting_Window::OnBnClickedLoad)
 	ON_BN_CLICKED(IDC_BUTTON_TRAIN_SVM, &Setting_Window::OnBnClickedButtonTrainSvm)
+	ON_BN_CLICKED(IDC_BUTTON_LOAD_FILE_TRAIN_SVM, &Setting_Window::OnBnClickedButtonLoadFileTrainSvm)
 END_MESSAGE_MAP()
 
 void Setting_Window::OnBnClickedOk() {
@@ -867,7 +868,7 @@ void Setting_Window::OnBnClickedLoad() {
 	if (IDOK == parasFile.DoModal()) {
 		//CStdioFile file(parasFile.GetFileName(), CFile::modeRead);
 		if (parasFile.GetFileExt() == _T("parameters")) {
-			BOOL ret1 = get_parameters_from_file(parasFile.GetFolderPath() + L"/" + parasFile.GetFileName());
+			BOOL ret1 = get_parameters_from_file(parasFile.GetFolderPath() + L"\\" + parasFile.GetFileName());
 			if (TRUE == ret1) {
 				UpdateData(FALSE); // update parameters to window
 				bool ret2 = CheckParameters();
@@ -888,10 +889,10 @@ void Setting_Window::OnBnClickedLoad() {
 
 bool Setting_Window::load_data_to_train_SVM(CString direction) { // Tested -> OK
 	// format in file
-	// label hu[0] hu[1] hu[2] hu[3] hu[4] hu[5] hu[6]
+	// label hu[0] hu[1] hu[2] hu[3] hu[4] hu[5] hu[6] \n
 	Ptr<ml::SVM> svm = ml::SVM::create();
 	svm->setType(ml::SVM::C_SVC);
-	svm->setKernel(ml::SVM::LINEAR);
+	svm->setKernel(ml::SVM::RBF);
 	svm->setTermCriteria(TermCriteria(TermCriteria::EPS + cv::TermCriteria::MAX_ITER,
 									  1000,	// number iteration to compute
 									  1e-6));	// the desired accuracy
@@ -922,6 +923,18 @@ void Setting_Window::OnBnClickedButtonTrainSvm()
 	UpdateData(TRUE);
 	load_data_to_train_SVM(setting_dir_data_train_svm);
 	// TODO: Add your control notification handler code here
+}
+
+void Setting_Window::OnBnClickedButtonLoadFileTrainSvm()
+{
+	LPCTSTR pszFilter = _T("SVMDataFile(*.svm)|*.svm||");
+	CFileDialog parasFile(TRUE, _T("svm"), NULL, OFN_HIDEREADONLY | OFN_FILEMUSTEXIST, pszFilter);
+	if (IDOK == parasFile.DoModal()) {
+		if (parasFile.GetFileExt() == _T("svm")) {
+			setting_dir_data_train_svm = parasFile.GetFolderPath() + L"\\" + parasFile.GetFileName();
+			UpdateData(FALSE); // update parameters to window
+		}
+	}
 }
 
 // BOOL radio button

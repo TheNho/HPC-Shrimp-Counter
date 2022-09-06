@@ -87,6 +87,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_615B1AFF4D8441EFA210E012D7DD2568"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_6C431672FECA49B09BD4715DA760BDD6"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -160,12 +166,6 @@
         "Entry"
         {
         "MsmKey" = "8:_CA3755B03F064B778B13285D6AC8940F"
-        "OwnerKey" = "8:_UNDEFINED"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_D14CFCDE558144A283EF7F44542A8B9C"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -512,6 +512,26 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_615B1AFF4D8441EFA210E012D7DD2568"
+            {
+            "SourcePath" = "8:..\\BasicDemo\\data.svm"
+            "TargetName" = "8:data.svm"
+            "Tag" = "8:"
+            "Folder" = "8:_B345541E344D427C95A826AE8346DE97"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_6C431672FECA49B09BD4715DA760BDD6"
             {
             "SourcePath" = "8:..\\Driver\\dpinst.exe"
@@ -756,26 +776,6 @@
             {
             "SourcePath" = "8:..\\Libraries\\avutil-55.dll"
             "TargetName" = "8:avutil-55.dll"
-            "Tag" = "8:"
-            "Folder" = "8:_B345541E344D427C95A826AE8346DE97"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:FALSE"
-            "IsDependency" = "11:FALSE"
-            "IsolateTo" = "8:"
-            }
-            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_D14CFCDE558144A283EF7F44542A8B9C"
-            {
-            "SourcePath" = "8:..\\BasicDemo\\data.txt"
-            "TargetName" = "8:data.txt"
             "Tag" = "8:"
             "Folder" = "8:_B345541E344D427C95A826AE8346DE97"
             "Condition" = "8:"

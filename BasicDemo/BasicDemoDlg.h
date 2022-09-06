@@ -1,4 +1,4 @@
-// Shrimp Counting Project
+// Shrimps Counting Project
 // Implement by The Nho 2022
 // BasicDemoDlg.h : header file
 #pragma once
@@ -158,6 +158,7 @@ private:
 
     // Detection
     vector<double> hu;
+    Mat huMat = Mat::zeros(1, 7, CV_32F);
     Moments M;
     Point2f center_point;
     Ptr<ml::SVM> SVM;
