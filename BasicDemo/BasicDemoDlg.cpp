@@ -1449,8 +1449,8 @@ void CBasicDemoDlg::ImageProcessing() {
         hu.clear(); // maybe bug this line
         cv::HuMoments(M, hu);
         // Log scale hu moments
-        for (int i = 0; i < hu.size(); i++) {
-            hu[i] = -1 * copysign(1.0, hu[i]) * log10(abs(hu[i]));
+        for (int h = 0; h < hu.size(); h++) {
+            hu[h] = -1 * copysign(1.0, hu[h]) * log10(abs(hu[h]));
         }
         // get tracking center
         TrackingCenter detect_center;

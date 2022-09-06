@@ -1,6 +1,6 @@
 Hao Phuong Corporation
-Shrimp Counting Project
-Code by The Nho, 2022
+Shrimps Counting Project
+Coded by The Nho, 2022
 R&D Team
 Main implemetation code is in file BasicDemoDlg.cpp
 This project is interfaced with HikRobot Camera MV-CA003-21UC
