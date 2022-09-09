@@ -51,7 +51,7 @@ protected:
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
 
-/*en:Control corresponding variable*/
+//en:Control corresponding variable*/
 private:
     BOOL                    m_bSoftWareTriggerCheck;
     double                  m_dExposureEdit;
@@ -133,7 +133,7 @@ public:
     virtual BOOL PreTranslateMessage(MSG* pMsg);
     int GrabThreadProcess();
     //opencv convert buffer data to Mat
-    bool Convert2Mat(MV_FRAME_OUT_INFO_EX* pstImageInfo, unsigned char* pData, cv::Mat *srcImage, Rect ROI, CString flipimage);
+    bool Convert2Mat(MV_FRAME_OUT_INFO_EX* pstImageInfo, unsigned char* pData, cv::Mat *srcImage, CString flipimage);
     void SORT(int max_age, int min_hits, double iouThreshold);
     double GetDistance(Point2f center_test, Point2f center_gt, float distance_threshold);
     void ImageProcessing();
@@ -141,23 +141,30 @@ public:
     void DisplayThread();
     void SettingInitial();
     afx_msg void OnBnClickedSettingButton();
+    float FindX(Point2f a, Point2f b, Point2f check);
+    void Get_ROI_Mask();
 
 private:
     float default_frame_rate;
     float default_expose_time;
     float default_gain;
-    int real_fps = 0;
+    int real_fps = 400;
     bool b_start_count = false;
     uint64 frame_count = 0;
     uint64 counter = 0;
+    uint64 F1_counter = 0;
+    uint64 F2_counter = 0;
+    uint64 F3_counter = 0;
+    uint64 F4_counter = 0;
+    double avg_size = 0;
     // Opencv variables
     Mat Mat_src;
     Mat dst; // dst is a binary image
     Mat mo_kernel;
     Ptr<BackgroundSubtractor> pBackSub;
-
+    // ROI
+    Mat Mask_ROI = Mat::zeros(Image_Height, Image_Width, CV_8UC1);
     // Detection
-    vector<double> hu;
     Mat huMat = Mat::zeros(1, 7, CV_32F);
     Moments M;
     Point2f center_point;
@@ -182,4 +189,7 @@ private:
     // variable of driver installing
     char dir_driver_install[ARRAY_SIZE] = "Driver\\install.bat";
     TCHAR driver_name[ARRAY_SIZE] = TEXT("mvu3v.sys");
+    int number_ROI_in_frame;
+    int number_shrimp_in_frame;
+    
 };

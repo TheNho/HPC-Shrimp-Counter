@@ -61,10 +61,10 @@ int min_height;
 int max_width;
 int max_height;
 // ROI
-unsigned int ROI_X0;
-unsigned int ROI_Y0;
-unsigned int ROI_Width;
-unsigned int ROI_Height;
+CString ROI_Point_Left_Above;
+CString ROI_Point_Left_Below;
+CString ROI_Point_Right_Above;
+CString ROI_Point_Right_Below;
 
 BOOL CBasicDemoApp::InitInstance()
 {

@@ -1,12 +1,12 @@
 ﻿// KalmanTracker.cpp: KalmanTracker Class Implementation Declaration
-// Using KalmanTracker OpenCV
+// Using Kalman Tracker OpenCV
 // This code is implemented by The Nho 2022
 
 #include "KalmanTracker.h"
 
 uint64 KalmanTracker::kf_count = 0;
 
-// initialize Kalman filter
+// Initialize Kalman filter with the first center
 void KalmanTracker::init_kf(StateType initial_center)
 {
 	int stateNum = 4;
@@ -26,7 +26,7 @@ void KalmanTracker::init_kf(StateType initial_center)
 	setIdentity(kf.measurementNoiseCov, Scalar::all(1e-1));
 	setIdentity(kf.errorCovPost, Scalar::all(1));
 
-	//instal the first point
+	//install the first point
 	kf.statePost.at<float>(0, 0) = initial_center.x;
 	kf.statePost.at<float>(1, 0) = initial_center.y;
 }
@@ -45,22 +45,23 @@ StateType KalmanTracker::predict(){
 }
 
 // Update the state vector with observed Center.
-void KalmanTracker::updateWithMatchedDetection(StateType stateMat, int min_hits){
+void KalmanTracker::updateWithMatchedDetection(TrackingCenter detection, int min_hits){
 	//m_history.clear();
 	m_time_since_update = 0; 
 	m_hit_streak += 1; 
 	m_hits += 1;
+	svm_number = detection.svm_respone; // update number
 	if (m_hits > min_hits) { // hit in many continuous frame -> confirm real tracker
 		m_age = 0; //reset age=0 to avoid delete
 		confirmed_tracker = true;
 	}
 	// measurement is a cv::Mat
-	measurement.at<float>(0, 0) = stateMat.x;
-	measurement.at<float>(1, 0) = stateMat.y;
+	measurement.at<float>(0, 0) = detection.center.x;
+	measurement.at<float>(1, 0) = detection.center.y;
 	// update -- function of opencv
 	kf.correct(measurement);
 }
-void KalmanTracker::updateWithPredictCenter(StateType stateMat) {
+void KalmanTracker::updateWithPredictedCenter(StateType stateMat) {
 	//m_history.clear();
 	m_time_since_update = 0;
 	m_hit_streak += 1;

@@ -16,25 +16,25 @@ using namespace cv;
 
 typedef struct _TrackingCenter
 {
-	int64 frame;
 	int64 id;
 	Point2f center;
-	vector<double> hu_moments;
+	int svm_respone;
 }TrackingCenter;
 
 // This class represents the internel state of individual tracked objects observed as bounding box.
 class KalmanTracker
 {
 public:
-	KalmanTracker(StateType initCenter)
+	KalmanTracker(StateType initial_center)
 	{
-		init_kf(initCenter);
+		init_kf(initial_center);
 		m_time_since_update = 0; // number of predict after update
 		m_hits = 0; // number of continuous hit with detections
 		m_hit_streak = 0; // number of update of after predict
 		m_age = 0;  // number of update after confirm real tracker
-		confirmed_tracker = false;
-		m_id = kf_count;
+		confirmed_tracker = false; // real track or fake track
+		m_id = kf_count; // id
+		svm_number = 1; // number of shirmps in contour
 		kf_count++;
 	}
 
@@ -44,8 +44,8 @@ public:
 	}
 
 	StateType predict();
-	void updateWithMatchedDetection(StateType stateMat, int min_hits);
-	void updateWithPredictCenter(StateType stateMat);
+	void updateWithMatchedDetection(TrackingCenter detection, int min_hits);
+	void updateWithPredictedCenter(StateType stateMat);
 	
 	StateType get_state();
 
@@ -56,6 +56,7 @@ public:
 	int m_hit_streak;
 	int m_age;
 	uint64 m_id;
+	int svm_number;
 private:
 	void init_kf(StateType stateMat);
 

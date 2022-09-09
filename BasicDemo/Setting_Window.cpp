@@ -42,10 +42,10 @@ extern int min_height;
 extern int max_width;
 extern int max_height;
 // ROI
-extern unsigned int ROI_X0;
-extern unsigned int ROI_Y0;
-extern unsigned int ROI_Width;
-extern unsigned int ROI_Height;
+extern CString ROI_Point_Left_Above;
+extern CString ROI_Point_Left_Below;
+extern CString ROI_Point_Right_Above;
+extern CString ROI_Point_Right_Below;
 
 Setting_Window::Setting_Window(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_Setting_DIALOG, pParent)
@@ -78,10 +78,10 @@ Setting_Window::Setting_Window(CWnd* pParent /*=nullptr*/)
 	, setting_max_width(max_width)
 	, setting_max_height(max_height)
 	, setting_flip_image(flip_image)
-	, setting_ROI_X0(ROI_X0)
-	, setting_ROI_Y0(ROI_Y0)
-	, setting_ROI_Width(ROI_Width)
-	, setting_ROI_Height(ROI_Height)
+	, setting_Point_Left_Above(ROI_Point_Left_Above)
+	, setting_Point_Left_Below(ROI_Point_Left_Below)
+	, setting_Point_Right_Above(ROI_Point_Right_Above)
+	, setting_Point_Right_Below(ROI_Point_Right_Below)
 	, setting_dir_data_train_svm(_T(""))
 {
 		
@@ -122,10 +122,10 @@ void Setting_Window::DoDataExchange(CDataExchange* pDX) {
 	DDX_Text(pDX, ID_MAX_HEIGHT, setting_max_height);
 	DDX_CBString(pDX, ID_FLIP_IMAGE, setting_flip_image);
 	DDX_Text(pDX, ID_BSG_LEARNING_RATE, setting_bsg_learning_rate);
-	DDX_Text(pDX, IDC_ROI_X0, setting_ROI_X0);
-	DDX_Text(pDX, IDC_ROI_Y0, setting_ROI_Y0);
-	DDX_Text(pDX, IDC_ROI_WIDTH, setting_ROI_Width);
-	DDX_Text(pDX, IDC_ROI_HEIGHT, setting_ROI_Height);
+	DDX_Text(pDX, IDC_POINT_LEFT_ABOVE, setting_Point_Left_Above);
+	DDX_Text(pDX, IDC_POINT_LEFT_BELOW, setting_Point_Left_Below);
+	DDX_Text(pDX, IDC_POINT_RIGHT_ABOVE, setting_Point_Right_Above);
+	DDX_Text(pDX, IDC_POINT_RIGHT_BELOW, setting_Point_Right_Below);
 	DDX_Text(pDX, IDC_EDIT_DIR_DATA_TRAIN_SVM, setting_dir_data_train_svm);
 }
 
@@ -172,6 +172,8 @@ void Setting_Window::OnBnClickedOk() {
 	if (ret) {
 		// TODO: Add your control notification handler code here
 		//bool ret = UpdateData(TRUE);
+		if (svm_trainned==true)
+			svm->save("SVM.xml");
 		UpdateData(TRUE); // update wintext to variables
 		update_setting = true;
 		//close window
@@ -475,58 +477,66 @@ bool Setting_Window::CheckParameters() { // Check parameters in current window
 		return false;
 	}
 	// Check ROI
-	// Check Detection parameters
-	CString get_ROI_X0, get_ROI_Y0, get_ROI_Width, get_ROI_Height;
-	GetDlgItem(IDC_ROI_X0)->GetWindowTextW(get_ROI_X0);
-	GetDlgItem(IDC_ROI_Y0)->GetWindowTextW(get_ROI_Y0);
-	GetDlgItem(IDC_ROI_WIDTH)->GetWindowTextW(get_ROI_Width);
-	GetDlgItem(IDC_ROI_HEIGHT)->GetWindowTextW(get_ROI_Height);
-	// X0
-	if (CheckInt(get_ROI_X0) == false) {
-		AfxMessageBox(L"ROI X0 must be Int!");
+	CString get_Point_LA, get_Point_LB, get_Point_RA, get_Point_RB;
+	GetDlgItem(IDC_POINT_LEFT_ABOVE)->GetWindowTextW(get_Point_LA);
+	GetDlgItem(IDC_POINT_LEFT_BELOW)->GetWindowTextW(get_Point_LB);
+	GetDlgItem(IDC_POINT_RIGHT_ABOVE)->GetWindowTextW(get_Point_RA);
+	GetDlgItem(IDC_POINT_RIGHT_BELOW)->GetWindowTextW(get_Point_RB);
+	if (get_Point_LA.Replace(L",", L";") != 1) {
+		AfxMessageBox(L"Point Left Above Error!");
 		return false;
 	}
-	if (_ttoi(get_ROI_X0) < 0 || _ttoi(get_ROI_X0) >= Image_Width) {
-		CString message;
-		message.Format(L"ROI X0 must be Postitive and smaller than %d!", Image_Width);
-		AfxMessageBox(message);
+	if (get_Point_LB.Replace(L",", L";") != 1) {
+		AfxMessageBox(L"Point Left Below Error!");
 		return false;
 	}
-	// Y0
-	if (CheckInt(get_ROI_Y0) == false) {
-		AfxMessageBox(L"ROI Y0 must be Int!");
+	if (get_Point_RA.Replace(L",", L";") != 1) {
+		AfxMessageBox(L"Point Right Above Error!");
 		return false;
 	}
-	if (_ttoi(get_ROI_Y0) < 0 || _ttoi(get_ROI_Y0) >= Image_Height) {
-		CString message;
-		message.Format(L"ROI Y0 must be Postitive and smaller than %d!", Image_Height);
-		AfxMessageBox(message);
+	if (get_Point_RB.Replace(L",", L";") != 1) {
+		AfxMessageBox(L"Point Right Below Error!");
 		return false;
 	}
-	// Width
-	if (CheckInt(get_ROI_Width) == false) {
-		AfxMessageBox(L"ROI Width must be Int!");
+	CString sToken;
+	AfxExtractSubString(sToken, get_Point_LA, 0, ';');
+	if (_ttoi(sToken) < 0 || _ttoi(sToken) > Image_Width) {
+		AfxMessageBox(L"Point Left Above Error!");
 		return false;
 	}
-	if (_ttoi(get_ROI_Width)<=0) {
-		AfxMessageBox(L"ROI Width must be Postitive!");
+	AfxExtractSubString(sToken, get_Point_LA, 1, ';');
+	if (_ttoi(sToken) < 0 || _ttoi(sToken) > Image_Height) {
+		AfxMessageBox(L"Point Left Above Error!");
 		return false;
 	}
-	if (_ttoi(get_ROI_Width)+_ttoi(get_ROI_X0) > Image_Width) {
-		AfxMessageBox(L"ROI Width or X0 must be smaller!");
+	AfxExtractSubString(sToken, get_Point_LB, 0, ';');
+	if (_ttoi(sToken) < 0 || _ttoi(sToken) > Image_Width) {
+		AfxMessageBox(L"Point Left Below Error!");
 		return false;
 	}
-	// Height
-	if (CheckInt(get_ROI_Height) == false) {
-		AfxMessageBox(L"ROI Height must be Int!");
+	AfxExtractSubString(sToken, get_Point_LB, 1, ';');
+	if (_ttoi(sToken) < 0 || _ttoi(sToken) > Image_Height) {
+		AfxMessageBox(L"Point Left Below Error!");
 		return false;
 	}
-	if (_ttoi(get_ROI_Height)<=0) {
-		AfxMessageBox(L"ROI Height must be Postitive!");
+	AfxExtractSubString(sToken, get_Point_RA, 0, ';');
+	if (_ttoi(sToken) < 0 || _ttoi(sToken) > Image_Width) {
+		AfxMessageBox(L"Point Right Above Error!");
 		return false;
 	}
-	if (_ttoi(get_ROI_Height) + _ttoi(get_ROI_Y0) > Image_Height) {
-		AfxMessageBox(L"ROI Height or Y0 must be smaller!");
+	AfxExtractSubString(sToken, get_Point_RA, 1, ';');
+	if (_ttoi(sToken) < 0 || _ttoi(sToken) > Image_Height) {
+		AfxMessageBox(L"Point Right Above Error!");
+		return false;
+	}
+	AfxExtractSubString(sToken, get_Point_RB, 0, ';');
+	if (_ttoi(sToken) < 0 || _ttoi(sToken) > Image_Width) {
+		AfxMessageBox(L"Point Right Below Error!");
+		return false;
+	}
+	AfxExtractSubString(sToken, get_Point_RB, 1, ';');
+	if (_ttoi(sToken) < 0 || _ttoi(sToken) > Image_Height) {
+		AfxMessageBox(L"Point Right Below Error!");
 		return false;
 	}
 	// all check done!
@@ -644,15 +654,10 @@ CString Setting_Window::get_parameters_from_window() {
 	// Flip image
 	data = data + L"Flip_Image:" + setting_flip_image + L"\n"; // line 27
 	// ROI parameters
-	CString ROI_data;
-	ROI_data.Format(L"%d", setting_ROI_X0);
-	data = data + L"ROI_X0:" + ROI_data + L"\n"; // line 28
-	ROI_data.Format(L"%d", setting_ROI_Y0);
-	data = data + L"ROI_Y0:" + ROI_data + L"\n"; // line 29
-	ROI_data.Format(L"%d", setting_ROI_Width);
-	data = data + L"ROI_Width:" + ROI_data + L"\n"; // line 30
-	ROI_data.Format(L"%d", setting_ROI_Height);
-	data = data + L"ROI_Height:" + ROI_data + L"\n"; // line 31
+	data = data + L"ROI_Point_Left_Above:" + setting_Point_Left_Above + L"\n"; // line 28
+	data = data + L"ROI_Point_Left_Below:" + setting_Point_Left_Below + L"\n"; // line 29
+	data = data + L"ROI_Point_Right_Above:" + setting_Point_Right_Above + L"\n"; // line 30
+	data = data + L"ROI_Point_Right_Below:" + setting_Point_Right_Below + L"\n"; // line 31
 	return data;
 }
 void Setting_Window::OnBnClickedSave() {
@@ -847,17 +852,17 @@ BOOL Setting_Window::get_parameters_from_file(CString setting_filename) {
 
 	CString ROI_data;
 	ROI_data = vector_get_parameters[28];
-	ROI_data.Replace(L"ROI_X0:", L"");
-	setting_ROI_X0 = _ttoi(ROI_data);
+	ROI_data.Replace(L"ROI_Point_Left_Above:", L"");
+	setting_Point_Left_Above = ROI_data;
 	ROI_data = vector_get_parameters[29];
-	ROI_data.Replace(L"ROI_Y0:", L"");
-	setting_ROI_Y0 = _ttoi(ROI_data);
+	ROI_data.Replace(L"ROI_Point_Left_Below:", L"");
+	setting_Point_Left_Below = ROI_data;
 	ROI_data = vector_get_parameters[30];
-	ROI_data.Replace(L"ROI_Width:", L"");
-	setting_ROI_Width = _ttoi(ROI_data);
+	ROI_data.Replace(L"ROI_Point_Right_Above:", L"");
+	setting_Point_Right_Above = ROI_data;
 	ROI_data = vector_get_parameters[31];
-	ROI_data.Replace(L"ROI_Height:", L"");
-	setting_ROI_Height = _ttoi(ROI_data);
+	ROI_data.Replace(L"ROI_Point_Right_Below:", L"");
+	setting_Point_Right_Below = ROI_data;
 
 	return TRUE;
 }
@@ -890,7 +895,6 @@ void Setting_Window::OnBnClickedLoad() {
 bool Setting_Window::load_data_to_train_SVM(CString direction) { // Tested -> OK
 	// format in file
 	// label hu[0] hu[1] hu[2] hu[3] hu[4] hu[5] hu[6] \n
-	Ptr<ml::SVM> svm = ml::SVM::create();
 	svm->setType(ml::SVM::C_SVC);
 	svm->setKernel(ml::SVM::RBF);
 	svm->setTermCriteria(TermCriteria(TermCriteria::EPS + cv::TermCriteria::MAX_ITER,
@@ -911,7 +915,6 @@ bool Setting_Window::load_data_to_train_SVM(CString direction) { // Tested -> OK
 	PtrTrainData->setTrainTestSplitRatio(0.8);
 	bool ret = svm->train(PtrTrainData);
 	if (ret) { 
-		svm->save("SVM.xml");
 		AfxMessageBox(L"Trainning SVM Success");
 		return true;
 	}
@@ -921,7 +924,7 @@ bool Setting_Window::load_data_to_train_SVM(CString direction) { // Tested -> OK
 void Setting_Window::OnBnClickedButtonTrainSvm()
 {
 	UpdateData(TRUE);
-	load_data_to_train_SVM(setting_dir_data_train_svm);
+	svm_trainned = load_data_to_train_SVM(setting_dir_data_train_svm);
 	// TODO: Add your control notification handler code here
 }
 

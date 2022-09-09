@@ -51,7 +51,6 @@
 #define IDC_BUTTON2                     1030
 #define IDC_BUTTON                      1030
 #define IDC_START_COUNT_BUTTON          1030
-#define IDC_BUTTON_TRAIN_SVM2           1030
 #define IDC_BUTTON_LOAD_FILE_TRAIN_SVM  1030
 #define IDC_BUTTON3                     1031
 #define IDC_RESET_NUMBER_BUTTON         1031
@@ -59,6 +58,7 @@
 #define IDC_F1_EDIT                     1032
 #define IDC_TOLERANCE_X                 1032
 #define IDC_ROI_X0                      1032
+#define IDC_POINT_LEFT_ABOVE            1032
 #define IDC_EDIT2                       1033
 #define ID_AVG_AREA                     1033
 #define IDC_EDIT3                       1034
@@ -118,9 +118,11 @@
 #define IDC_RADIO_ADAPTIVETHRESHOLD     1056
 #define IDC_RADIO_My_Tracking           1057
 #define IDC_ROI_WIDTH                   1057
+#define IDC_POINT_RIGHT_ABOVE           1057
 #define ID_MAX_AREA                     1058
 #define IDC_RADIO_SORT_TRACKING         1059
 #define IDC_ROI_Y0                      1059
+#define IDC_POINT_LEFT_BELOW            1059
 #define IDC_LIST3                       1060
 #define IDC_LOG_HISTORY_LIST            1060
 #define ID_MAX_WIDTH                    1060
@@ -133,6 +135,7 @@
 #define ID_BSG_LEARNING_RATE            1063
 #define IDC_EDIT18                      1064
 #define IDC_ROI_HEIGHT                  1064
+#define IDC_POINT_RIGHT_BELOW           1064
 #define IDC_MORPHO_ITERATIONS           1071
 #define IDC_EDIT_DIR_DATA_TRAIN_SVM     1072
 

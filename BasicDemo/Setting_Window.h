@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include<opencv2/core.hpp>
 #include <opencv2/ml.hpp>
 
 using namespace cv;
@@ -74,12 +75,14 @@ public:
 	int setting_max_height;
 	CString setting_flip_image;
 	float setting_bsg_learning_rate;
-	unsigned int setting_ROI_X0;
-	unsigned int setting_ROI_Y0;
-	unsigned int setting_ROI_Width;
-	unsigned int setting_ROI_Height;
+	CString setting_Point_Left_Above;
+	CString setting_Point_Left_Below;
+	CString setting_Point_Right_Above;
+	CString setting_Point_Right_Below;
 private:
 	CString setting_dir_data_train_svm;
+	Ptr<ml::SVM> svm = ml::SVM::create();
+	bool svm_trainned = false;
 public:
 	afx_msg void OnBnClickedButtonTrainSvm();
 	afx_msg void OnBnClickedButtonLoadFileTrainSvm();

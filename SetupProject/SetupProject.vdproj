@@ -141,6 +141,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_B82C8E5A9DDD41ECB1F81AAC13315370"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_C141B182A2D4441B881A3C3D9588B18E"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -692,6 +698,26 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_B82C8E5A9DDD41ECB1F81AAC13315370"
+            {
+            "SourcePath" = "8:..\\BasicDemo\\res\\Image_folder.ico"
+            "TargetName" = "8:Image_folder.ico"
+            "Tag" = "8:"
+            "Folder" = "8:_FE34A9369DE44E0EBA1164A13988FEF7"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_C141B182A2D4441B881A3C3D9588B18E"
             {
             "SourcePath" = "8:..\\Driver\\mvu3v.inf"
@@ -972,6 +998,17 @@
                         {
                         }
                     }
+                    "{9EF0B969-E518-4E46-987F-47570745A589}:_A6E5B441BD174283B2C889AA097F0184"
+                    {
+                    "Name" = "8:Saved_Image"
+                    "AlwaysCreate" = "11:TRUE"
+                    "Condition" = "8:"
+                    "Transitive" = "11:FALSE"
+                    "Property" = "8:_5B8296C0C94744909A468EE063A692FC"
+                        "Folders"
+                        {
+                        }
+                    }
                     "{9EF0B969-E518-4E46-987F-47570745A589}:_FE34A9369DE44E0EBA1164A13988FEF7"
                     {
                     "Name" = "8:icoin"
@@ -1002,7 +1039,7 @@
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:Hao Phuong Shrimps Counting"
         "ProductCode" = "8:{75879AE9-AF7B-477E-AC23-A331D7709D40}"
-        "PackageCode" = "8:{04396A56-D218-440D-8A7E-1BF935F3479E}"
+        "PackageCode" = "8:{8E77FC8B-6DCA-4D78-A8F8-D27D0A1E7950}"
         "UpgradeCode" = "8:{164574B3-7D0E-40EF-9AC8-3D0C99097871}"
         "AspNetVersion" = "8:"
         "RestartWWWService" = "11:FALSE"
@@ -1122,6 +1159,20 @@
         }
         "Shortcut"
         {
+            "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_1DB6E59BEAF94C058D98163EDB8B7ADB"
+            {
+            "Name" = "8:HPC Saved Image"
+            "Arguments" = "8:"
+            "Description" = "8:"
+            "ShowCmd" = "3:1"
+            "IconIndex" = "3:0"
+            "Transitive" = "11:FALSE"
+            "Target" = "8:_A6E5B441BD174283B2C889AA097F0184"
+            "Folder" = "8:_329E362F322A4471912923E31054C914"
+            "WorkingFolder" = "8:_B345541E344D427C95A826AE8346DE97"
+            "Icon" = "8:_B82C8E5A9DDD41ECB1F81AAC13315370"
+            "Feature" = "8:"
+            }
             "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_34CE7F3B47D942D6AAA55B9E6A87B941"
             {
             "Name" = "8:Hao Phuong Shrimps Counting"

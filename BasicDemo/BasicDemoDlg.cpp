@@ -48,10 +48,10 @@ extern int min_height;
 extern int max_width;
 extern int max_height;
 
-extern unsigned int ROI_X0;
-extern unsigned int ROI_Y0;
-extern unsigned int ROI_Width;
-extern unsigned int ROI_Height;
+extern CString ROI_Point_Left_Above;
+extern CString ROI_Point_Left_Below;
+extern CString ROI_Point_Right_Above;
+extern CString ROI_Point_Right_Below;
 
 //Global filename, used in all windows
 extern CString global_filename;
@@ -101,6 +101,13 @@ CBasicDemoDlg::CBasicDemoDlg(CWnd* pParent /*=NULL*/)
     , m_nSaveImageBufSize(0)
     , counter(0)
     , frame_count(0)
+    , number_ROI_in_frame(0)
+    , number_shrimp_in_frame(0)
+    , F1_counter(0)
+    , F2_counter(0)
+    , F3_counter(0)
+    , F4_counter(0)
+    , avg_size(0)
 {
     // Load icon
 	//m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
@@ -118,7 +125,14 @@ void CBasicDemoDlg::DoDataExchange(CDataExchange* pDX) {
     DDX_Check(pDX, IDC_SOFTWARE_TRIGGER_CHECK, m_bSoftWareTriggerCheck);
     DDX_Text(pDX, IDC_SHIRMP_NUMBER_STATIC, counter);
     DDX_Text(pDX, IDC_FRAME_COUNT_EDIT, frame_count);
-    
+
+    DDX_Text(pDX, IDC_ROI_IN_FRAME_EDIT, number_ROI_in_frame);
+    DDX_Text(pDX, IDC_SHRIMP_IN_FRAME_EDIT, number_shrimp_in_frame);
+    DDX_Text(pDX, IDC_F1_EDIT, F1_counter);
+    DDX_Text(pDX, IDC_F2_EDIT, F2_counter);
+    DDX_Text(pDX, IDC_F3_EDIT, F3_counter);
+    DDX_Text(pDX, IDC_F4_EDIT, F4_counter);
+    DDX_Text(pDX, IDC_AVG_SIZE_EDIT, avg_size);
 }
 
 BEGIN_MESSAGE_MAP(CBasicDemoDlg, CDialog)
@@ -203,8 +217,16 @@ BOOL CBasicDemoDlg::OnInitDialog() {
 
 void CBasicDemoDlg::SettingInitial() {
     // Install the first run variables
-    // local variables
+    // ROI Mask
+    ROI_Point_Left_Above = L"23,0";
+    ROI_Point_Left_Below = L"32,480";
+    ROI_Point_Right_Above = L"625,0";
+    ROI_Point_Right_Below = L"619,480";
+    Get_ROI_Mask();
+    // Local variables
+    // Load SVM
     SVM = ml::SVM::load(SVM_dir);
+    // Image detail
     default_frame_rate = 200;
     default_expose_time = 2000;
     default_gain = 10;
@@ -236,10 +258,6 @@ void CBasicDemoDlg::SettingInitial() {
     min_height = 3;
     max_width = 50;
     max_height = 50;
-    ROI_X0 = 30;
-    ROI_Y0 = 0;
-    ROI_Width = 590;
-    ROI_Height = 480;
 
     // Initialize global directory to save result file
     global_filename = nFilename;
@@ -560,7 +578,7 @@ int CBasicDemoDlg::SetTriggerSource() {
     return nRet;
 }
 
-//en:Save Image / SDK function
+//en:Save Image
 int CBasicDemoDlg::SaveImage(enum MV_SAVE_IAMGE_TYPE enSaveImageType) {
     // check folder Saved_Image existing, if not create folder
     DWORD fileAttr = GetFileAttributes(L"Saved_Image");
@@ -582,13 +600,22 @@ int CBasicDemoDlg::SaveImage(enum MV_SAVE_IAMGE_TYPE enSaveImageType) {
         LeaveCriticalSection(&m_hSaveImageMux);
         return MV_E_SUPPORT;
     }
-
+    Mat mSave = Mat(m_stImageInfo.nHeight, m_stImageInfo.nWidth, CV_8UC1, m_pSaveImageBuf);
+    if (flip_image == L"None") {
+        // do nothing
+    }
+    else if (flip_image == L"X") {
+        cv::flip(mSave, mSave, 1);
+    }
+    else if (flip_image == L"Y") {
+        cv::flip(mSave, mSave, 0);
+    }
     stSaveFileParam.enImageType = enSaveImageType; // en:Image format to save
     stSaveFileParam.enPixelType = m_stImageInfo.enPixelType;  // en:Camera pixel type
     stSaveFileParam.nWidth      = m_stImageInfo.nWidth;         // en:Width
     stSaveFileParam.nHeight     = m_stImageInfo.nHeight;          //en:Height
     stSaveFileParam.nDataLen    = m_stImageInfo.nFrameLen;
-    stSaveFileParam.pData       = m_pSaveImageBuf;
+    stSaveFileParam.pData       = mSave.data;
     stSaveFileParam.iMethodValue = 0;
 
     //en:jpg image nQuality range is (50-99], png image nQuality range is [0-9]
@@ -618,7 +645,7 @@ int CBasicDemoDlg::SaveImage(enum MV_SAVE_IAMGE_TYPE enSaveImageType) {
 int CBasicDemoDlg::GrabThreadProcess() {
 
     //For debug
-    //String dir_file = "Data/Data14/";
+    //String dir_file = "Data/Data10/";
     //uint idx_img = 0;
     
     MV_FRAME_OUT stImageInfo = {0}; // get image from buffer
@@ -653,8 +680,7 @@ int CBasicDemoDlg::GrabThreadProcess() {
                 continue;
             }
             // Convert data to cvMat, drop roi and flip image
-            Rect ROI(ROI_X0, ROI_Y0, ROI_Width, ROI_Height);
-            bool retm = Convert2Mat(&stImageInfo.stFrameInfo, stImageInfo.pBufAddr, &Mat_src, ROI, flip_image);
+            bool retm = Convert2Mat(&stImageInfo.stFrameInfo, stImageInfo.pBufAddr, &Mat_src, flip_image);
             if (retm == false || Mat_src.empty()) {
                 AfxMessageBox(L"Error while convert data to cv Mat!");
                 return -1;
@@ -673,7 +699,6 @@ int CBasicDemoDlg::GrabThreadProcess() {
             int64 end_time_fps = getTickCount();
             real_fps = int(getTickFrequency() / (end_time_fps - start_time_fps));
             start_time_fps = end_time_fps;
-
         }
         else {
             if (MV_TRIGGER_MODE_ON ==  m_nTriggerMode) {
@@ -688,16 +713,16 @@ int CBasicDemoDlg::GrabThreadProcess() {
         Mat_src = src_img1(ROI);
         idx_img++;
         // image processing
-        ImageProcessing_GPU();
+        ImageProcessing();
         /// Press start count?
         if (b_start_count == true) {
             SORT(max_age, min_hits, distance_threshold);
             SORT_Counting();
         }
         // for debug
-        //imshow("Src Image Before", dst);
+        imshow("Src Image Before", Mat_src);
         // press space to pause and continue
-        if (waitKey(20) == 32)
+        if (waitKey(15) == 32)
             waitKey();
         int64 end_time_fps = getTickCount();
         real_fps = int(getTickFrequency() / (end_time_fps - start_time_fps));
@@ -934,7 +959,7 @@ void CBasicDemoDlg::DisplayThread() {
         // Access are in conflict between 2 theads
         // -> fixed by waiting the first thread started
         putText(Mat_display, "FPS: "+ to_string(real_fps), Point(5, 25), FONT_HERSHEY_COMPLEX, 1, 128, 1, 8);
-        line(Mat_display, Point(0, line_position), Point(640, line_position), 0, 2, 8, 0);
+        //line(Mat_display, Point(0, line_position), Point(640, line_position), 0, 2, 8, 0);
         
         // display frame
         stDisplayInfo.hWnd = m_hwndDisplay;
@@ -1208,7 +1233,7 @@ void CBasicDemoDlg::OnBnClickedSettingButton() {
     open_setting_windown->DoModal();
     // click ok -> update_setting = true
     if (open_setting_windown->update_setting == true) {
-        // reload SVM
+        // Reload SVM
         SVM = ml::SVM::load(SVM_dir);
         // get image processing paramerters from setting window
         flip_image = open_setting_windown->setting_flip_image;
@@ -1283,10 +1308,11 @@ void CBasicDemoDlg::OnBnClickedSettingButton() {
         max_height = open_setting_windown->setting_max_height;
         
         //ROI
-        ROI_X0 = open_setting_windown->setting_ROI_X0;
-        ROI_Y0 = open_setting_windown->setting_ROI_Y0;
-        ROI_Width = open_setting_windown->setting_ROI_Width;
-        ROI_Height = open_setting_windown->setting_ROI_Height;
+        ROI_Point_Left_Above = open_setting_windown->setting_Point_Left_Above;
+        ROI_Point_Left_Below = open_setting_windown->setting_Point_Left_Below;
+        ROI_Point_Right_Above = open_setting_windown->setting_Point_Right_Above;
+        ROI_Point_Right_Below = open_setting_windown->setting_Point_Right_Below;
+        Get_ROI_Mask();
 
         // Blur image
         blur_method = open_setting_windown->setting_blur_method;
@@ -1335,11 +1361,10 @@ void CBasicDemoDlg::OnBnClickedSettingButton() {
 
 //OpenCV convert data to cvMat, drop ROI and flip image
 bool CBasicDemoDlg::Convert2Mat(MV_FRAME_OUT_INFO_EX* pstImageInfo, unsigned char* pData, 
-                                Mat *srcImage, Rect ROI, CString flipimage) {
+                                Mat *srcImage, CString flipimage) {
     if (pstImageInfo->enPixelType == PixelType_Gvsp_Mono8) {
         Mat MatsrcImage = Mat(pstImageInfo->nHeight, pstImageInfo->nWidth, CV_8UC1, pData);
-        // Drop ROI
-        MatsrcImage = MatsrcImage(ROI);
+        // Flip image
         if (flipimage == L"None") {
             // do nothing
         }
@@ -1349,6 +1374,9 @@ bool CBasicDemoDlg::Convert2Mat(MV_FRAME_OUT_INFO_EX* pstImageInfo, unsigned cha
         else if (flipimage == L"Y") {
             cv::flip(MatsrcImage, MatsrcImage, 0);
         }
+        // Drop ROI
+        add(MatsrcImage, Mask_ROI, MatsrcImage);
+
         *srcImage = MatsrcImage;
         MatsrcImage.release();
     }
@@ -1422,6 +1450,10 @@ void CBasicDemoDlg::ImageProcessing() {
     vector<Vec4i> hierarchy;
     detections.clear();
     cv::findContours(dst, contours, hierarchy, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
+    number_ROI_in_frame = contours.size();
+    number_shrimp_in_frame = 0;
+    double total_area_in_frame = 0;
+    int total_shrimp_in_frame = 0;
     for (size_t i = 0; i < contours.size(); i++) {
         double area = contourArea(contours[i]);
         if (area < min_area || area > max_area) continue;
@@ -1440,21 +1472,33 @@ void CBasicDemoDlg::ImageProcessing() {
         if ((width_Rect < min_width) || (width_Rect > max_width) || 
             (height_Rect < min_height) || (height_Rect > max_height)) 
             continue;
-       
         // get center point
         M = moments(contours[i]);
         center_point = Point2f((M.m10 / M.m00), (M.m01 / M.m00));
         // get hu-moments
-        hu.clear(); // maybe bug this line
+        vector<double> hu;
         cv::HuMoments(M, hu);
-        // get tracking center
+        // Log scale hu-moments
+        for (int h = 0; h < 7; h++) {
+            huMat.at<float>(h) = -1 * copysign(1.0, hu[h]) * log10(abs(hu[h]));
+        }
+        int response = SVM->predict(huMat);
+        number_shrimp_in_frame += response;
+        // Get tracking center
         TrackingCenter detect_center;
         detect_center.id = -1;
-        detect_center.frame = frame_count;
         detect_center.center = center_point;
-        detect_center.hu_moments = hu;
+        detect_center.svm_respone = response;
         detections.push_back(detect_center);
+
+        total_area_in_frame += area;
+        total_shrimp_in_frame += response;
+
+        /*// draw contours
+        drawContours(Mat_src, contours, i, 127); //*/
     }
+    if (total_shrimp_in_frame > 0)
+        avg_size = round((avg_size + total_area_in_frame / total_shrimp_in_frame) / 2);
 }
 
 double CBasicDemoDlg::GetDistance(Point2f center_test, Point2f center_gt, float distance_threshold) {
@@ -1472,7 +1516,7 @@ void CBasicDemoDlg::SORT(int max_age, int min_hits, double distanceThreshold) {
 
     if (trackers.size() == 0) { // the first frame
         for (uint i = 0; i < detections.size(); i++) {
-            KalmanTracker trk = KalmanTracker(detections[i].center); //kf_count++ -> id++
+            KalmanTracker trk = KalmanTracker(detections[i].center);
             trackers.push_back(trk);
         }
         return;
@@ -1483,12 +1527,11 @@ void CBasicDemoDlg::SORT(int max_age, int min_hits, double distanceThreshold) {
     for (auto it = trackers.begin(); it != trackers.end();) {
         Point2f pCenter = (*it).predict();
         if (pCenter.y > 0 && pCenter.y < Image_Height + 20 &&
-            pCenter.x > -10 && pCenter.x < Image_Width + 10) {
+            pCenter.x > 0 && pCenter.x < Image_Width) {
             predictedCenters.push_back(pCenter);
 
-            //Draw predict centers brown to view and debug
-            putText(Mat_src, to_string((*it).m_id), pCenter, FONT_HERSHEY_COMPLEX_SMALL, 1, 128, 1, 8);
-            circle(Mat_src, pCenter, 2, 128, 2, 8, 0);
+            /*//Draw predict centers brown to view and debug
+            circle(Mat_src, pCenter, 2, 128, 2, 8, 0); //*/
 
             it++;
         }
@@ -1511,8 +1554,8 @@ void CBasicDemoDlg::SORT(int max_age, int min_hits, double distanceThreshold) {
     if (distanceMatrix.size() == 0) return;
 
     HungarianAlgorithm HungAlgo;
-    vector<int> assignment; // the resulting assignment is [track(prediction) : detection], with len=predict Number
-    HungAlgo.Solve(distanceMatrix, assignment); 
+    vector<int> assignment; // the resulting assignment is [track(prediction) : detection]
+    HungAlgo.Solve(distanceMatrix, assignment); // with len=predict Number
 
     // find matched, unmatched_detections and unmatched_predictions
     set<int> unmatchedDetections;
@@ -1533,18 +1576,18 @@ void CBasicDemoDlg::SORT(int max_age, int min_hits, double distanceThreshold) {
     // 3.3. update tracker
     for (unsigned int i = 0; i < trkNum; ++i) {
         if (assignment[i] == -1) { // update unmatched tracker
-            trackers[i].updateWithPredictCenter(predictedCenters[i]);
+            trackers[i].updateWithPredictedCenter(predictedCenters[i]);
             continue;
         }
         if (distanceMatrix[i][assignment[i]] == Image_Width) { // filter out with large distance
-            //cv::waitKey(); // stop this time to view 2 points matched with large distance for debug
-            trackers[i].updateWithPredictCenter(predictedCenters[i]);
+            /*// Stop this time to view 2 points matched with large distance for debug
+            cv::waitKey(); //*/
+            trackers[i].updateWithPredictedCenter(predictedCenters[i]);
             unmatchedDetections.insert(assignment[i]);
         }
         else { // update tracker with matched point
-            trackers[i].updateWithMatchedDetection(detections[assignment[i]].center, min_hits);
-
-            //Draw line between 2 matched points and save distance to file txt
+            trackers[i].updateWithMatchedDetection(detections[assignment[i]], min_hits);
+            /*//Draw line between 2 matched points and save distance to file txt
             line(Mat_src, predictedCenters[i], detections[assignment[i]].center, 128, 2, 8, 0);
             /*CStdioFile StdFile;
             CFileException ex;
@@ -1554,10 +1597,9 @@ void CBasicDemoDlg::SORT(int max_age, int min_hits, double distanceThreshold) {
             text = text + L"\n";
             StdFile.SeekToEnd();
             StdFile.WriteString(text);
-            StdFile.Close();*/
+            StdFile.Close();//*/
         }
     }
-
     // Create and initialise new trackers for unmatched detections
     for (auto umd : unmatchedDetections) {
         KalmanTracker tracker = KalmanTracker(detections[umd].center);
@@ -1567,18 +1609,22 @@ void CBasicDemoDlg::SORT(int max_age, int min_hits, double distanceThreshold) {
     // Get trackers' output
     frameTrackingResult.clear();
     for (auto it = trackers.begin(); it != trackers.end();) {
-        if (((*it).m_time_since_update < 1) // tracker updated in current frame
-          &&((*it).confirmed_tracker == true)) { 
+        if (((*it).m_time_since_update == 0) // tracker updated in current frame
+          //&&((*it).m_age == 0) // tracker updated with detection in current frame
+          &&((*it).confirmed_tracker == true)) { // real tracker
             TrackingCenter res;
             res.center = (*it).get_state();
             res.id = (*it).m_id; // m_id = kf_count
-            res.frame = frame_count;
+            res.svm_respone = (*it).svm_number;
             frameTrackingResult.push_back(res);
-
-            //Draw Point output by white
+            /*//Draw output Point by white
             circle(Mat_src, res.center, 3, 200, 3, 8, 0);
+            putText(Mat_src, to_string(res.id), Point(res.center.x + 20, res.center.y),
+                FONT_HERSHEY_COMPLEX_SMALL, 1, 128, 1, 8);
+            putText(Mat_src, to_string(res.svm_respone)+":", Point(res.center.x, res.center.y),
+                FONT_HERSHEY_COMPLEX_SMALL, 1, 128, 1, 8); //*/
         }
-        if (it != trackers.end() && (*it).m_age >= max_age) {  // remove dead tracker
+        if (it != trackers.end() && (*it).m_age > max_age) {  // remove dead tracker
             it = trackers.erase(it);
         }
         else {
@@ -1609,13 +1655,15 @@ void CBasicDemoDlg::SORT_Counting() {
                         continue;
                     }
                     else {
-                        // Log scale hu-moments
-                        for (int h = 0; h < 7; h++) {
-                            huMat.at<float>(h) = -1 * copysign(1.0, previous_frameTrackingResult[i].hu_moments[h]) 
-                                                    * log10(abs(previous_frameTrackingResult[i].hu_moments[h]));
-                        }
-                        int response = round(SVM->predict(huMat));
-                        counter += response; 
+                        if (frameTrackingResult[i].svm_respone == 1)
+                            F1_counter++;
+                        else if (frameTrackingResult[i].svm_respone == 2)
+                            F2_counter++;
+                        else if (frameTrackingResult[i].svm_respone == 3)
+                            F3_counter++;
+                        else if (frameTrackingResult[i].svm_respone == 4)
+                            F4_counter++;
+                        counter += frameTrackingResult[i].svm_respone;
                     }
                 }
             }
@@ -1679,10 +1727,14 @@ void CBasicDemoDlg::OnBnClickedStopCountButton() {
     return;
 }
 void CBasicDemoDlg::OnBnClickedResetNumberButton() {
-    
+    // Reset all number in main window
     counter = 0;
     frame_count = 0;
-
+    F1_counter = 0;
+    F2_counter = 0;
+    F3_counter = 0;
+    F4_counter = 0;
+    avg_size = 0;
     UpdateData(FALSE);
 }
 
@@ -1690,4 +1742,40 @@ void CBasicDemoDlg::OnBnClickedLogButton() {
     LogHistory* open_logHistory_windown = new LogHistory();
     open_logHistory_windown->DoModal();
     return;
+}
+
+float CBasicDemoDlg::FindX(Point2f a, Point2f b, Point2f check) { // Find x position on the line
+    float temp = -(b.x - a.x) * (check.y - a.y) / (a.y - b.y); // from y position
+    return (a.x + temp);
+}
+void CBasicDemoDlg::Get_ROI_Mask() { // return Mask_ROI
+    CString sTokenX, sTokenY;
+    Point2f Left_Above, Left_Below, Right_Above, Right_Below;
+
+    AfxExtractSubString(sTokenX, ROI_Point_Left_Above, 0, ',');
+    AfxExtractSubString(sTokenY, ROI_Point_Left_Above, 1, ',');
+    Left_Above = Point2f(_ttof(sTokenX), _ttof(sTokenY));
+
+    AfxExtractSubString(sTokenX, ROI_Point_Left_Below, 0, ',');
+    AfxExtractSubString(sTokenY, ROI_Point_Left_Below, 1, ',');
+    Left_Below = Point2f(_ttof(sTokenX), _ttof(sTokenY));
+
+    AfxExtractSubString(sTokenX, ROI_Point_Right_Above, 0, ',');
+    AfxExtractSubString(sTokenY, ROI_Point_Right_Above, 1, ',');
+    Right_Above = Point2f(_ttof(sTokenX), _ttof(sTokenY));
+
+    AfxExtractSubString(sTokenX, ROI_Point_Right_Below, 0, ',');
+    AfxExtractSubString(sTokenY, ROI_Point_Right_Below, 1, ',');
+    Right_Below = Point2f(_ttof(sTokenX), _ttof(sTokenY));
+
+    for (int i = 0; i < Image_Width; i++) {
+        for (int j = 0; j < Image_Height; j++) {
+            Point2f Check = Point2f(i, j);
+            if ((FindX(Left_Above, Left_Below, Check) <= Check.x)
+             && (FindX(Right_Above, Right_Below, Check) >= Check.x))
+                Mask_ROI.at<uchar>(j, i) = 0;
+            else
+                Mask_ROI.at<uchar>(j, i) = 255;
+        }
+    }
 }
