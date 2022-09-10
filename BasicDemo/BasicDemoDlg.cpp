@@ -680,7 +680,7 @@ int CBasicDemoDlg::GrabThreadProcess() {
                 continue;
             }
             // Convert data to cvMat, drop roi and flip image
-            bool retm = Convert2Mat(&stImageInfo.stFrameInfo, stImageInfo.pBufAddr, &Mat_src, flip_image);
+            bool retm = Convert2Mat(&stImageInfo.stFrameInfo, stImageInfo.pBufAddr);
             if (retm == false || Mat_src.empty()) {
                 AfxMessageBox(L"Error while convert data to cv Mat!");
                 return -1;
@@ -1360,24 +1360,23 @@ void CBasicDemoDlg::OnBnClickedSettingButton() {
 }
 
 //OpenCV convert data to cvMat, drop ROI and flip image
-bool CBasicDemoDlg::Convert2Mat(MV_FRAME_OUT_INFO_EX* pstImageInfo, unsigned char* pData, 
-                                Mat *srcImage, CString flipimage) {
+bool CBasicDemoDlg::Convert2Mat(MV_FRAME_OUT_INFO_EX* pstImageInfo, unsigned char* pData) {
     if (pstImageInfo->enPixelType == PixelType_Gvsp_Mono8) {
         Mat MatsrcImage = Mat(pstImageInfo->nHeight, pstImageInfo->nWidth, CV_8UC1, pData);
         // Flip image
-        if (flipimage == L"None") {
+        if (flip_image == L"None") {
             // do nothing
         }
-        else if (flipimage == L"X") {
+        else if (flip_image == L"X") {
             cv::flip(MatsrcImage, MatsrcImage, 1);
         }
-        else if (flipimage == L"Y") {
+        else if (flip_image == L"Y") {
             cv::flip(MatsrcImage, MatsrcImage, 0);
         }
         // Drop ROI
         add(MatsrcImage, Mask_ROI, MatsrcImage);
 
-        *srcImage = MatsrcImage;
+        Mat_src = MatsrcImage.clone();
         MatsrcImage.release();
     }
     else {
@@ -1385,7 +1384,7 @@ bool CBasicDemoDlg::Convert2Mat(MV_FRAME_OUT_INFO_EX* pstImageInfo, unsigned cha
         return false;
     }
 
-    if (NULL == srcImage) {
+    if (Mat_src.empty()) {
         printf("Convert to Mat failed.\n");
         return false;
     }
@@ -1450,7 +1449,7 @@ void CBasicDemoDlg::ImageProcessing() {
     vector<Vec4i> hierarchy;
     detections.clear();
     cv::findContours(dst, contours, hierarchy, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
-    number_ROI_in_frame = contours.size();
+    number_ROI_in_frame = 0;
     number_shrimp_in_frame = 0;
     double total_area_in_frame = 0;
     int total_shrimp_in_frame = 0;
@@ -1492,6 +1491,7 @@ void CBasicDemoDlg::ImageProcessing() {
         detections.push_back(detect_center);
 
         total_area_in_frame += area;
+        number_ROI_in_frame++;
         total_shrimp_in_frame += response;
 
         /*// draw contours
@@ -1499,6 +1499,8 @@ void CBasicDemoDlg::ImageProcessing() {
     }
     if (total_shrimp_in_frame > 0)
         avg_size = round((avg_size + total_area_in_frame / total_shrimp_in_frame) / 2);
+    else
+        avg_size = 0;
 }
 
 double CBasicDemoDlg::GetDistance(Point2f center_test, Point2f center_gt, float distance_threshold) {
@@ -1744,9 +1746,12 @@ void CBasicDemoDlg::OnBnClickedLogButton() {
     return;
 }
 
-float CBasicDemoDlg::FindX(Point2f a, Point2f b, Point2f check) { // Find x position on the line
-    float temp = -(b.x - a.x) * (check.y - a.y) / (a.y - b.y); // from y position
-    return (a.x + temp);
+bool CBasicDemoDlg::IsLeft(Point2f A, Point2f B, Point2f Check) { // Find x position on the line
+    float x_pos = A.x -(B.x - A.x) * (Check.y - A.y) / (A.y - B.y); // from y position
+    if (x_pos >= Check.x)
+        return true;
+    else
+        return false;
 }
 void CBasicDemoDlg::Get_ROI_Mask() { // return Mask_ROI
     CString sTokenX, sTokenY;
@@ -1771,8 +1776,8 @@ void CBasicDemoDlg::Get_ROI_Mask() { // return Mask_ROI
     for (int i = 0; i < Image_Width; i++) {
         for (int j = 0; j < Image_Height; j++) {
             Point2f Check = Point2f(i, j);
-            if ((FindX(Left_Above, Left_Below, Check) <= Check.x)
-             && (FindX(Right_Above, Right_Below, Check) >= Check.x))
+            if (!IsLeft(Left_Above, Left_Below, Check) // Right side
+             && IsLeft(Right_Above, Right_Below, Check)) // Left side
                 Mask_ROI.at<uchar>(j, i) = 0;
             else
                 Mask_ROI.at<uchar>(j, i) = 255;

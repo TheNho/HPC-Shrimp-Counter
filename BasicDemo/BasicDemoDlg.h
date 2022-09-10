@@ -133,7 +133,7 @@ public:
     virtual BOOL PreTranslateMessage(MSG* pMsg);
     int GrabThreadProcess();
     //opencv convert buffer data to Mat
-    bool Convert2Mat(MV_FRAME_OUT_INFO_EX* pstImageInfo, unsigned char* pData, cv::Mat *srcImage, CString flipimage);
+    bool Convert2Mat(MV_FRAME_OUT_INFO_EX* pstImageInfo, unsigned char* pData);
     void SORT(int max_age, int min_hits, double iouThreshold);
     double GetDistance(Point2f center_test, Point2f center_gt, float distance_threshold);
     void ImageProcessing();
@@ -141,14 +141,14 @@ public:
     void DisplayThread();
     void SettingInitial();
     afx_msg void OnBnClickedSettingButton();
-    float FindX(Point2f a, Point2f b, Point2f check);
+    bool IsLeft(Point2f A, Point2f B, Point2f Check);
     void Get_ROI_Mask();
 
 private:
     float default_frame_rate;
     float default_expose_time;
     float default_gain;
-    int real_fps = 400;
+    int real_fps = 0;
     bool b_start_count = false;
     uint64 frame_count = 0;
     uint64 counter = 0;

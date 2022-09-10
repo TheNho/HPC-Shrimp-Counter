@@ -500,42 +500,42 @@ bool Setting_Window::CheckParameters() { // Check parameters in current window
 	}
 	CString sToken;
 	AfxExtractSubString(sToken, get_Point_LA, 0, ';');
-	if (_ttoi(sToken) < 0 || _ttoi(sToken) > Image_Width) {
+	if (!CheckInt(sToken) || _ttoi(sToken) < 0 || _ttoi(sToken) > Image_Width) {
 		AfxMessageBox(L"Point Left Above Error!");
 		return false;
 	}
 	AfxExtractSubString(sToken, get_Point_LA, 1, ';');
-	if (_ttoi(sToken) < 0 || _ttoi(sToken) > Image_Height) {
+	if (!CheckInt(sToken) || _ttoi(sToken) < 0 || _ttoi(sToken) > Image_Height) {
 		AfxMessageBox(L"Point Left Above Error!");
 		return false;
 	}
 	AfxExtractSubString(sToken, get_Point_LB, 0, ';');
-	if (_ttoi(sToken) < 0 || _ttoi(sToken) > Image_Width) {
+	if (!CheckInt(sToken) || _ttoi(sToken) < 0 || _ttoi(sToken) > Image_Width) {
 		AfxMessageBox(L"Point Left Below Error!");
 		return false;
 	}
 	AfxExtractSubString(sToken, get_Point_LB, 1, ';');
-	if (_ttoi(sToken) < 0 || _ttoi(sToken) > Image_Height) {
+	if (!CheckInt(sToken) || _ttoi(sToken) < 0 || _ttoi(sToken) > Image_Height) {
 		AfxMessageBox(L"Point Left Below Error!");
 		return false;
 	}
 	AfxExtractSubString(sToken, get_Point_RA, 0, ';');
-	if (_ttoi(sToken) < 0 || _ttoi(sToken) > Image_Width) {
+	if (!CheckInt(sToken) || _ttoi(sToken) < 0 || _ttoi(sToken) > Image_Width) {
 		AfxMessageBox(L"Point Right Above Error!");
 		return false;
 	}
 	AfxExtractSubString(sToken, get_Point_RA, 1, ';');
-	if (_ttoi(sToken) < 0 || _ttoi(sToken) > Image_Height) {
+	if (!CheckInt(sToken) || _ttoi(sToken) < 0 || _ttoi(sToken) > Image_Height) {
 		AfxMessageBox(L"Point Right Above Error!");
 		return false;
 	}
 	AfxExtractSubString(sToken, get_Point_RB, 0, ';');
-	if (_ttoi(sToken) < 0 || _ttoi(sToken) > Image_Width) {
+	if (!CheckInt(sToken) || _ttoi(sToken) < 0 || _ttoi(sToken) > Image_Width) {
 		AfxMessageBox(L"Point Right Below Error!");
 		return false;
 	}
 	AfxExtractSubString(sToken, get_Point_RB, 1, ';');
-	if (_ttoi(sToken) < 0 || _ttoi(sToken) > Image_Height) {
+	if (!CheckInt(sToken) || _ttoi(sToken) < 0 || _ttoi(sToken) > Image_Height) {
 		AfxMessageBox(L"Point Right Below Error!");
 		return false;
 	}
