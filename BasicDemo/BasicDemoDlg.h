@@ -54,9 +54,9 @@ protected:
 //en:Control corresponding variable*/
 private:
     BOOL                    m_bSoftWareTriggerCheck;
-    double                  m_dExposureEdit;
-    double                  m_dGainEdit;
-    double                  m_dFrameRateEdit;   
+    //double                  m_dExposureEdit;
+    //double                  m_dGainEdit;
+    //double                  m_dFrameRateEdit;   
 
     CComboBox               m_ctrlDeviceCombo;                // en:Enumerated device
     int                     m_nDeviceCombo;
@@ -70,12 +70,12 @@ private:
 
     int SetTriggerMode();                // en:Set Trigger Mode
     int GetTriggerMode();
-    int GetExposureTime();               // en:Set Exposure Time
-    int SetExposureTime(); 
-    int GetGain();                       // en:Set Gain
-    int SetGain();
-    int GetFrameRate();                  //en:Set Frame Rate
-    int SetFrameRate();
+    double GetExposureTime();               // en:Set Exposure Time
+    int SetExposureTime(float ExposureTime);
+    double GetGain();                       // en:Set Gain
+    int SetGain(float Gian);
+    double GetFrameRate();                  //en:Set Frame Rate
+    int SetFrameRate(float FrameRate);
     int GetTriggerSource();              //en:Set Trigger Source
     int SetTriggerSource();
 
@@ -125,8 +125,8 @@ public:
     afx_msg void OnBnClickedSavePngButton();
   
     /*en:Parameters Get and Set*/
-    afx_msg void OnBnClickedGetParameterButton();       //en:Get Parameter
-    afx_msg void OnBnClickedSetParameterButton();       //en:Exit from upper right corner
+    void GetImageParameters();       //en:Get Parameter
+    void SetImageParameters(double setFrameRate, double setGain, double setExposureTine);       //en:Exit from upper right corner
   
     afx_msg void OnClose();
 
@@ -145,9 +145,6 @@ public:
     void Get_ROI_Mask();
 
 private:
-    float default_frame_rate;
-    float default_expose_time;
-    float default_gain;
     int real_fps = 0;
     bool b_start_count = false;
     uint64 frame_count = 0;

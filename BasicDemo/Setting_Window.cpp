@@ -11,7 +11,6 @@
 IMPLEMENT_DYNAMIC(Setting_Window, CDialogEx)
 
 // Global variables getting current parameters on the first initial window
-extern CString flip_image;
 extern CString blur_method;
 extern int blur_kernel;
 extern CString segment_binary_method;
@@ -28,19 +27,22 @@ extern int morphological_kernel;
 extern int morphological_iterations;
 
 extern int line_position;
-extern float max_distance;
 
 extern float  distance_threshold;
 extern int min_hits;
 extern int max_age;
 
-extern double avg_area;
 extern double min_area;
 extern double max_area;
 extern int min_width;
 extern int min_height;
 extern int max_width;
 extern int max_height;
+// Image
+extern CString flip_image;
+extern double image_frame_rate;
+extern double image_gain;
+extern double image_exposure_time;
 // ROI
 extern CString ROI_Point_Left_Above;
 extern CString ROI_Point_Left_Below;
@@ -64,8 +66,6 @@ Setting_Window::Setting_Window(CWnd* pParent /*=nullptr*/)
 	, setting_min_hits(min_hits)
 	, setting_max_age(max_age)
 	, setting_line_position(line_position)
-	, setting_max_distance(max_distance)
-	, setting_avg_area(avg_area)
 	, setting_min_area(min_area)
 	, setting_max_area(max_area)
 	, setting_min_width(min_width)
@@ -83,6 +83,9 @@ Setting_Window::Setting_Window(CWnd* pParent /*=nullptr*/)
 	, setting_Point_Right_Above(ROI_Point_Right_Above)
 	, setting_Point_Right_Below(ROI_Point_Right_Below)
 	, setting_dir_data_train_svm(_T(""))
+	, setting_image_gain(image_gain)
+	, setting_image_frame_rate(image_frame_rate)
+	, setting_image_exposure_time(image_exposure_time)
 {
 		
 }
@@ -106,8 +109,6 @@ void Setting_Window::DoDataExchange(CDataExchange* pDX) {
 	DDX_Text(pDX, ID_MIN_HITS, setting_min_hits);
 	DDX_Text(pDX, ID_MAX_AGE, setting_max_age);
 	DDX_Text(pDX, ID_LINE_POSITION, setting_line_position);
-	DDX_Text(pDX, ID_MAX_DISTANCE, setting_max_distance);
-	DDX_Text(pDX, ID_AVG_AREA, setting_avg_area);
 	DDX_Text(pDX, ID_MIN_AREA, setting_min_area);
 	DDX_Text(pDX, ID_MIN_WIDTH, setting_min_width);
 	DDX_Text(pDX, ID_MIN_HEIGHT, setting_min_height);
@@ -127,6 +128,9 @@ void Setting_Window::DoDataExchange(CDataExchange* pDX) {
 	DDX_Text(pDX, IDC_POINT_RIGHT_ABOVE, setting_Point_Right_Above);
 	DDX_Text(pDX, IDC_POINT_RIGHT_BELOW, setting_Point_Right_Below);
 	DDX_Text(pDX, IDC_EDIT_DIR_DATA_TRAIN_SVM, setting_dir_data_train_svm);
+	DDX_Text(pDX, IDC_EDIT_IMAGE_GIAN, setting_image_gain);
+	DDX_Text(pDX, IDC_EDIT_IMAGE_FRAME_RATE, setting_image_frame_rate);
+	DDX_Text(pDX, IDC_EDIT_IMAGE_EXPOSURE_TIME, setting_image_exposure_time);
 }
 
 // initial window
@@ -164,6 +168,7 @@ BEGIN_MESSAGE_MAP(Setting_Window, CDialogEx)
 	ON_BN_CLICKED(ID_LOAD, &Setting_Window::OnBnClickedLoad)
 	ON_BN_CLICKED(IDC_BUTTON_TRAIN_SVM, &Setting_Window::OnBnClickedButtonTrainSvm)
 	ON_BN_CLICKED(IDC_BUTTON_LOAD_FILE_TRAIN_SVM, &Setting_Window::OnBnClickedButtonLoadFileTrainSvm)
+	ON_BN_CLICKED(IDC_BUTTON_SET_DEFAULT, &Setting_Window::OnBnClickedButtonSetDefault)
 END_MESSAGE_MAP()
 
 void Setting_Window::OnBnClickedOk() {
@@ -379,9 +384,8 @@ bool Setting_Window::CheckParameters() { // Check parameters in current window
 	}
 	
 	//Check counting parameters
-	CString get_line_position, get_max_distance;
+	CString get_line_position;
 	GetDlgItem(ID_LINE_POSITION)->GetWindowTextW(get_line_position);
-	GetDlgItem(ID_MAX_DISTANCE)->GetWindowTextW(get_max_distance);
 	// line position
 	if (CheckInt(get_line_position) == true) {
 		if (_ttoi(get_line_position) <= 0 || _ttoi(get_line_position) >= Image_Height) {
@@ -395,33 +399,14 @@ bool Setting_Window::CheckParameters() { // Check parameters in current window
 		AfxMessageBox(L"Line Position must be Int!");
 		return false;
 	}
-	// max distance
-	if (CheckFloat(get_max_distance) == false) {
-		AfxMessageBox(L"Max Square Distance must be float!");
-		return false;
-	}
-	if (_ttof(get_max_distance) <=0) {
-		AfxMessageBox(L"Max Square Distance must be Positive!");
-		return false;
-	}
 	// Check Detection parameters
-	CString get_avg_area, get_min_area, get_max_area, get_min_width, get_max_width, get_min_height, get_max_height;
-	GetDlgItem(ID_AVG_AREA)->GetWindowTextW(get_avg_area);
+	CString get_min_area, get_max_area, get_min_width, get_max_width, get_min_height, get_max_height;
 	GetDlgItem(ID_MIN_AREA)->GetWindowTextW(get_min_area);
 	GetDlgItem(ID_MAX_AREA)->GetWindowTextW(get_max_area);
 	GetDlgItem(ID_MIN_WIDTH)->GetWindowTextW(get_min_width);
 	GetDlgItem(ID_MIN_HEIGHT)->GetWindowTextW(get_min_height);
 	GetDlgItem(ID_MAX_WIDTH)->GetWindowTextW(get_max_width);
 	GetDlgItem(ID_MAX_HEIGHT)->GetWindowTextW(get_max_height);
-	// Avg area
-	if (CheckFloat(get_avg_area) == false) {
-		AfxMessageBox(L"Avg Area must be Float!");
-		return false;
-	}
-	if (_ttof(get_avg_area) <=0) {
-		AfxMessageBox(L"Avg Area must be Postitive!");
-		return false;
-	}
 	// max area
 	if (CheckFloat(get_max_area) == false) {
 		AfxMessageBox(L"Max Area must be Float!");
@@ -539,6 +524,41 @@ bool Setting_Window::CheckParameters() { // Check parameters in current window
 		AfxMessageBox(L"Point Right Below Error!");
 		return false;
 	}
+	// Check Image
+	CString get_frame_rate, get_gian, get_exposure_time;
+	GetDlgItem(IDC_EDIT_IMAGE_FRAME_RATE)->GetWindowTextW(get_frame_rate);
+	GetDlgItem(IDC_EDIT_IMAGE_GIAN)->GetWindowTextW(get_gian);
+	GetDlgItem(IDC_EDIT_IMAGE_EXPOSURE_TIME)->GetWindowTextW(get_exposure_time);
+	if (CheckFloat(get_frame_rate) == true) {
+		if (_ttof(get_frame_rate) < 0 || _ttof(get_frame_rate) > 815) {
+			AfxMessageBox(L"Frame Rate Error!");
+			return false;
+		}
+	}
+	else {
+		AfxMessageBox(L"Frame Rate Error!");
+		return false;
+	}
+	if (CheckFloat(get_gian) == true) {
+		if (_ttof(get_gian) < 0 || _ttof(get_gian) > 15) {
+			AfxMessageBox(L"Gain Error!");
+			return false;
+		}
+	}
+	else {
+		AfxMessageBox(L"Gain Error!");
+		return false;
+	}
+	if (CheckFloat(get_exposure_time) == true) {
+		if (_ttof(get_exposure_time) < 0) {
+			AfxMessageBox(L"Exposure Time Error!");
+			return false;
+		}
+	}
+	else {
+		AfxMessageBox(L"Gian Time Error!");
+		return false;
+	}
 	// all check done!
 	return true;
 }
@@ -605,59 +625,64 @@ CString Setting_Window::get_parameters_from_window() {
 	data = data + L"Morpho_iterations:" + blur_data + L"\n"; // line 5
 	// detection
 	CString detection_data;
-	detection_data.Format(L"%f", setting_avg_area);
-	data = data + L"Avg_Area:" + detection_data + L"\n"; // line 6
 	detection_data.Format(L"%f", setting_min_area);
-	data = data + L"Min_Area:" + detection_data + L"\n"; // line 7
+	data = data + L"Min_Area:" + detection_data + L"\n"; // line 6
 	detection_data.Format(L"%f", setting_max_area);
-	data = data + L"Max_Area:" + detection_data + L"\n"; // line 8
+	data = data + L"Max_Area:" + detection_data + L"\n"; // line 7
 	detection_data.Format(L"%d", setting_min_width);
-	data = data + L"Min_Width:" + detection_data + L"\n"; // line 9
+	data = data + L"Min_Width:" + detection_data + L"\n"; // line 8
 	detection_data.Format(L"%d", setting_max_width);
-	data = data + L"Max_Width:" + detection_data + L"\n"; // line 10
+	data = data + L"Max_Width:" + detection_data + L"\n"; // line 9
 	detection_data.Format(L"%d", setting_min_height);
-	data = data + L"Min_Height:" + detection_data + L"\n"; // line 11
+	data = data + L"Min_Height:" + detection_data + L"\n"; // line 10
 	detection_data.Format(L"%d", setting_max_height);
-	data = data + L"Max_Height:" + detection_data + L"\n"; // line 12
+	data = data + L"Max_Height:" + detection_data + L"\n"; // line 11
 	// counting
 	CString counting_data;
 	counting_data.Format(L"%d", setting_line_position);
-	data = data + L"Line_Position:" + counting_data + L"\n"; // line 13
-	counting_data.Format(L"%f", setting_max_distance);
-	data = data + L"Max_Distance:" + counting_data + L"\n"; // line 14
+	data = data + L"Line_Position:" + counting_data + L"\n"; // line 12
 	// detetion method
-	data = data + "Segment_To_Binary_Method:" + setting_segment_binary_method + L"\n"; // line 15
+	data = data + "Segment_To_Binary_Method:" + setting_segment_binary_method + L"\n"; // line 13
 	CString data_detection_method;
 	// Background Subtraction
-	data = data + L"Background_Subtraction_Method:" + setting_bsg_method + L"\n"; // line 16
-	data = data + L"Background_Subtraction_Shadow:" + setting_bsg_shadow + L"\n"; // line 17
+	data = data + L"Background_Subtraction_Method:" + setting_bsg_method + L"\n"; // line 14
+	data = data + L"Background_Subtraction_Shadow:" + setting_bsg_shadow + L"\n"; // line 15
 	data_detection_method.Format(L"%f", setting_bsg_threshold);
-	data = data + L"Background_Subtraction_Threshold:" + data_detection_method + L"\n"; // line 18
+	data = data + L"Background_Subtraction_Threshold:" + data_detection_method + L"\n"; // line 16
 	data_detection_method.Format(L"%d", setting_bsg_history);
-	data = data + L"Background_Subtraction_History:" + data_detection_method + L"\n"; // line 19
+	data = data + L"Background_Subtraction_History:" + data_detection_method + L"\n"; // line 17
 	data_detection_method.Format(L"%f", setting_bsg_learning_rate);
-	data = data + L"Background_Subtraction_Learning_Rate:" + data_detection_method + L"\n"; // line 20
+	data = data + L"Background_Subtraction_Learning_Rate:" + data_detection_method + L"\n"; // line 18
 	// Adaptive Threshod
-	data = data + L"Adaptive_Threshod_Method:" + setting_adaptiveThreshold_method + L"\n"; // line 21
+	data = data + L"Adaptive_Threshod_Method:" + setting_adaptiveThreshold_method + L"\n"; // line 19
 	data_detection_method.Format(L"%d", setting_adaptiveThreshold_KSize);
-	data = data + L"KSize:" + data_detection_method + L"\n"; // line 22
+	data = data + L"KSize:" + data_detection_method + L"\n"; // line 20
 	data_detection_method.Format(L"%d", setting_adaptiveThreshold_C);
-	data = data + L"C:" + data_detection_method + L"\n"; // line 23
+	data = data + L"C:" + data_detection_method + L"\n"; // line 21
 	// SORT tracking
 	CString SORT_data;
 	SORT_data.Format(L"%f", setting_distance_threshold);
-	data = data + L"Distance_Threshold:" + SORT_data + L"\n"; // line 24
+	data = data + L"Distance_Threshold:" + SORT_data + L"\n"; // line 22
 	SORT_data.Format(L"%d", setting_min_hits);
-	data = data + L"Min_Hits:" + SORT_data + L"\n"; // line 25
+	data = data + L"Min_Hits:" + SORT_data + L"\n"; // line 23
 	SORT_data.Format(L"%d", setting_max_age);
-	data = data + L"Max_Age:" + SORT_data + L"\n"; // line 26
+	data = data + L"Max_Age:" + SORT_data + L"\n"; // line 24
 	// Flip image
-	data = data + L"Flip_Image:" + setting_flip_image + L"\n"; // line 27
+	data = data + L"Flip_Image:" + setting_flip_image + L"\n"; // line 25
 	// ROI parameters
-	data = data + L"ROI_Point_Left_Above:" + setting_Point_Left_Above + L"\n"; // line 28
-	data = data + L"ROI_Point_Left_Below:" + setting_Point_Left_Below + L"\n"; // line 29
-	data = data + L"ROI_Point_Right_Above:" + setting_Point_Right_Above + L"\n"; // line 30
-	data = data + L"ROI_Point_Right_Below:" + setting_Point_Right_Below + L"\n"; // line 31
+	data = data + L"ROI_Point_Left_Above:" +setting_Point_Left_Above + L"\n"; // line 26
+	data = data + L"ROI_Point_Left_Below:" +setting_Point_Left_Below + L"\n"; // line 27
+	data = data + L"ROI_Point_Right_Above:" +setting_Point_Right_Above + L"\n"; // line 28
+	data = data + L"ROI_Point_Right_Below:" +setting_Point_Right_Below + L"\n"; // line 29
+	// Image parameters
+	CString Image_data;
+	Image_data.Format(L"%f", setting_image_frame_rate);
+	data = data + L"Image_Frame_Rate:" + Image_data + L"\n"; // line 30
+	Image_data.Format(L"%f", setting_image_gain);
+	data = data + L"Image_Gain:" + Image_data + L"\n"; // line 31
+	Image_data.Format(L"%f", setting_image_exposure_time);
+	data = data + L"Image_Exposure_Time:" + Image_data + L"\n"; // line 32
+
 	return data;
 }
 void Setting_Window::OnBnClickedSave() {
@@ -746,42 +771,34 @@ BOOL Setting_Window::get_parameters_from_file(CString setting_filename) {
 	setting_morpho_iterations = _ttoi(data_);
 
 	data_ = vector_get_parameters[6];
-	data_.Replace(L"Avg_Area:", L"");
-	setting_avg_area = _ttoi(data_);
-
-	data_ = vector_get_parameters[7];
 	data_.Replace(L"Min_Area:", L"");
 	setting_min_area = _ttoi(data_);
 
-	data_ = vector_get_parameters[8];
+	data_ = vector_get_parameters[7];
 	data_.Replace(L"Max_Area:", L"");
 	setting_max_area = _ttoi(data_);
 
-	data_ = vector_get_parameters[9];
+	data_ = vector_get_parameters[8];
 	data_.Replace(L"Min_Width:", L"");
 	setting_min_width = _ttoi(data_);
 
-	data_ = vector_get_parameters[10];
+	data_ = vector_get_parameters[9];
 	data_.Replace(L"Max_Width:", L"");
 	setting_max_width = _ttoi(data_);
 
-	data_ = vector_get_parameters[11];
+	data_ = vector_get_parameters[10];
 	data_.Replace(L"Min_Height:", L"");
 	setting_min_height = _ttoi(data_);
 
-	data_ = vector_get_parameters[12];
+	data_ = vector_get_parameters[11];
 	data_.Replace(L"Max_Height:", L"");
 	setting_max_height = _ttoi(data_);
 
-	data_ = vector_get_parameters[13];
+	data_ = vector_get_parameters[12];
 	data_.Replace(L"Line_Position:", L"");
 	setting_line_position = _ttoi(data_);
 
-	data_ = vector_get_parameters[14];
-	data_.Replace(L"Max_Distance:", L"");
-	setting_max_distance = _ttoi(data_);
-
-	data_ = vector_get_parameters[15];
+	data_ = vector_get_parameters[13];
 	data_.Replace(L"Segment_To_Binary_Method:", L"");
 	setting_segment_binary_method = data_;
 	if (setting_segment_binary_method == L"Background Subtraction") {
@@ -790,23 +807,23 @@ BOOL Setting_Window::get_parameters_from_file(CString setting_filename) {
 		EnableAdaptiveThreshold(FALSE);
 		EnableBackgroundSubtraction(TRUE);
 
-		CString data_BSG = vector_get_parameters[16];
+		CString data_BSG = vector_get_parameters[14];
 		data_BSG.Replace(L"Background_Subtraction_Method:", L"");
 		setting_bsg_method = data_BSG;
 
-		data_BSG = vector_get_parameters[17];
+		data_BSG = vector_get_parameters[15];
 		data_BSG.Replace(L"Background_Subtraction_Shadow:", L"");
 		setting_bsg_shadow = data_BSG;
 
-		data_BSG = vector_get_parameters[18];
+		data_BSG = vector_get_parameters[16];
 		data_BSG.Replace(L"Background_Subtraction_Threshold:", L"");
 		setting_bsg_threshold = _ttof(data_BSG);
 
-		data_BSG = vector_get_parameters[19];
+		data_BSG = vector_get_parameters[17];
 		data_BSG.Replace(L"Background_Subtraction_History:", L"");
 		setting_bsg_history = _ttoi(data_BSG);
 
-		data_BSG = vector_get_parameters[20];
+		data_BSG = vector_get_parameters[18];
 		data_BSG.Replace(L"Background_Subtraction_Learning_Rate:", L"");
 		setting_bsg_learning_rate = _ttof(data_BSG);
 	}
@@ -816,15 +833,15 @@ BOOL Setting_Window::get_parameters_from_file(CString setting_filename) {
 		EnableAdaptiveThreshold(TRUE);
 		EnableBackgroundSubtraction(FALSE);
 
-		CString data_AT = vector_get_parameters[21];
+		CString data_AT = vector_get_parameters[19];
 		data_AT.Replace(L"Adaptive_Threshod_Method:", L"");
 		setting_adaptiveThreshold_method = data_AT;
 
-		data_AT = vector_get_parameters[22];
+		data_AT = vector_get_parameters[20];
 		data_AT.Replace(L"KSize:", L"");
 		setting_adaptiveThreshold_KSize = _ttoi(data_AT);
 
-		data_AT = vector_get_parameters[23];
+		data_AT = vector_get_parameters[21];
 		data_AT.Replace(L"C:", L"");
 		setting_adaptiveThreshold_C = _ttoi(data_AT);
 	}
@@ -833,36 +850,47 @@ BOOL Setting_Window::get_parameters_from_file(CString setting_filename) {
 		return FALSE;
 	}
 
-	CString data_SORT = vector_get_parameters[24];
+	CString data_SORT = vector_get_parameters[22];
 	data_SORT.Replace(L"Distance_Threshold:", L"");
 	setting_distance_threshold = _ttof(data_SORT);
 
-	data_SORT = vector_get_parameters[25];
+	data_SORT = vector_get_parameters[23];
 	data_SORT.Replace(L"Min_Hits:", L"");
 	setting_min_hits = _ttoi(data_SORT);
 
-	data_SORT = vector_get_parameters[26];
+	data_SORT = vector_get_parameters[24];
 	data_SORT.Replace(L"Max_Age:", L"");
 	setting_max_age = _ttoi(data_SORT);
 	
 	CString data_flip_image;
-	data_flip_image = vector_get_parameters[27];
+	data_flip_image = vector_get_parameters[25];
 	data_flip_image.Replace(L"Flip_Image:", L"");
 	setting_flip_image = data_flip_image;
 
 	CString ROI_data;
-	ROI_data = vector_get_parameters[28];
+	ROI_data = vector_get_parameters[26];
 	ROI_data.Replace(L"ROI_Point_Left_Above:", L"");
 	setting_Point_Left_Above = ROI_data;
-	ROI_data = vector_get_parameters[29];
+	ROI_data = vector_get_parameters[27];
 	ROI_data.Replace(L"ROI_Point_Left_Below:", L"");
 	setting_Point_Left_Below = ROI_data;
-	ROI_data = vector_get_parameters[30];
+	ROI_data = vector_get_parameters[28];
 	ROI_data.Replace(L"ROI_Point_Right_Above:", L"");
 	setting_Point_Right_Above = ROI_data;
-	ROI_data = vector_get_parameters[31];
+	ROI_data = vector_get_parameters[29];
 	ROI_data.Replace(L"ROI_Point_Right_Below:", L"");
 	setting_Point_Right_Below = ROI_data;
+
+	CString Image_data;
+	Image_data = vector_get_parameters[30];
+	Image_data.Replace(L"Image_Frame_Rate:", L"");
+	setting_image_frame_rate = _ttof(Image_data);
+	Image_data = vector_get_parameters[31];
+	Image_data.Replace(L"Image_Gain:", L"");
+	setting_image_gain = _ttof(Image_data);
+	Image_data = vector_get_parameters[32];
+	Image_data.Replace(L"Image_Exposure_Time:", L"");
+	setting_image_exposure_time = _ttof(Image_data);
 
 	return TRUE;
 }
@@ -944,3 +972,8 @@ void Setting_Window::OnBnClickedButtonLoadFileTrainSvm()
 // ban dau khoi tao nhan gia tri TRUE -> khong check
 // nhan bo check nhan gia tri -1, checked nhan gia tri 1
 // khong check, nhan gia tri 0 = FALSE
+
+void Setting_Window::OnBnClickedButtonSetDefault()
+{
+	// TODO: Add your control notification handler code here
+}

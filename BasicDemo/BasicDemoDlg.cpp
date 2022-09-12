@@ -34,20 +34,20 @@ extern int morphological_kernel;
 extern int morphological_iterations;
 
 extern int line_position;
-extern float max_distance;
 
 extern float distance_threshold;
 extern int min_hits;
 extern int max_age;
 
-extern double avg_area;
 extern double min_area;
 extern double max_area;
 extern int min_width;
 extern int min_height;
 extern int max_width;
 extern int max_height;
-
+extern double image_frame_rate;
+extern double image_gain;
+extern double image_exposure_time;
 extern CString ROI_Point_Left_Above;
 extern CString ROI_Point_Left_Below;
 extern CString ROI_Point_Right_Above;
@@ -92,9 +92,9 @@ CBasicDemoDlg::CBasicDemoDlg(CWnd* pParent /*=NULL*/)
     , m_hGrabThread(NULL)
     , m_bThreadState(FALSE)
     , m_nTriggerMode(MV_TRIGGER_MODE_OFF)
-    , m_dExposureEdit(0)
-    , m_dGainEdit(0)
-    , m_dFrameRateEdit(0)
+    //, m_dExposureEdit(0)
+    //, m_dGainEdit(0)
+    //, m_dFrameRateEdit(0)
     , m_bSoftWareTriggerCheck(FALSE)
     , m_nTriggerSource(MV_TRIGGER_SOURCE_SOFTWARE)
     , m_pSaveImageBuf(NULL)
@@ -119,9 +119,9 @@ void CBasicDemoDlg::DoDataExchange(CDataExchange* pDX) {
     CDialog::DoDataExchange(pDX);
     DDX_Control(pDX, IDC_DEVICE_COMBO, m_ctrlDeviceCombo);
     DDX_CBIndex(pDX, IDC_DEVICE_COMBO, m_nDeviceCombo);
-    DDX_Text(pDX, IDC_EXPOSURE_EDIT, m_dExposureEdit);
-    DDX_Text(pDX, IDC_GAIN_EDIT, m_dGainEdit);
-    DDX_Text(pDX, IDC_FRAME_RATE_EDIT, m_dFrameRateEdit);
+    //DDX_Text(pDX, IDC_EXPOSURE_EDIT, m_dExposureEdit);
+    //DDX_Text(pDX, IDC_GAIN_EDIT, m_dGainEdit);
+    //DDX_Text(pDX, IDC_FRAME_RATE_EDIT, m_dFrameRateEdit);
     DDX_Check(pDX, IDC_SOFTWARE_TRIGGER_CHECK, m_bSoftWareTriggerCheck);
     DDX_Text(pDX, IDC_SHIRMP_NUMBER_STATIC, counter);
     DDX_Text(pDX, IDC_FRAME_COUNT_EDIT, frame_count);
@@ -147,8 +147,8 @@ BEGIN_MESSAGE_MAP(CBasicDemoDlg, CDialog)
     ON_BN_CLICKED(IDC_TRIGGER_MODE_RADIO, &CBasicDemoDlg::OnBnClickedTriggerModeRadio)
     ON_BN_CLICKED(IDC_START_GRABBING_BUTTON, &CBasicDemoDlg::OnBnClickedStartGrabbingButton)
     ON_BN_CLICKED(IDC_STOP_GRABBING_BUTTON, &CBasicDemoDlg::OnBnClickedStopGrabbingButton)
-    ON_BN_CLICKED(IDC_GET_PARAMETER_BUTTON, &CBasicDemoDlg::OnBnClickedGetParameterButton)
-    ON_BN_CLICKED(IDC_SET_PARAMETER_BUTTON, &CBasicDemoDlg::OnBnClickedSetParameterButton)
+   // ON_BN_CLICKED(IDC_GET_PARAMETER_BUTTON, &CBasicDemoDlg::OnBnClickedGetParameterButton)
+    //ON_BN_CLICKED(IDC_SET_PARAMETER_BUTTON, &CBasicDemoDlg::OnBnClickedSetParameterButton)
     ON_BN_CLICKED(IDC_SOFTWARE_TRIGGER_CHECK, &CBasicDemoDlg::OnBnClickedSoftwareTriggerCheck)
     ON_BN_CLICKED(IDC_SOFTWARE_ONCE_BUTTON, &CBasicDemoDlg::OnBnClickedSoftwareOnceButton)
     ON_BN_CLICKED(IDC_SAVE_BMP_BUTTON, &CBasicDemoDlg::OnBnClickedSaveBmpButton)
@@ -216,6 +216,7 @@ BOOL CBasicDemoDlg::OnInitDialog() {
 }
 
 void CBasicDemoDlg::SettingInitial() {
+    // Load DefaultSettings file
     // Install the first run variables
     // ROI Mask
     ROI_Point_Left_Above = L"23,0";
@@ -227,9 +228,9 @@ void CBasicDemoDlg::SettingInitial() {
     // Load SVM
     SVM = ml::SVM::load(SVM_dir);
     // Image detail
-    default_frame_rate = 200;
-    default_expose_time = 2000;
-    default_gain = 10;
+    image_frame_rate = 200;
+    image_gain = 10;
+    image_exposure_time = 2000;
     // global variables
     flip_image = L"Y"; // None;X;Y
     blur_method = L"AVG"; //AVG;GAUSS
@@ -247,11 +248,9 @@ void CBasicDemoDlg::SettingInitial() {
     morphological_kernel = 5; //1;3;5;7;9
     morphological_iterations = 2;
     line_position = 400;
-    max_distance = 100; // max distance between 2 center points in 2 continuous frames
     distance_threshold = 50; // distance threshold between predict center and current center
     min_hits = 3;
     max_age = 10;
-    avg_area = 100;
     min_area = 10;
     max_area = 1000;
     min_width = 3;
@@ -350,11 +349,11 @@ void CBasicDemoDlg::EnableControls(BOOL bIsCameraReady) {
     GetDlgItem(IDC_SAVE_TIFF_BUTTON)->EnableWindow(m_bStartGrabbing ? TRUE : FALSE);
     GetDlgItem(IDC_SAVE_PNG_BUTTON)->EnableWindow(m_bStartGrabbing ? TRUE : FALSE);
     GetDlgItem(IDC_SAVE_JPG_BUTTON)->EnableWindow(m_bStartGrabbing ? TRUE : FALSE);
-    GetDlgItem(IDC_EXPOSURE_EDIT)->EnableWindow(m_bOpenDevice && !m_bStartGrabbing ? TRUE : FALSE);
-    GetDlgItem(IDC_GAIN_EDIT)->EnableWindow(m_bOpenDevice && !m_bStartGrabbing ? TRUE : FALSE);
-    GetDlgItem(IDC_FRAME_RATE_EDIT)->EnableWindow(m_bOpenDevice && !m_bStartGrabbing ? TRUE : FALSE);
-    GetDlgItem(IDC_GET_PARAMETER_BUTTON)->EnableWindow(m_bOpenDevice && !m_bStartGrabbing ? TRUE : FALSE);
-    GetDlgItem(IDC_SET_PARAMETER_BUTTON)->EnableWindow(m_bOpenDevice && !m_bStartGrabbing ? TRUE : FALSE);
+    //GetDlgItem(IDC_EXPOSURE_EDIT)->EnableWindow(m_bOpenDevice && !m_bStartGrabbing ? TRUE : FALSE);
+    //GetDlgItem(IDC_GAIN_EDIT)->EnableWindow(m_bOpenDevice && !m_bStartGrabbing ? TRUE : FALSE);
+    //GetDlgItem(IDC_FRAME_RATE_EDIT)->EnableWindow(m_bOpenDevice && !m_bStartGrabbing ? TRUE : FALSE);
+    //GetDlgItem(IDC_GET_PARAMETER_BUTTON)->EnableWindow(m_bOpenDevice && !m_bStartGrabbing ? TRUE : FALSE);
+    //GetDlgItem(IDC_SET_PARAMETER_BUTTON)->EnableWindow(m_bOpenDevice && !m_bStartGrabbing ? TRUE : FALSE);
     GetDlgItem(IDC_CONTINUS_MODE_RADIO)->EnableWindow(m_bOpenDevice ? TRUE : FALSE);
     GetDlgItem(IDC_TRIGGER_MODE_RADIO)->EnableWindow(m_bOpenDevice ? TRUE : FALSE);
     GetDlgItem(IDC_SETTING_BUTTON)->EnableWindow(m_bStartGrabbing ? FALSE : TRUE);
@@ -463,8 +462,8 @@ int CBasicDemoDlg::SetTriggerMode()
     return m_pcMyCamera->SetEnumValue("TriggerMode", m_nTriggerMode);
 }
 
-//en:Get Exposure Time / SDK function
-int CBasicDemoDlg::GetExposureTime() {
+//en:Get Exposure Time
+double CBasicDemoDlg::GetExposureTime() {
     MVCC_FLOATVALUE stFloatValue = {0};
 
     int nRet = m_pcMyCamera->GetFloatValue("ExposureTime", &stFloatValue);
@@ -472,13 +471,11 @@ int CBasicDemoDlg::GetExposureTime() {
         return nRet;
     }
 
-    m_dExposureEdit = stFloatValue.fCurValue;
-
-    return MV_OK;
+    return stFloatValue.fCurValue;;
 }
 
-//en:Set Exposure Time / SDK function
-int CBasicDemoDlg::SetExposureTime() {
+//en:Set Exposure Time 
+int CBasicDemoDlg::SetExposureTime(float ExposureTime) {
     // en:Adjust these two exposure mode to allow exposure time effective
     int nRet = m_pcMyCamera->SetEnumValue("ExposureMode", MV_EXPOSURE_MODE_TIMED);
     if (MV_OK != nRet) {
@@ -487,51 +484,49 @@ int CBasicDemoDlg::SetExposureTime() {
 
     m_pcMyCamera->SetEnumValue("ExposureAuto", MV_EXPOSURE_AUTO_MODE_OFF);
 
-    return m_pcMyCamera->SetFloatValue("ExposureTime", (float)m_dExposureEdit);
+    return m_pcMyCamera->SetFloatValue("ExposureTime", ExposureTime);
 }
 
-//en:Get Gain / SDK function
-int CBasicDemoDlg::GetGain() {
+//en:Get Gain 
+double CBasicDemoDlg::GetGain() {
     MVCC_FLOATVALUE stFloatValue = {0};
 
     int nRet = m_pcMyCamera->GetFloatValue("Gain", &stFloatValue);
     if (MV_OK != nRet) {
         return nRet;
     }
-    m_dGainEdit = stFloatValue.fCurValue;
 
-    return MV_OK;
+    return stFloatValue.fCurValue;;
 }
 
-//en:Set Gain / SDK function
-int CBasicDemoDlg::SetGain() {
+//en:Set Gain 
+int CBasicDemoDlg::SetGain(float Gian) {
     //en:Set Gain after Auto Gain is turned off, this failure does not need to return
     m_pcMyCamera->SetEnumValue("GainAuto", 0);
 
-    return m_pcMyCamera->SetFloatValue("Gain", (float)m_dGainEdit);
+    return m_pcMyCamera->SetFloatValue("Gain", Gian);
 }
 
-//en:Get Frame Rate / SDK function
-int CBasicDemoDlg::GetFrameRate() {
+//en:Get Frame Rate 
+double CBasicDemoDlg::GetFrameRate() {
     MVCC_FLOATVALUE stFloatValue = {0};
 
     int nRet = m_pcMyCamera->GetFloatValue("ResultingFrameRate", &stFloatValue);
     if (MV_OK != nRet) {
         return nRet;
     }
-    m_dFrameRateEdit = stFloatValue.fCurValue;
 
-    return MV_OK;
+    return stFloatValue.fCurValue;;
 }
 
-//en:Set Frame Rate / SDK function
-int CBasicDemoDlg::SetFrameRate() {
+//en:Set Frame Rate
+int CBasicDemoDlg::SetFrameRate( float FrameRate) {
     int nRet = m_pcMyCamera->SetBoolValue("AcquisitionFrameRateEnable", true);
     if (MV_OK != nRet) {
         return nRet;
     }
 
-    return m_pcMyCamera->SetFloatValue("AcquisitionFrameRate", (float)m_dFrameRateEdit);
+    return m_pcMyCamera->SetFloatValue("AcquisitionFrameRate", FrameRate);
 }
 
 //en:Get Trigger Source / SDK function
@@ -872,10 +867,10 @@ void CBasicDemoDlg::OnBnClickedOpenButton() {
         AfxMessageBox(L"Cannot set Initail Frame Rate!");
         return;
     }
-    m_pcMyCamera->SetFloatValue("AcquisitionFrameRate", default_frame_rate);
+    m_pcMyCamera->SetFloatValue("AcquisitionFrameRate", image_frame_rate);
     // Gain
     m_pcMyCamera->SetEnumValue("GainAuto", 0);
-    m_pcMyCamera->SetFloatValue("Gain", default_gain);
+    m_pcMyCamera->SetFloatValue("Gain", image_gain);
     // Expose time
     nRet = m_pcMyCamera->SetEnumValue("ExposureMode", MV_EXPOSURE_MODE_TIMED);
     if (MV_OK != nRet) {
@@ -883,11 +878,11 @@ void CBasicDemoDlg::OnBnClickedOpenButton() {
         return;
     }
     m_pcMyCamera->SetEnumValue("ExposureAuto", MV_EXPOSURE_AUTO_MODE_OFF);
-    m_pcMyCamera->SetFloatValue("ExposureTime", default_expose_time);
+    m_pcMyCamera->SetFloatValue("ExposureTime", image_exposure_time);
 
     m_bOpenDevice = TRUE;
     EnableControls(TRUE);
-    OnBnClickedGetParameterButton(); //en:Get Parameter
+    //GetImageParameters(); //en:Get Parameter
 }
 
 //en:Click Close button: Close Device
@@ -981,6 +976,9 @@ void CBasicDemoDlg::DisplayThread() {
 
 //en:Click Start button
 void CBasicDemoDlg::OnBnClickedStartGrabbingButton() {
+    // Set camera
+    SetImageParameters(image_frame_rate, image_gain, image_exposure_time);
+
     if (FALSE == m_bOpenDevice || TRUE == m_bStartGrabbing || NULL == m_pcMyCamera) {
         return;
     }
@@ -1020,6 +1018,7 @@ void CBasicDemoDlg::OnBnClickedStartGrabbingButton() {
 
 //en:Click Stop button
 void CBasicDemoDlg::OnBnClickedStopGrabbingButton() {
+    GetImageParameters();
     if (FALSE == m_bOpenDevice || FALSE == m_bStartGrabbing || NULL == m_pcMyCamera) {
         return;
     }
@@ -1056,27 +1055,27 @@ void CBasicDemoDlg::OnBnClickedStopGrabbingButton() {
     previous_frameTrackingResult.clear();
 }
 
-//en:Click Get Parameter button / SDK function
-void CBasicDemoDlg::OnBnClickedGetParameterButton() {
+//en:Get Iamge Parameters
+void CBasicDemoDlg::GetImageParameters() {
     int nRet = GetTriggerMode();
     if (nRet != MV_OK)
     {
         ShowErrorMsg(TEXT("Get Trigger Mode Fail"), nRet);
     }
 
-    nRet = GetExposureTime();
+    image_exposure_time = GetExposureTime();
     if (nRet != MV_OK)
     {
         ShowErrorMsg(TEXT("Get Exposure Time Fail"), nRet);
     }
 
-    nRet = GetGain();
+    image_gain = GetGain();
     if (nRet != MV_OK)
     {
         ShowErrorMsg(TEXT("Get Gain Fail"), nRet);
     }
 
-    nRet = GetFrameRate();
+    image_frame_rate = GetFrameRate();
     if (nRet != MV_OK)
     {
         ShowErrorMsg(TEXT("Get Frame Rate Fail"), nRet);
@@ -1091,24 +1090,23 @@ void CBasicDemoDlg::OnBnClickedGetParameterButton() {
     UpdateData(FALSE);
 }
 
-//en:Click Set Parameter button / SDK function
-void CBasicDemoDlg::OnBnClickedSetParameterButton() {
-    UpdateData(TRUE);
-
+//en:Set Parameter
+void CBasicDemoDlg::SetImageParameters(double setFrameRate, double setGain, double setExposureTine) {
+    
     bool bIsSetSucceed = true;
-    int nRet = SetExposureTime();
+    int nRet = SetExposureTime(setExposureTine);
     if (nRet != MV_OK)
     {
         bIsSetSucceed = false;
         ShowErrorMsg(TEXT("Set Exposure Time Fail"), nRet);
     }
-    nRet = SetGain();
+    nRet = SetGain(setGain);
     if (nRet != MV_OK)
     {
         bIsSetSucceed = false;
         ShowErrorMsg(TEXT("Set Gain Fail"), nRet);
     }
-    nRet = SetFrameRate();
+    nRet = SetFrameRate(setFrameRate);
     if (nRet != MV_OK)
     {
         bIsSetSucceed = false;
@@ -1117,9 +1115,9 @@ void CBasicDemoDlg::OnBnClickedSetParameterButton() {
     
     if (true == bIsSetSucceed)
     {
-        ShowErrorMsg(TEXT("Set Parameter Succeed"), nRet);
+        //ShowErrorMsg(TEXT("Set Parameter Succeed"), nRet);
     }
-}
+}//*/
 
 //en:Click Software button / SDK function
 void CBasicDemoDlg::OnBnClickedSoftwareTriggerCheck() {
@@ -1296,17 +1294,18 @@ void CBasicDemoDlg::OnBnClickedSettingButton() {
 
         // counting parameters
         line_position = open_setting_windown->setting_line_position;
-        max_distance = open_setting_windown->setting_max_distance;
 
         // Detection parameters
-        avg_area = open_setting_windown->setting_avg_area;
         min_area = open_setting_windown->setting_min_area;
         max_area = open_setting_windown->setting_max_area;
         min_width = open_setting_windown->setting_min_width;
         max_width = open_setting_windown->setting_max_width;
         min_height = open_setting_windown->setting_min_height;
         max_height = open_setting_windown->setting_max_height;
-        
+        // Image
+        image_frame_rate = open_setting_windown->setting_image_frame_rate;
+        image_gain = open_setting_windown->setting_image_gain;
+        image_exposure_time = open_setting_windown->setting_image_exposure_time;
         //ROI
         ROI_Point_Left_Above = open_setting_windown->setting_Point_Left_Above;
         ROI_Point_Left_Below = open_setting_windown->setting_Point_Left_Below;
@@ -1652,28 +1651,22 @@ void CBasicDemoDlg::SORT_Counting() {
                     continue;
                 } // previous point above the line this time with the same id
                 else {
-                    float distance = GetDistance(frameTrackingResult[i].center, previous_frameTrackingResult[k].center, distance_threshold);
-                    if (distance > max_distance) { // check distance 2 frames
-                        continue;
-                    }
-                    else {
-                        if (frameTrackingResult[i].svm_respone == 1)
-                            F1_counter++;
-                        else if (frameTrackingResult[i].svm_respone == 2)
-                            F2_counter++;
-                        else if (frameTrackingResult[i].svm_respone == 3)
-                            F3_counter++;
-                        else if (frameTrackingResult[i].svm_respone == 4)
-                            F4_counter++;
-                        counter += frameTrackingResult[i].svm_respone;
-                    }
+                    if (frameTrackingResult[i].svm_respone == 1)
+                        F1_counter++;
+                    else if (frameTrackingResult[i].svm_respone == 2)
+                        F2_counter++;
+                    else if (frameTrackingResult[i].svm_respone == 3)
+                        F3_counter++;
+                    else if (frameTrackingResult[i].svm_respone == 4)
+                        F4_counter++;
+                    counter += frameTrackingResult[i].svm_respone;
                 }
             }
         } 
     }
     // copy frame tracking results to previous tracking result
     previous_frameTrackingResult.clear();
-    copy(frameTrackingResult.begin(), frameTrackingResult.end(), back_inserter(previous_frameTrackingResult));
+    std::copy(frameTrackingResult.begin(), frameTrackingResult.end(), back_inserter(previous_frameTrackingResult));
     frameTrackingResult.clear();
     return;
 }

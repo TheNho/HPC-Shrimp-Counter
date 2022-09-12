@@ -54,6 +54,7 @@
 #define IDC_BUTTON_LOAD_FILE_TRAIN_SVM  1030
 #define IDC_BUTTON3                     1031
 #define IDC_RESET_NUMBER_BUTTON         1031
+#define IDC_BUTTON_SET_DEFAULT          1031
 #define IDC_EDIT1                       1032
 #define IDC_F1_EDIT                     1032
 #define IDC_TOLERANCE_X                 1032
@@ -138,6 +139,10 @@
 #define IDC_POINT_RIGHT_BELOW           1064
 #define IDC_MORPHO_ITERATIONS           1071
 #define IDC_EDIT_DIR_DATA_TRAIN_SVM     1072
+#define IDC_EDIT_IMAGE_GIAN             1073
+#define IDC_EDIT_IMAGE_FRAME_RATE       1074
+#define IDC_EDIT19                      1075
+#define IDC_EDIT_IMAGE_EXPOSURE_TIME    1075
 
 // Next default values for new objects
 // 
@@ -145,7 +150,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        147
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1073
+#define _APS_NEXT_CONTROL_VALUE         1076
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

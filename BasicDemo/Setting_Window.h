@@ -42,8 +42,6 @@ public:
 	int setting_min_hits;
 	int setting_max_age;
 	int setting_line_position;
-	float setting_max_distance;
-	double setting_avg_area;
 	double setting_min_area;
 	double setting_max_area;
 	int setting_min_width;
@@ -86,4 +84,8 @@ private:
 public:
 	afx_msg void OnBnClickedButtonTrainSvm();
 	afx_msg void OnBnClickedButtonLoadFileTrainSvm();
+	afx_msg void OnBnClickedButtonSetDefault();
+	double setting_image_gain;
+	double setting_image_frame_rate;
+	double setting_image_exposure_time;
 };

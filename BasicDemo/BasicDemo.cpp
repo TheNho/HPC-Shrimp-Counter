@@ -47,19 +47,21 @@ int morphological_kernel;
 int morphological_iterations;
 // Counting
 int line_position;
-float max_distance;
 // SORT parameters
 float  distance_threshold;
 int min_hits;
 int max_age;
 // Detection parameters
-double avg_area;
 double min_area;
 double max_area;
 int min_width;
 int min_height;
 int max_width;
 int max_height;
+// Image parameters
+double image_frame_rate;
+double image_gain;
+double image_exposure_time;
 // ROI
 CString ROI_Point_Left_Above;
 CString ROI_Point_Left_Below;
