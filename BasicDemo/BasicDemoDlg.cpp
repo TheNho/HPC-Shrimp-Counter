@@ -216,7 +216,7 @@ BOOL CBasicDemoDlg::OnInitDialog() {
 }
 
 void CBasicDemoDlg::SettingInitial() {
-    // Load DefaultSettings file
+    /*// Load DefaultSettings file
     // Install the first run variables
     // ROI Mask
     ROI_Point_Left_Above = L"23,0";
@@ -257,7 +257,14 @@ void CBasicDemoDlg::SettingInitial() {
     min_height = 3;
     max_width = 50;
     max_height = 50;
-
+    */
+    BOOL ret1 = get_parameters_from_file(L"DefaultSettings.parameters");
+    if (ret1 == FALSE)
+        ret1 = get_parameters_from_file(L"FactorySettings.parameters");
+    if (ret1 == FALSE) {
+        this->SendMessage(WM_CLOSE);
+        return;
+    }
     // Initialize global directory to save result file
     global_filename = nFilename;
 
@@ -1681,7 +1688,6 @@ void CBasicDemoDlg::OnBnClickedStartCountButton() {
     return;
 }
 void CBasicDemoDlg::OnBnClickedStopCountButton() {
-    
     b_start_count = false;
     //EnableControls(TRUE);
     GetDlgItem(IDC_START_COUNT_BUTTON)->EnableWindow(TRUE);
@@ -1776,4 +1782,171 @@ void CBasicDemoDlg::Get_ROI_Mask() { // return Mask_ROI
                 Mask_ROI.at<uchar>(j, i) = 255;
         }
     }
+}
+
+BOOL CBasicDemoDlg::get_parameters_from_file(CString setting_filename) {
+    CStdioFile Paras_File;
+    CFileException Log_ex;
+    vector<CString> vector_get_parameters;
+    // get all line text save to vector
+    if (!Paras_File.Open(setting_filename, CFile::modeNoTruncate | CFile::modeRead, &Log_ex)) {
+        CString error;
+        error.Format(L"Cannot open file %s!", setting_filename);
+        AfxMessageBox(error);
+        return FALSE;
+    }
+    else {
+        // check empty file
+        if (Paras_File.GetLength() == 0) {
+            AfxMessageBox(L"File is empty!");
+            return FALSE;
+        }
+        CString lineText;
+        vector_get_parameters.clear(); // dont need
+        // Read data in each line and save in vector_get_parameters
+        while (Paras_File.ReadString(lineText)) { // error if file empty
+            // delete the only \n data in file
+            if (lineText == L"") {
+                continue;
+            }
+            else {
+                vector_get_parameters.push_back(lineText);
+            }
+        }
+        Paras_File.Close();
+    }
+    // Check signature
+    CString data_ = vector_get_parameters[0];
+    if (data_ != L"Hao Phuong - Parameters File") {
+        AfxMessageBox(L"File is not Hao Phuong parameters file!");
+        return FALSE;
+    }
+    // Get all parameters
+    data_ = vector_get_parameters[1];
+    data_.Replace(L"Blur_Method:", L"");
+    blur_method = data_;
+
+    data_ = vector_get_parameters[2];
+    data_.Replace(L"Blur_Kernel:", L"");
+    blur_kernel = _ttoi(data_);
+
+    data_ = vector_get_parameters[3];
+    data_.Replace(L"Mopho_Method:", L"");
+    morphological_method = data_;
+
+    data_ = vector_get_parameters[4];
+    data_.Replace(L"Morpho_Kernel:", L"");
+    morphological_kernel = _ttoi(data_);
+
+    data_ = vector_get_parameters[5];
+    data_.Replace(L"Morpho_iterations:", L"");
+    morphological_iterations = _ttoi(data_);
+
+    data_ = vector_get_parameters[6];
+    data_.Replace(L"Min_Area:", L"");
+    min_area = _ttoi(data_);
+
+    data_ = vector_get_parameters[7];
+    data_.Replace(L"Max_Area:", L"");
+    max_area = _ttoi(data_);
+
+    data_ = vector_get_parameters[8];
+    data_.Replace(L"Min_Width:", L"");
+    min_width = _ttoi(data_);
+
+    data_ = vector_get_parameters[9];
+    data_.Replace(L"Max_Width:", L"");
+    max_width = _ttoi(data_);
+
+    data_ = vector_get_parameters[10];
+    data_.Replace(L"Min_Height:", L"");
+    min_height = _ttoi(data_);
+
+    data_ = vector_get_parameters[11];
+    data_.Replace(L"Max_Height:", L"");
+    max_height = _ttoi(data_);
+
+    data_ = vector_get_parameters[12];
+    data_.Replace(L"Line_Position:", L"");
+    line_position = _ttoi(data_);
+
+    data_ = vector_get_parameters[13];
+    data_.Replace(L"Segment_To_Binary_Method:", L"");
+    segment_binary_method = data_;
+    CString data_BSG = vector_get_parameters[14];
+    data_BSG.Replace(L"Background_Subtraction_Method:", L"");
+    bgs_method = data_BSG;
+
+    data_BSG = vector_get_parameters[15];
+    data_BSG.Replace(L"Background_Subtraction_Shadow:", L"");
+    bgs_shadows = data_BSG;
+
+    data_BSG = vector_get_parameters[16];
+    data_BSG.Replace(L"Background_Subtraction_Threshold:", L"");
+    bgs_threshold = _ttof(data_BSG);
+
+    data_BSG = vector_get_parameters[17];
+    data_BSG.Replace(L"Background_Subtraction_History:", L"");
+    bgs_history = _ttoi(data_BSG);
+
+    data_BSG = vector_get_parameters[18];
+    data_BSG.Replace(L"Background_Subtraction_Learning_Rate:", L"");
+    bsg_learning_rate = _ttof(data_BSG);
+
+    CString data_AT = vector_get_parameters[19];
+    data_AT.Replace(L"Adaptive_Threshod_Method:", L"");
+    adaptiveThreshold_method = data_AT;
+
+    data_AT = vector_get_parameters[20];
+    data_AT.Replace(L"KSize:", L"");
+    adaptiveThreshold_KSize = _ttoi(data_AT);
+
+    data_AT = vector_get_parameters[21];
+    data_AT.Replace(L"C:", L"");
+    adaptiveThreshold_C = _ttoi(data_AT);
+
+
+    CString data_SORT = vector_get_parameters[22];
+    data_SORT.Replace(L"Distance_Threshold:", L"");
+    distance_threshold = _ttof(data_SORT);
+
+    data_SORT = vector_get_parameters[23];
+    data_SORT.Replace(L"Min_Hits:", L"");
+    min_hits = _ttoi(data_SORT);
+
+    data_SORT = vector_get_parameters[24];
+    data_SORT.Replace(L"Max_Age:", L"");
+    max_age = _ttoi(data_SORT);
+
+    CString data_flip_image;
+    data_flip_image = vector_get_parameters[25];
+    data_flip_image.Replace(L"Flip_Image:", L"");
+    flip_image = data_flip_image;
+
+    CString ROI_data;
+    ROI_data = vector_get_parameters[26];
+    ROI_data.Replace(L"ROI_Point_Left_Above:", L"");
+    ROI_Point_Left_Above = ROI_data;
+    ROI_data = vector_get_parameters[27];
+    ROI_data.Replace(L"ROI_Point_Left_Below:", L"");
+    ROI_Point_Left_Below = ROI_data;
+    ROI_data = vector_get_parameters[28];
+    ROI_data.Replace(L"ROI_Point_Right_Above:", L"");
+    ROI_Point_Right_Above = ROI_data;
+    ROI_data = vector_get_parameters[29];
+    ROI_data.Replace(L"ROI_Point_Right_Below:", L"");
+    ROI_Point_Right_Below = ROI_data;
+
+    CString Image_data;
+    Image_data = vector_get_parameters[30];
+    Image_data.Replace(L"Image_Frame_Rate:", L"");
+    image_frame_rate = _ttof(Image_data);
+    Image_data = vector_get_parameters[31];
+    Image_data.Replace(L"Image_Gain:", L"");
+    image_gain = _ttof(Image_data);
+    Image_data = vector_get_parameters[32];
+    Image_data.Replace(L"Image_Exposure_Time:", L"");
+    image_exposure_time = _ttof(Image_data);
+
+    return TRUE;
 }

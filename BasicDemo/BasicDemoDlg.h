@@ -143,7 +143,7 @@ public:
     afx_msg void OnBnClickedSettingButton();
     bool IsLeft(Point2f A, Point2f B, Point2f Check);
     void Get_ROI_Mask();
-
+    BOOL get_parameters_from_file(CString setting_filename);
 private:
     int real_fps = 0;
     bool b_start_count = false;

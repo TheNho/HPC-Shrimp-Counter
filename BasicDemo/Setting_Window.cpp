@@ -136,6 +136,7 @@ void Setting_Window::DoDataExchange(CDataExchange* pDX) {
 // initial window
 BOOL Setting_Window::OnInitDialog() {
 	CDialogEx::OnInitDialog();
+	
 	// initial setting set
 	setting_segment_binary_method = segment_binary_method;
 	if (setting_segment_binary_method == L"Adaptive Threshold") {
@@ -594,16 +595,14 @@ void Setting_Window::EnableAdaptiveThreshold(BOOL CHECKED) {
 	GetDlgItem(ID_ADAPTIVETHRESHOLD_C)->EnableWindow(CHECKED);
 }
 
-void Setting_Window::OnBnClickedRadioBackgroundsubtraction()
-{
-	// TODO: Add your control notification handler code here
+void Setting_Window::OnBnClickedRadioBackgroundsubtraction(){
+	((CButton*)GetDlgItem(IDC_RADIO_ADAPTIVETHRESHOLD))->SetCheck(FALSE);
 	EnableAdaptiveThreshold(FALSE);
 	EnableBackgroundSubtraction(TRUE);
 	setting_segment_binary_method = L"Background Subtraction";
 }
-void Setting_Window::OnBnClickedRadioAdaptivethreshold()
-{
-	// TODO: Add your control notification handler code here
+void Setting_Window::OnBnClickedRadioAdaptivethreshold(){
+	((CButton*)GetDlgItem(IDC_RADIO_BACKGROUNDSUBTRACTION))->SetCheck(FALSE);
 	EnableAdaptiveThreshold(TRUE);
 	EnableBackgroundSubtraction(FALSE);
 	setting_segment_binary_method = L"Adaptive Threshold";
@@ -975,5 +974,24 @@ void Setting_Window::OnBnClickedButtonLoadFileTrainSvm()
 
 void Setting_Window::OnBnClickedButtonSetDefault()
 {
-	// TODO: Add your control notification handler code here
+	// Save parameters to file DefaultSettings.parameters
+	bool ret = CheckParameters();
+	if (ret == false) {
+		return;
+	}
+	UpdateData(TRUE);
+	try {
+		CStdioFile file(L"DefaultSettings.parameters", CFile::modeCreate | CFile::modeWrite | CFile::typeText);
+		CString save_data = get_parameters_from_window();
+		file.WriteString(save_data);
+		file.Close();
+		AfxMessageBox(L"Set default success!");
+		}
+	catch (CFileException* pe) {
+		CString error;
+		error.Format(L"File could not be saved!\nCause = %d ", pe->m_cause);
+		AfxMessageBox(error);
+		pe->Delete();
+	}
+	return;
 }
