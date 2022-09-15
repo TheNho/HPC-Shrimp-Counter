@@ -51,6 +51,7 @@ void KalmanTracker::updateWithMatchedDetection(TrackingCenter detection, int min
 	m_hit_streak += 1; 
 	m_hits += 1;
 	svm_number = detection.svm_respone; // update number
+	area = detection.contours_area;
 	if (m_hits > min_hits) { // hit in many continuous frame -> confirm real tracker
 		m_age = 0; //reset age=0 to avoid delete
 		confirmed_tracker = true;

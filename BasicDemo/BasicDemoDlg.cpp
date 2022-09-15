@@ -92,9 +92,6 @@ CBasicDemoDlg::CBasicDemoDlg(CWnd* pParent /*=NULL*/)
     , m_hGrabThread(NULL)
     , m_bThreadState(FALSE)
     , m_nTriggerMode(MV_TRIGGER_MODE_OFF)
-    //, m_dExposureEdit(0)
-    //, m_dGainEdit(0)
-    //, m_dFrameRateEdit(0)
     , m_bSoftWareTriggerCheck(FALSE)
     , m_nTriggerSource(MV_TRIGGER_SOURCE_SOFTWARE)
     , m_pSaveImageBuf(NULL)
@@ -216,55 +213,53 @@ BOOL CBasicDemoDlg::OnInitDialog() {
 }
 
 void CBasicDemoDlg::SettingInitial() {
-    /*// Load DefaultSettings file
-    // Install the first run variables
-    // ROI Mask
-    ROI_Point_Left_Above = L"23,0";
-    ROI_Point_Left_Below = L"32,480";
-    ROI_Point_Right_Above = L"625,0";
-    ROI_Point_Right_Below = L"619,480";
-    Get_ROI_Mask();
-    // Local variables
-    // Load SVM
-    SVM = ml::SVM::load(SVM_dir);
-    // Image detail
-    image_frame_rate = 200;
-    image_gain = 10;
-    image_exposure_time = 2000;
-    // global variables
-    flip_image = L"Y"; // None;X;Y
-    blur_method = L"AVG"; //AVG;GAUSS
-    blur_kernel = 1; //1;3;5;7;9
-    segment_binary_method = L"Adaptive Threshold"; //Adaptive Threshold;Background Subtraction
-    bgs_method = L"MOG2"; //MOG2
-    bgs_threshold = 25;
-    bgs_shadows = L"False"; //False;True
-    bgs_history = 500;
-    bsg_learning_rate = -1; // Negative for auto learning rate
-    adaptiveThreshold_method = L"MEAN_C"; //MEAN_C;GAUSSIAN_C
-    adaptiveThreshold_KSize = 29;
-    adaptiveThreshold_C = 20;
-    morphological_method = L"Open"; //Open;Close;Erode;Dilate
-    morphological_kernel = 5; //1;3;5;7;9
-    morphological_iterations = 2;
-    line_position = 400;
-    distance_threshold = 50; // distance threshold between predict center and current center
-    min_hits = 3;
-    max_age = 10;
-    min_area = 10;
-    max_area = 1000;
-    min_width = 3;
-    min_height = 3;
-    max_width = 50;
-    max_height = 50;
-    */
+    
     BOOL ret1 = get_parameters_from_file(L"DefaultSettings.parameters");
-    if (ret1 == FALSE)
-        ret1 = get_parameters_from_file(L"FactorySettings.parameters");
-    if (ret1 == FALSE) {
-        this->SendMessage(WM_CLOSE);
-        return;
+    if (ret1 == FALSE) { // Load Factory Settings
+        ROI_Point_Left_Above = L"0,0";
+        ROI_Point_Left_Below = L"0,480";
+        ROI_Point_Right_Above = L"640,0";
+        ROI_Point_Right_Below = L"640,480";
+
+        image_frame_rate = 200;
+        image_gain = 10;
+        image_exposure_time = 2000;
+        flip_image = L"Y"; // None;X;Y
+        
+        blur_method = L"AVG"; //AVG;GAUSS
+        blur_kernel = 1; //1;3;5;7;9
+        
+        segment_binary_method = L"Adaptive Threshold"; //Adaptive Threshold;Background Subtraction
+        
+        bgs_method = L"MOG2"; //MOG2
+        bgs_threshold = 25;
+        bgs_shadows = L"False"; //False;True
+        bgs_history = 500;
+        bsg_learning_rate = -1; // Negative for auto learning rate
+        
+        adaptiveThreshold_method = L"MEAN_C"; //MEAN_C;GAUSSIAN_C
+        adaptiveThreshold_KSize = 29;
+        adaptiveThreshold_C = 20;
+
+        morphological_method = L"Open"; //Open;Close;Erode;Dilate
+        morphological_kernel = 5; //1;3;5;7;9
+        morphological_iterations = 2;
+
+        line_position = 400;
+
+        distance_threshold = 50; // distance threshold between predict center and current center
+        min_hits = 3;
+        max_age = 10;
+
+        min_area = 10;
+        max_area = 1000;
+        min_width = 3;
+        min_height = 3;
+        max_width = 50;
+        max_height = 50;
     }
+    Get_ROI_Mask();
+    SVM = ml::SVM::load(SVM_dir);
     // Initialize global directory to save result file
     global_filename = nFilename;
 
@@ -1493,20 +1488,16 @@ void CBasicDemoDlg::ImageProcessing() {
         TrackingCenter detect_center;
         detect_center.id = -1;
         detect_center.center = center_point;
+        detect_center.contours_area = area;
         detect_center.svm_respone = response;
         detections.push_back(detect_center);
 
-        total_area_in_frame += area;
         number_ROI_in_frame++;
         total_shrimp_in_frame += response;
 
         /*// draw contours
         drawContours(Mat_src, contours, i, 127); //*/
     }
-    if (total_shrimp_in_frame > 0)
-        avg_size = round((avg_size + total_area_in_frame / total_shrimp_in_frame) / 2);
-    else
-        avg_size = 0;
 }
 
 double CBasicDemoDlg::GetDistance(Point2f center_test, Point2f center_gt, float distance_threshold) {
@@ -1618,11 +1609,13 @@ void CBasicDemoDlg::SORT(int max_age, int min_hits, double distanceThreshold) {
     frameTrackingResult.clear();
     for (auto it = trackers.begin(); it != trackers.end();) {
         if (((*it).m_time_since_update == 0) // tracker updated in current frame
-          //&&((*it).m_age == 0) // tracker updated with detection in current frame
-          &&((*it).confirmed_tracker == true)) { // real tracker
+        //&&((*it).m_age == 0) // tracker updated with detection in current frame
+        //&&((*it).confirmed_tracker == true)) { // real tracker
+          || (*it).m_hits == 0) { // new tracker
             TrackingCenter res;
             res.center = (*it).get_state();
             res.id = (*it).m_id; // m_id = kf_count
+            res.contours_area = (*it).area;
             res.svm_respone = (*it).svm_number;
             frameTrackingResult.push_back(res);
             /*//Draw output Point by white
@@ -1640,9 +1633,8 @@ void CBasicDemoDlg::SORT(int max_age, int min_hits, double distanceThreshold) {
         }
     }
 }
-// Counting function
 // Input: previous_tracking and current_tracking
-// Ouput: counter
+// Ouput: counter; avg_size
 void CBasicDemoDlg::SORT_Counting() {
 
     if (frameTrackingResult.size() == 0)
@@ -1658,6 +1650,7 @@ void CBasicDemoDlg::SORT_Counting() {
                     continue;
                 } // previous point above the line this time with the same id
                 else {
+                    
                     if (frameTrackingResult[i].svm_respone == 1)
                         F1_counter++;
                     else if (frameTrackingResult[i].svm_respone == 2)
@@ -1667,13 +1660,17 @@ void CBasicDemoDlg::SORT_Counting() {
                     else if (frameTrackingResult[i].svm_respone == 4)
                         F4_counter++;
                     counter += frameTrackingResult[i].svm_respone;
+                    total_area += frameTrackingResult[i].contours_area;
+                    if (counter > 0) // Bug diveded 0
+                        avg_size = total_area / counter;
                 }
             }
         } 
     }
     // copy frame tracking results to previous tracking result
     previous_frameTrackingResult.clear();
-    std::copy(frameTrackingResult.begin(), frameTrackingResult.end(), back_inserter(previous_frameTrackingResult));
+    std::copy(frameTrackingResult.begin(), frameTrackingResult.end(), 
+              back_inserter(previous_frameTrackingResult)); // insert new elements at the end of x
     frameTrackingResult.clear();
     return;
 }
@@ -1736,6 +1733,7 @@ void CBasicDemoDlg::OnBnClickedResetNumberButton() {
     F3_counter = 0;
     F4_counter = 0;
     avg_size = 0;
+    total_area = 0;
     UpdateData(FALSE);
 }
 

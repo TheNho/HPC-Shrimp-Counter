@@ -24,10 +24,10 @@ Distance_Threshold:50.000000
 Min_Hits:3
 Max_Age:10
 Flip_Image:Y
-ROI_Point_Left_Above:0,0
-ROI_Point_Left_Below:0,480
-ROI_Point_Right_Above:640,0
-ROI_Point_Right_Below:640,480
+ROI_Point_Left_Above:23,0
+ROI_Point_Left_Below:32,480
+ROI_Point_Right_Above:625,0
+ROI_Point_Right_Below:619,480
 Image_Frame_Rate:200.000000
-Image_Gain:10.000000
+Image_Gain:10.016100
 Image_Exposure_Time:2000.000000

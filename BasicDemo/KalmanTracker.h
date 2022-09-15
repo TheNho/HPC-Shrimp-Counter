@@ -18,6 +18,7 @@ typedef struct _TrackingCenter
 {
 	int64 id;
 	Point2f center;
+	double contours_area;
 	int svm_respone;
 }TrackingCenter;
 
@@ -35,6 +36,7 @@ public:
 		confirmed_tracker = false; // real track or fake track
 		m_id = kf_count; // id
 		svm_number = 1; // number of shirmps in contour
+		area = 0;
 		kf_count++;
 	}
 
@@ -57,6 +59,7 @@ public:
 	int m_age;
 	uint64 m_id;
 	int svm_number;
+	double area;
 private:
 	void init_kf(StateType stateMat);
 

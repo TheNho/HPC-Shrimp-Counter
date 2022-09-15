@@ -154,6 +154,7 @@ private:
     uint64 F3_counter = 0;
     uint64 F4_counter = 0;
     double avg_size = 0;
+    double total_area = 0;
     // Opencv variables
     Mat Mat_src;
     Mat dst; // dst is a binary image
