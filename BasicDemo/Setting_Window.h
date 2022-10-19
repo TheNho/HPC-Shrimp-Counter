@@ -26,57 +26,51 @@ protected:
 
 	DECLARE_MESSAGE_MAP()
 public:
-	CString setting_segment_binary_method;
 	//CString setting_counting_method;
 	bool update_setting = false;
+
 	CString setting_blur_method;
 	int setting_blur_kernel;
+
 	CString setting_morpho_type;
 	int setting_morpho_kernel;
 	int setting_morpho_iterations;
+
 	CString setting_bsg_method;
 	float setting_bsg_threshold;
 	CString setting_bsg_shadow;
 	int setting_bsg_history;
+	float setting_bsg_learning_rate;
+
 	float setting_distance_threshold;
 	int setting_min_hits;
 	int setting_max_age;
+
 	int setting_line_position;
+
 	double setting_min_area;
 	double setting_max_area;
 	int setting_min_width;
 	int setting_min_height;
+	int setting_max_width;
+	int setting_max_height;
+
+	CString setting_flip_image;
+
 	afx_msg void OnBnClickedOk();
 	afx_msg void OnBnClickedCancel();
 private:
 	bool Setting_Window::CheckParameters();
 	bool Setting_Window::CheckInt(CString text);
 	bool Setting_Window::CheckFloat(CString text);
-	void Setting_Window::EnableBackgroundSubtraction(BOOL CHECKED);
-	void Setting_Window::EnableAdaptiveThreshold(BOOL CHECKED);
 	bool Setting_Window::load_data_to_train_SVM(CString direction);
 	
 public:
-	CString setting_adaptiveThreshold_method;
-	int setting_adaptiveThreshold_KSize;
-	int setting_adaptiveThreshold_C;
-	BOOL setting_adaptiveThreshold_Checked;
-	BOOL setting_bsg_Checked;
 	BOOL get_parameters_from_file(CString setting_filename);
 	CString get_parameters_from_window();
-	afx_msg void OnBnClickedRadioBackgroundsubtraction();
-	afx_msg void OnBnClickedRadioAdaptivethreshold();
 	afx_msg void OnBnClickedSave();
 	afx_msg void OnBnClickedLoad();
 	
-	int setting_max_width;
-	int setting_max_height;
-	CString setting_flip_image;
-	float setting_bsg_learning_rate;
-	CString setting_Point_Left_Above;
-	CString setting_Point_Left_Below;
-	CString setting_Point_Right_Above;
-	CString setting_Point_Right_Below;
 private:
 	CString setting_dir_data_train_svm;
 	Ptr<ml::SVM> svm = ml::SVM::create();
@@ -88,4 +82,6 @@ public:
 	double setting_image_gain;
 	double setting_image_frame_rate;
 	double setting_image_exposure_time;
+	double setting_anpha;
+	double setting_beta;
 };

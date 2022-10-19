@@ -3,3 +3,5 @@
 *.user
 */Development
 */Data
+*/Data_file
+*.pptx

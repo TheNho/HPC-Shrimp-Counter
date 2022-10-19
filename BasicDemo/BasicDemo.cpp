@@ -1,6 +1,4 @@
-
 // BasicDemo.cpp: implementation file
-
 #include "stdafx.h"
 #include "BasicDemo.h"
 #include "BasicDemoDlg.h"
@@ -29,18 +27,15 @@ CString flip_image;
 // blur image
 CString blur_method;
 int blur_kernel;
-// segmentation to binary
-CString segment_binary_method;
+
 // Background Subtraction paprameters
 CString bgs_method;
 float bgs_threshold;
 CString bgs_shadows;
 int bgs_history;
 float bsg_learning_rate;
-// Adaptive Threshold Parameters
-CString adaptiveThreshold_method;
-int adaptiveThreshold_KSize;
-int adaptiveThreshold_C;
+float background_ratio;
+
 // Morphological Parameters
 CString morphological_method;
 int morphological_kernel;
@@ -62,11 +57,9 @@ int max_height;
 double image_frame_rate;
 double image_gain;
 double image_exposure_time;
-// ROI
-CString ROI_Point_Left_Above;
-CString ROI_Point_Left_Below;
-CString ROI_Point_Right_Above;
-CString ROI_Point_Right_Below;
+// Image Enhance Parameters
+double anpha;
+double beta;
 
 BOOL CBasicDemoApp::InitInstance()
 {

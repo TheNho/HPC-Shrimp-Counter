@@ -59,7 +59,6 @@
 #define IDC_F1_EDIT                     1032
 #define IDC_TOLERANCE_X                 1032
 #define IDC_ROI_X0                      1032
-#define IDC_POINT_LEFT_ABOVE            1032
 #define IDC_EDIT2                       1033
 #define ID_AVG_AREA                     1033
 #define IDC_EDIT3                       1034
@@ -97,6 +96,7 @@
 #define IDC_EDIT12                      1044
 #define ID_MAX_DISTANCE                 1044
 #define IDC_F4_EDIT                     1044
+#define ID_BSG_HISTORY3                 1044
 #define IDC_EDIT13                      1045
 #define ID_MIN_AREA                     1045
 #define IDC_EDIT14                      1046
@@ -111,19 +111,20 @@
 #define ID_CANCEL                       1051
 #define ID_BSG_METHOD2                  1052
 #define ID_ADAPTIVETHRESHOLD_METHOD     1052
+#define ID_SETTING_ANPHA                1052
 #define ID_BSG_THRESHOLD2               1053
 #define ID_ADAPTIVETHRESHOLD_KSIZE      1053
+#define ID_MIN_AREA3                    1053
+#define ID_SETTING_BETA                 1053
 #define ID_BSG_THRESHOLD3               1054
 #define ID_ADAPTIVETHRESHOLD_C          1054
 #define IDC_RADIO_BACKGROUNDSUBTRACTION 1055
 #define IDC_RADIO_ADAPTIVETHRESHOLD     1056
 #define IDC_RADIO_My_Tracking           1057
 #define IDC_ROI_WIDTH                   1057
-#define IDC_POINT_RIGHT_ABOVE           1057
 #define ID_MAX_AREA                     1058
 #define IDC_RADIO_SORT_TRACKING         1059
 #define IDC_ROI_Y0                      1059
-#define IDC_POINT_LEFT_BELOW            1059
 #define IDC_LIST3                       1060
 #define IDC_LOG_HISTORY_LIST            1060
 #define ID_MAX_WIDTH                    1060
@@ -136,12 +137,10 @@
 #define ID_BSG_LEARNING_RATE            1063
 #define IDC_EDIT18                      1064
 #define IDC_ROI_HEIGHT                  1064
-#define IDC_POINT_RIGHT_BELOW           1064
 #define IDC_MORPHO_ITERATIONS           1071
 #define IDC_EDIT_DIR_DATA_TRAIN_SVM     1072
 #define IDC_EDIT_IMAGE_GIAN             1073
 #define IDC_EDIT_IMAGE_FRAME_RATE       1074
-#define IDC_EDIT19                      1075
 #define IDC_EDIT_IMAGE_EXPOSURE_TIME    1075
 
 // Next default values for new objects

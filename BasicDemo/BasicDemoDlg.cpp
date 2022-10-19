@@ -1,4 +1,4 @@
-// Shrimps Counting Project
+// Shrimp Counting Project
 // This code is implemented by The Nho 2022
 // Interfacing with Camera HikRobot
 // SORT Tracking
@@ -9,25 +9,26 @@
 #include "BasicDemo.h"
 #include "BasicDemoDlg.h"
 
-// Global variables
 // Parameters Setting 
-// Using global to load current parameters to Setting window
+// Using global variables to load current parameters to Setting window
 extern CString flip_image;
+extern double image_frame_rate;
+extern double image_gain;
+extern double image_exposure_time;
 
 extern CString blur_method;
 extern int blur_kernel;
 
-extern CString segment_binary_method;
+extern double anpha;
+extern double beta;
 
 extern CString bgs_method;
 extern float bgs_threshold;
 extern CString bgs_shadows;
 extern int bgs_history;
 extern float bsg_learning_rate;
+extern float background_ratio;
 
-extern CString adaptiveThreshold_method;
-extern int adaptiveThreshold_KSize;
-extern int adaptiveThreshold_C;
 
 extern CString morphological_method;
 extern int morphological_kernel;
@@ -45,13 +46,6 @@ extern int min_width;
 extern int min_height;
 extern int max_width;
 extern int max_height;
-extern double image_frame_rate;
-extern double image_gain;
-extern double image_exposure_time;
-extern CString ROI_Point_Left_Above;
-extern CString ROI_Point_Left_Below;
-extern CString ROI_Point_Right_Above;
-extern CString ROI_Point_Right_Below;
 
 //Global filename, used in all windows
 extern CString global_filename;
@@ -116,13 +110,9 @@ void CBasicDemoDlg::DoDataExchange(CDataExchange* pDX) {
     CDialog::DoDataExchange(pDX);
     DDX_Control(pDX, IDC_DEVICE_COMBO, m_ctrlDeviceCombo);
     DDX_CBIndex(pDX, IDC_DEVICE_COMBO, m_nDeviceCombo);
-    //DDX_Text(pDX, IDC_EXPOSURE_EDIT, m_dExposureEdit);
-    //DDX_Text(pDX, IDC_GAIN_EDIT, m_dGainEdit);
-    //DDX_Text(pDX, IDC_FRAME_RATE_EDIT, m_dFrameRateEdit);
     DDX_Check(pDX, IDC_SOFTWARE_TRIGGER_CHECK, m_bSoftWareTriggerCheck);
     DDX_Text(pDX, IDC_SHIRMP_NUMBER_STATIC, counter);
     DDX_Text(pDX, IDC_FRAME_COUNT_EDIT, frame_count);
-
     DDX_Text(pDX, IDC_ROI_IN_FRAME_EDIT, number_ROI_in_frame);
     DDX_Text(pDX, IDC_SHRIMP_IN_FRAME_EDIT, number_shrimp_in_frame);
     DDX_Text(pDX, IDC_F1_EDIT, F1_counter);
@@ -144,8 +134,6 @@ BEGIN_MESSAGE_MAP(CBasicDemoDlg, CDialog)
     ON_BN_CLICKED(IDC_TRIGGER_MODE_RADIO, &CBasicDemoDlg::OnBnClickedTriggerModeRadio)
     ON_BN_CLICKED(IDC_START_GRABBING_BUTTON, &CBasicDemoDlg::OnBnClickedStartGrabbingButton)
     ON_BN_CLICKED(IDC_STOP_GRABBING_BUTTON, &CBasicDemoDlg::OnBnClickedStopGrabbingButton)
-   // ON_BN_CLICKED(IDC_GET_PARAMETER_BUTTON, &CBasicDemoDlg::OnBnClickedGetParameterButton)
-    //ON_BN_CLICKED(IDC_SET_PARAMETER_BUTTON, &CBasicDemoDlg::OnBnClickedSetParameterButton)
     ON_BN_CLICKED(IDC_SOFTWARE_TRIGGER_CHECK, &CBasicDemoDlg::OnBnClickedSoftwareTriggerCheck)
     ON_BN_CLICKED(IDC_SOFTWARE_ONCE_BUTTON, &CBasicDemoDlg::OnBnClickedSoftwareOnceButton)
     ON_BN_CLICKED(IDC_SAVE_BMP_BUTTON, &CBasicDemoDlg::OnBnClickedSaveBmpButton)
@@ -213,33 +201,26 @@ BOOL CBasicDemoDlg::OnInitDialog() {
 }
 
 void CBasicDemoDlg::SettingInitial() {
-    
+    // Load Default settings
     BOOL ret1 = get_parameters_from_file(L"DefaultSettings.parameters");
     if (ret1 == FALSE) { // Load Factory Settings
-        ROI_Point_Left_Above = L"0,0";
-        ROI_Point_Left_Below = L"0,480";
-        ROI_Point_Right_Above = L"640,0";
-        ROI_Point_Right_Below = L"640,480";
-
+        flip_image = L"Y"; // None;X;Y
         image_frame_rate = 200;
         image_gain = 10;
         image_exposure_time = 2000;
-        flip_image = L"Y"; // None;X;Y
         
         blur_method = L"AVG"; //AVG;GAUSS
-        blur_kernel = 1; //1;3;5;7;9
+        blur_kernel = 3; //1;3;5;7;9
         
-        segment_binary_method = L"Adaptive Threshold"; //Adaptive Threshold;Background Subtraction
-        
+        anpha = 2;
+        beta = -160;
+
         bgs_method = L"MOG2"; //MOG2
         bgs_threshold = 25;
         bgs_shadows = L"False"; //False;True
         bgs_history = 500;
         bsg_learning_rate = -1; // Negative for auto learning rate
-        
-        adaptiveThreshold_method = L"MEAN_C"; //MEAN_C;GAUSSIAN_C
-        adaptiveThreshold_KSize = 29;
-        adaptiveThreshold_C = 20;
+        //backfround_ratio;
 
         morphological_method = L"Open"; //Open;Close;Erode;Dilate
         morphological_kernel = 5; //1;3;5;7;9
@@ -258,44 +239,32 @@ void CBasicDemoDlg::SettingInitial() {
         max_width = 50;
         max_height = 50;
     }
-    Get_ROI_Mask();
-    SVM = ml::SVM::load(SVM_dir);
+    //SVM = ml::SVM::load(SVM_dir);
+    
     // Initialize global directory to save result file
     global_filename = nFilename;
 
-    // Segmentation
-    if (segment_binary_method == L"Adaptive Threshold") {
-        // do nothing
-    }
-    else if (segment_binary_method == L"Background Subtraction") {
-        if (bgs_method == L"MOG2") {
-            if (bgs_shadows == L"True") {
-                pBackSub = createBackgroundSubtractorMOG2(bgs_history, bgs_threshold, true);
-            }
-            else if (bgs_shadows == L"False") {
-                pBackSub = createBackgroundSubtractorMOG2(bgs_history, bgs_threshold, false);
-            }
-            else {
-                AfxMessageBox(L"Shadow Error!");
-                return;
-            }
+    // First install Background Subtraction
+    if (bgs_method == L"MOG2") {
+        if (bgs_shadows == L"True") {
+            pBackSub = createBackgroundSubtractorMOG2(bgs_history, bgs_threshold, true);
+        }
+        else if (bgs_shadows == L"False") {
+            pBackSub = createBackgroundSubtractorMOG2(bgs_history, bgs_threshold, false);
         }
         else {
-            AfxMessageBox(L"Backgruond Subtraction Initail Error!");
+            AfxMessageBox(L"Shadow Error!");
             return;
         }
     }
     else {
-        AfxMessageBox(L"Segmentation to Binary method Initail Error!");
+        AfxMessageBox(L"Backgruond Subtraction Initail Error!");
         return;
     }
-    //Blur image
-    
     // Morphological filter
     mo_kernel = getStructuringElement(MORPH_RECT, Size(morphological_kernel, morphological_kernel));
 
     return;
-
 }
 
 void CBasicDemoDlg::OnSysCommand(UINT nID, LPARAM lParam) {
@@ -351,11 +320,6 @@ void CBasicDemoDlg::EnableControls(BOOL bIsCameraReady) {
     GetDlgItem(IDC_SAVE_TIFF_BUTTON)->EnableWindow(m_bStartGrabbing ? TRUE : FALSE);
     GetDlgItem(IDC_SAVE_PNG_BUTTON)->EnableWindow(m_bStartGrabbing ? TRUE : FALSE);
     GetDlgItem(IDC_SAVE_JPG_BUTTON)->EnableWindow(m_bStartGrabbing ? TRUE : FALSE);
-    //GetDlgItem(IDC_EXPOSURE_EDIT)->EnableWindow(m_bOpenDevice && !m_bStartGrabbing ? TRUE : FALSE);
-    //GetDlgItem(IDC_GAIN_EDIT)->EnableWindow(m_bOpenDevice && !m_bStartGrabbing ? TRUE : FALSE);
-    //GetDlgItem(IDC_FRAME_RATE_EDIT)->EnableWindow(m_bOpenDevice && !m_bStartGrabbing ? TRUE : FALSE);
-    //GetDlgItem(IDC_GET_PARAMETER_BUTTON)->EnableWindow(m_bOpenDevice && !m_bStartGrabbing ? TRUE : FALSE);
-    //GetDlgItem(IDC_SET_PARAMETER_BUTTON)->EnableWindow(m_bOpenDevice && !m_bStartGrabbing ? TRUE : FALSE);
     GetDlgItem(IDC_CONTINUS_MODE_RADIO)->EnableWindow(m_bOpenDevice ? TRUE : FALSE);
     GetDlgItem(IDC_TRIGGER_MODE_RADIO)->EnableWindow(m_bOpenDevice ? TRUE : FALSE);
     GetDlgItem(IDC_SETTING_BUTTON)->EnableWindow(m_bStartGrabbing ? FALSE : TRUE);
@@ -641,10 +605,6 @@ int CBasicDemoDlg::SaveImage(enum MV_SAVE_IAMGE_TYPE enSaveImageType) {
 // Grap image from buffer, copy to cv Mat, processing and counting
 int CBasicDemoDlg::GrabThreadProcess() {
 
-    //For debug
-    //String dir_file = "Data/Data10/";
-    //uint idx_img = 0;
-    
     MV_FRAME_OUT stImageInfo = {0}; // get image from buffer
     int nRet = MV_OK;
     double start_time_fps = 0;
@@ -701,37 +661,14 @@ int CBasicDemoDlg::GrabThreadProcess() {
             if (MV_TRIGGER_MODE_ON ==  m_nTriggerMode) {
                 Sleep(5);
             }
-        } 
-        /*////////////////////////////////////////////////////////////////////////////////////////
-        String img_file = dir_file + to_string(idx_img) + ".bmp";
-        Mat src_img1 = imread(img_file, 0);
-        if (src_img1.empty()) break;
-        Rect ROI(35, 0, 570, 480);
-        Mat_src = src_img1(ROI);
-        idx_img++;
-        // image processing
-        ImageProcessing();
-        /// Press start count?
-        if (b_start_count == true) {
-            SORT(max_age, min_hits, distance_threshold);
-            SORT_Counting();
         }
-        // for debug
-        imshow("Src Image Before", Mat_src);
-        // press space to pause and continue
-        if (waitKey(15) == 32)
-            waitKey();
-        int64 end_time_fps = getTickCount();
-        real_fps = int(getTickFrequency() / (end_time_fps - start_time_fps));
-        start_time_fps = end_time_fps;
-        ////////////////////////////////////////////////////////////////////////////////////*/
     }
-    // end thread, destroy all windows
-    //cv::destroyAllWindows();
+    //destroyAllWindows();
     return MV_OK;
 }
 
 //en:Click Find Device button:Enumeration
+// Check camera driver
 void CBasicDemoDlg::OnBnClickedEnumButton() {
     // Check if camera driver installed
     bool driver_installed = false;
@@ -940,19 +877,18 @@ unsigned int __stdcall Display(void* pUser) {
 void CBasicDemoDlg::DisplayThread() {
 
     MV_DISPLAY_FRAME_INFO stDisplayInfo = { 0 };
-    Mat Mat_display;
 
     while (m_bThreadState) {
       
-        // wait until Mat_src not NULL
-        if (Mat_src.empty()) {
+        // wait until Mat_display not NULL
+        if (Mat_display.empty()) {
             Sleep(5);
             continue;
         }
 
         // copy Mat_src and draw
         //Mat_display = dst.clone();
-        Mat_display = Mat_src.clone(); 
+        //Mat_display = Mat_src.clone(); 
         // Access are in conflict between 2 theads
         // -> fixed by waiting the first thread started
         putText(Mat_display, "FPS: "+ to_string(real_fps), Point(5, 25), FONT_HERSHEY_COMPLEX, 1, 128, 1, 8);
@@ -970,7 +906,7 @@ void CBasicDemoDlg::DisplayThread() {
         UpdateData(FALSE); // update shrimp number and frame count to window
 
         // sleep 15ms/60fps
-        Sleep(15);
+        Sleep(5);
     }
     Mat_display.release();
     return;
@@ -1234,88 +1170,14 @@ void CBasicDemoDlg::OnBnClickedSettingButton() {
     // click ok -> update_setting = true
     if (open_setting_windown->update_setting == true) {
         // Reload SVM
-        SVM = ml::SVM::load(SVM_dir);
+        //SVM = ml::SVM::load(SVM_dir);
+        
         // get image processing paramerters from setting window
         flip_image = open_setting_windown->setting_flip_image;
-        segment_binary_method = open_setting_windown->setting_segment_binary_method;
-        if (segment_binary_method == L"Adaptive Threshold") {
-                // adaptive threshold
-                adaptiveThreshold_method = open_setting_windown->setting_adaptiveThreshold_method;
-                adaptiveThreshold_KSize = open_setting_windown->setting_adaptiveThreshold_KSize;
-                adaptiveThreshold_C = open_setting_windown->setting_adaptiveThreshold_C;
-                // Check again
-                if (adaptiveThreshold_method == L"MEAN_C" ||
-                    adaptiveThreshold_method == L"GAUSSIAN_C") {
-                    // do nothing
-                }
-                else {
-                    AfxMessageBox(L"Adaptive Threshold Setting Error!");
-                    delete open_setting_windown;
-                    return;
-                }
-        }
-        else if (segment_binary_method == L"Background Subtraction") {
-                // back ground subtraction
-                bgs_method = open_setting_windown->setting_bsg_method;
-                bgs_threshold = open_setting_windown->setting_bsg_threshold;
-                bgs_shadows = open_setting_windown->setting_bsg_shadow;
-                bgs_history = open_setting_windown->setting_bsg_history;
-                bsg_learning_rate = open_setting_windown->setting_bsg_learning_rate;
-                // change back ground subtraction method
-                if (bgs_method == L"MOG2") {
-                    if (bgs_shadows == L"True") {
-                        pBackSub = createBackgroundSubtractorMOG2(bgs_history, bgs_threshold, true);
-                    }
-                    else if (bgs_shadows == L"False"){
-                        pBackSub = createBackgroundSubtractorMOG2(bgs_history, bgs_threshold, false);
-                    }
-                    else {
-                        AfxMessageBox(L"Backgruond Subtraction Shadows Setting Error!");
-                        delete open_setting_windown;
-                        return;
-                    }
-                }
-                else {
-                    // for debug
-                    AfxMessageBox(L"Backgruond Subtraction Setting Error!");
-                    delete open_setting_windown;
-                    return;
-                }
-        }
-        else {
-            // for debug
-            AfxMessageBox(L"Segment to binary Setting Error!");
-            delete open_setting_windown;
-            return;
-        }
-        
-        // SORT Tracking
-        distance_threshold = open_setting_windown->setting_distance_threshold;
-        min_hits = open_setting_windown->setting_min_hits;
-        max_age = open_setting_windown->setting_max_age;
-
-        // counting parameters
-        line_position = open_setting_windown->setting_line_position;
-
-        // Detection parameters
-        min_area = open_setting_windown->setting_min_area;
-        max_area = open_setting_windown->setting_max_area;
-        min_width = open_setting_windown->setting_min_width;
-        max_width = open_setting_windown->setting_max_width;
-        min_height = open_setting_windown->setting_min_height;
-        max_height = open_setting_windown->setting_max_height;
-        // Image
         image_frame_rate = open_setting_windown->setting_image_frame_rate;
         image_gain = open_setting_windown->setting_image_gain;
         image_exposure_time = open_setting_windown->setting_image_exposure_time;
-        //ROI
-        ROI_Point_Left_Above = open_setting_windown->setting_Point_Left_Above;
-        ROI_Point_Left_Below = open_setting_windown->setting_Point_Left_Below;
-        ROI_Point_Right_Above = open_setting_windown->setting_Point_Right_Above;
-        ROI_Point_Right_Below = open_setting_windown->setting_Point_Right_Below;
-        Get_ROI_Mask();
 
-        // Blur image
         blur_method = open_setting_windown->setting_blur_method;
         blur_kernel = open_setting_windown->setting_blur_kernel;
         if (blur_kernel != 1) { // blur kernel = 1 dont use blur
@@ -1329,15 +1191,44 @@ void CBasicDemoDlg::OnBnClickedSettingButton() {
                 return;
             }
         }
-        // Morphological filter
+
+        anpha = open_setting_windown->setting_anpha;
+        beta = open_setting_windown->setting_beta;
+
+        bgs_method = open_setting_windown->setting_bsg_method;
+        bgs_threshold = open_setting_windown->setting_bsg_threshold;
+        bgs_shadows = open_setting_windown->setting_bsg_shadow;
+        bgs_history = open_setting_windown->setting_bsg_history;
+        bsg_learning_rate = open_setting_windown->setting_bsg_learning_rate;
+        //background_ratio
+        if (bgs_method == L"MOG2") {
+            if (bgs_shadows == L"True") {
+                pBackSub = createBackgroundSubtractorMOG2(bgs_history, bgs_threshold, true);
+            }
+            else if (bgs_shadows == L"False"){
+                pBackSub = createBackgroundSubtractorMOG2(bgs_history, bgs_threshold, false);
+            }
+            else {
+                AfxMessageBox(L"Backgruond Subtraction Shadows Setting Error!");
+                delete open_setting_windown;
+                return;
+            }
+        }
+        else {
+            // for debug
+            AfxMessageBox(L"Backgruond Subtraction Setting Error!");
+            delete open_setting_windown;
+            return;
+        }
+
         morphological_method = open_setting_windown->setting_morpho_type;
         morphological_kernel = open_setting_windown->setting_morpho_kernel;
         morphological_iterations = open_setting_windown->setting_morpho_iterations;
         if (morphological_kernel != 1) { // = 1 dont use
             mo_kernel = getStructuringElement(MORPH_RECT, Size(morphological_kernel, morphological_kernel));
             if (morphological_method == L"Dilate" ||
-                morphological_method == L"Erode"  ||
-                morphological_method == L"Open"   ||
+                morphological_method == L"Erode" ||
+                morphological_method == L"Open" ||
                 morphological_method == L"Close") {
                 // do nothing
             }
@@ -1347,6 +1238,20 @@ void CBasicDemoDlg::OnBnClickedSettingButton() {
                 return;
             }
         }
+
+        line_position = open_setting_windown->setting_line_position;
+
+        distance_threshold = open_setting_windown->setting_distance_threshold;
+        min_hits = open_setting_windown->setting_min_hits;
+        max_age = open_setting_windown->setting_max_age;
+
+        min_area = open_setting_windown->setting_min_area;
+        max_area = open_setting_windown->setting_max_area;
+        min_width = open_setting_windown->setting_min_width;
+        max_width = open_setting_windown->setting_max_width;
+        min_height = open_setting_windown->setting_min_height;
+        max_height = open_setting_windown->setting_max_height;
+
         // All successed!
         AfxMessageBox(L"Updated All Parameters Success!");
         delete open_setting_windown;
@@ -1360,7 +1265,7 @@ void CBasicDemoDlg::OnBnClickedSettingButton() {
     //open_setting_windown->DestroyWindow();
 }
 
-//OpenCV convert data to cvMat, drop ROI and flip image
+//OpenCV convert data to cvMat and flip image
 bool CBasicDemoDlg::Convert2Mat(MV_FRAME_OUT_INFO_EX* pstImageInfo, unsigned char* pData) {
     if (pstImageInfo->enPixelType == PixelType_Gvsp_Mono8) {
         Mat MatsrcImage = Mat(pstImageInfo->nHeight, pstImageInfo->nWidth, CV_8UC1, pData);
@@ -1374,8 +1279,6 @@ bool CBasicDemoDlg::Convert2Mat(MV_FRAME_OUT_INFO_EX* pstImageInfo, unsigned cha
         else if (flip_image == L"Y") {
             cv::flip(MatsrcImage, MatsrcImage, 0);
         }
-        // Drop ROI
-        add(MatsrcImage, Mask_ROI, MatsrcImage);
 
         Mat_src = MatsrcImage.clone();
         MatsrcImage.release();
@@ -1409,21 +1312,12 @@ void CBasicDemoDlg::ImageProcessing() {
         else if (blur_method == L"GAUSS")
             GaussianBlur(src_processing, src_processing, Size(blur_kernel, blur_kernel), float(blur_kernel / 5.0));
     }
+
+    // Image Enhanced
+    src_processing.convertTo(src_processing, -1, anpha, beta);
+
     // Segmentation to binary image
-    //threshold(gpu_Mat_src, gpu_Mat_dst, 200, 255, THRESH_BINARY_INV);
-    if (segment_binary_method == L"Adaptive Threshold") {
-        if (adaptiveThreshold_method == L"MEAN_C")
-            adaptiveThreshold(src_processing, dst, 255, ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY_INV, adaptiveThreshold_KSize, adaptiveThreshold_C);
-        else if (adaptiveThreshold_method == L"GAUSSIAN_C")
-            adaptiveThreshold(src_processing, dst, 255, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY_INV, adaptiveThreshold_KSize, adaptiveThreshold_C);
-    }
-    else if (segment_binary_method == L"Background Subtraction") {
-        pBackSub->apply(src_processing, dst, bsg_learning_rate);
-    }
-    else {
-        AfxMessageBox(L"Image Processing Error Binary Segment Method!");
-        return;
-    }
+    pBackSub->apply(src_processing, dst, bsg_learning_rate);
     
     // morphological filter
     if (morphological_kernel != 1) {// kernel == 1 dont apply
@@ -1440,11 +1334,6 @@ void CBasicDemoDlg::ImageProcessing() {
             return;
         }
     }
-    
-    // Distance transform
-    //distanceTransform(dst, dst, DIST_L2, 3);
-    //cv::threshold(dst, dst, 100, 255, THRESH_BINARY);
-
     // contours
     vector<vector<Point>> contours;
     vector<Vec4i> hierarchy;
@@ -1475,28 +1364,52 @@ void CBasicDemoDlg::ImageProcessing() {
         // get center point
         M = moments(contours[i]);
         center_point = Point2f((M.m10 / M.m00), (M.m01 / M.m00));
-        // get hu-moments
-        vector<double> hu;
-        cv::HuMoments(M, hu);
-        // Log scale hu-moments
-        for (int h = 0; h < 7; h++) {
-            huMat.at<float>(h) = -1 * copysign(1.0, hu[h]) * log10(abs(hu[h]));
-        }
-        int response = SVM->predict(huMat);
-        number_shrimp_in_frame += response;
+
         // Get tracking center
         TrackingCenter detect_center;
         detect_center.id = -1;
         detect_center.center = center_point;
         detect_center.contours_area = area;
-        detect_center.svm_respone = response;
+        detect_center.svm_respone = 1; // SVM->predict(Mat);
         detections.push_back(detect_center);
 
+        number_shrimp_in_frame += 1;
         number_ROI_in_frame++;
-        total_shrimp_in_frame += response;
+        total_shrimp_in_frame += 1;
+        /*
+        // draw contours
+        //drawContours(Mat_src, contours, i, 127); //
 
-        /*// draw contours
-        drawContours(Mat_src, contours, i, 127); //*/
+        Mat ROI_img = src_processing(boundRect);
+        Mat ROI_dst = dst(boundRect);
+        Mat ROI_save;
+        bitwise_and(ROI_img, ROI_dst, ROI_save);
+        int sample_size = 64;
+        int w = boundRect.width;
+        int h = boundRect.height;
+        if (w < sample_size && h < sample_size) {
+            int top = (sample_size - h) / 2;
+            int bot = sample_size - h - top;
+            int left = (sample_size - w) / 2;
+            int right = sample_size - w - left;
+            copyMakeBorder(ROI_save, ROI_save, top, bot, left, right, BORDER_CONSTANT, 0);
+            if (frame_count %10 == 0 && frame_count > 2000) {
+                String filename = "Data_image/Video1/" + to_string(frame_count) + "_" + to_string(i) + ".jpg";
+                imwrite(filename, ROI_save);
+            }
+        }*/
+        /*// save data every 10 frames
+        if (frame_count % 10 == 0 && frame_count > 10) {
+            int data_size = 64;
+            if (center_point.x > data_size / 2 + 1 && center_point.x < 640 - data_size / 2 - 1
+                && center_point.y > data_size / 2 + 1 && center_point.y < 480 - data_size / 2 - 1) {
+                int x_pos = center_point.x - data_size / 2;
+                int y_pos = center_point.y - data_size / 2;
+                Rect_<int> data_Rect = Rect(x_pos, y_pos, data_size, data_size);
+                String filename = "Data_img/Video9/" + to_string(frame_count) + "_" + to_string(i) + ".jpg";
+                imwrite(filename, src_processing(data_Rect));
+            }
+        } //*/
     }
 }
 
@@ -1619,11 +1532,11 @@ void CBasicDemoDlg::SORT(int max_age, int min_hits, double distanceThreshold) {
             res.svm_respone = (*it).svm_number;
             frameTrackingResult.push_back(res);
             /*//Draw output Point by white
-            circle(Mat_src, res.center, 3, 200, 3, 8, 0);
-            putText(Mat_src, to_string(res.id), Point(res.center.x + 20, res.center.y),
+            circle(Mat_display, res.center, 2, 100, 3, 8, 0);
+            putText(Mat_display, to_string(res.id), Point(res.center.x, res.center.y),
                 FONT_HERSHEY_COMPLEX_SMALL, 1, 128, 1, 8);
-            putText(Mat_src, to_string(res.svm_respone)+":", Point(res.center.x, res.center.y),
-                FONT_HERSHEY_COMPLEX_SMALL, 1, 128, 1, 8); //*/
+            //putText(Mat_src, to_string(res.svm_respone)+":", Point(res.center.x, res.center.y),
+                //FONT_HERSHEY_COMPLEX_SMALL, 1, 128, 1, 8); //*/
         }
         if (it != trackers.end() && (*it).m_age > max_age) {  // remove dead tracker
             it = trackers.erase(it);
@@ -1632,6 +1545,7 @@ void CBasicDemoDlg::SORT(int max_age, int min_hits, double distanceThreshold) {
             it++;
         }
     }
+    
 }
 // Input: previous_tracking and current_tracking
 // Ouput: counter; avg_size
@@ -1651,17 +1565,17 @@ void CBasicDemoDlg::SORT_Counting() {
                 } // previous point above the line this time with the same id
                 else {
                     
-                    if (frameTrackingResult[i].svm_respone == 1)
+                    /*if (frameTrackingResult[i].svm_respone == 1)
                         F1_counter++;
                     else if (frameTrackingResult[i].svm_respone == 2)
                         F2_counter++;
                     else if (frameTrackingResult[i].svm_respone == 3)
                         F3_counter++;
                     else if (frameTrackingResult[i].svm_respone == 4)
-                        F4_counter++;
-                    counter += frameTrackingResult[i].svm_respone;
+                        F4_counter++; */
+                    counter += 1;//frameTrackingResult[i].svm_respone;
                     total_area += frameTrackingResult[i].contours_area;
-                    if (counter > 0) // Bug diveded 0
+                    if (counter > 0) // Bug if diveded by 0
                         avg_size = total_area / counter;
                 }
             }
@@ -1715,13 +1629,20 @@ void CBasicDemoDlg::OnBnClickedStopCountButton() {
     // get number
     CString text_counter;
     text_counter.Format(L"%lld", counter);
-    CString text_result = text_date + L" " + text_time + L" " + text_counter + L"\n";
+    // get avg size
+    CString text_avg_size;
+    text_avg_size.Format(L"%f", avg_size);
+    CString text_result = text_date + L" " + text_time 
+                          + L" " + text_counter + L" " + text_avg_size + "\n";
     // set pointer to the end of file
     StdFile.SeekToEnd();
     // write result
     StdFile.WriteString(text_result);
     StdFile.Close();
-    
+
+    avg_size = 0;
+    total_area = 0;
+
     return;
 }
 void CBasicDemoDlg::OnBnClickedResetNumberButton() {
@@ -1741,45 +1662,6 @@ void CBasicDemoDlg::OnBnClickedLogButton() {
     LogHistory* open_logHistory_windown = new LogHistory();
     open_logHistory_windown->DoModal();
     return;
-}
-
-bool CBasicDemoDlg::IsLeft(Point2f A, Point2f B, Point2f Check) { // Find x position on the line
-    float x_pos = A.x -(B.x - A.x) * (Check.y - A.y) / (A.y - B.y); // from y position
-    if (x_pos >= Check.x)
-        return true;
-    else
-        return false;
-}
-void CBasicDemoDlg::Get_ROI_Mask() { // return Mask_ROI
-    CString sTokenX, sTokenY;
-    Point2f Left_Above, Left_Below, Right_Above, Right_Below;
-
-    AfxExtractSubString(sTokenX, ROI_Point_Left_Above, 0, ',');
-    AfxExtractSubString(sTokenY, ROI_Point_Left_Above, 1, ',');
-    Left_Above = Point2f(_ttof(sTokenX), _ttof(sTokenY));
-
-    AfxExtractSubString(sTokenX, ROI_Point_Left_Below, 0, ',');
-    AfxExtractSubString(sTokenY, ROI_Point_Left_Below, 1, ',');
-    Left_Below = Point2f(_ttof(sTokenX), _ttof(sTokenY));
-
-    AfxExtractSubString(sTokenX, ROI_Point_Right_Above, 0, ',');
-    AfxExtractSubString(sTokenY, ROI_Point_Right_Above, 1, ',');
-    Right_Above = Point2f(_ttof(sTokenX), _ttof(sTokenY));
-
-    AfxExtractSubString(sTokenX, ROI_Point_Right_Below, 0, ',');
-    AfxExtractSubString(sTokenY, ROI_Point_Right_Below, 1, ',');
-    Right_Below = Point2f(_ttof(sTokenX), _ttof(sTokenY));
-
-    for (int i = 0; i < Image_Width; i++) {
-        for (int j = 0; j < Image_Height; j++) {
-            Point2f Check = Point2f(i, j);
-            if (!IsLeft(Left_Above, Left_Below, Check) // Right side
-             && IsLeft(Right_Above, Right_Below, Check)) // Left side
-                Mask_ROI.at<uchar>(j, i) = 0;
-            else
-                Mask_ROI.at<uchar>(j, i) = 255;
-        }
-    }
 }
 
 BOOL CBasicDemoDlg::get_parameters_from_file(CString setting_filename) {
@@ -1821,130 +1703,93 @@ BOOL CBasicDemoDlg::get_parameters_from_file(CString setting_filename) {
     }
     // Get all parameters
     data_ = vector_get_parameters[1];
-    data_.Replace(L"Blur_Method:", L"");
-    blur_method = data_;
+    data_.Replace(L"Flip_Image:", L"");
+    flip_image = data_;
 
     data_ = vector_get_parameters[2];
+    data_.Replace(L"Image_Frame_Rate:", L"");
+    image_frame_rate = _ttof(data_);
+    data_ = vector_get_parameters[3];
+    data_.Replace(L"Image_Gain:", L"");
+    image_gain = _ttof(data_);
+    data_ = vector_get_parameters[4];
+    data_.Replace(L"Image_Exposure_Time:", L"");
+    image_exposure_time = _ttof(data_);
+
+    data_ = vector_get_parameters[5];
+    data_.Replace(L"Blur_Method:", L"");
+    blur_method = data_;
+    data_ = vector_get_parameters[6];
     data_.Replace(L"Blur_Kernel:", L"");
     blur_kernel = _ttoi(data_);
 
-    data_ = vector_get_parameters[3];
+    data_ = vector_get_parameters[7];
+    data_.Replace(L"Image_Enhanced_anpha:", L"");
+    anpha = _ttof(data_);
+    data_ = vector_get_parameters[8];
+    data_.Replace(L"Image_Enhanced_beta:", L"");
+    beta = _ttof(data_);
+
+    data_ = vector_get_parameters[9];
+    data_.Replace(L"Background_Subtraction_Method:", L"");
+    bgs_method = data_;
+    data_ = vector_get_parameters[11];
+    data_.Replace(L"Background_Subtraction_Shadow:", L"");
+    bgs_shadows = data_;
+    data_ = vector_get_parameters[10];
+    data_.Replace(L"Background_Subtraction_Threshold:", L"");
+    bgs_threshold = _ttof(data_);
+    data_ = vector_get_parameters[12];
+    data_.Replace(L"Background_Subtraction_History:", L"");
+    bgs_history = _ttoi(data_);
+    data_ = vector_get_parameters[13];
+    data_.Replace(L"Background_Subtraction_Learning_Rate:", L"");
+    bsg_learning_rate = _ttof(data_);
+
+    data_ = vector_get_parameters[14];
     data_.Replace(L"Mopho_Method:", L"");
     morphological_method = data_;
-
-    data_ = vector_get_parameters[4];
+    data_ = vector_get_parameters[15];
     data_.Replace(L"Morpho_Kernel:", L"");
     morphological_kernel = _ttoi(data_);
-
-    data_ = vector_get_parameters[5];
+    data_ = vector_get_parameters[16];
     data_.Replace(L"Morpho_iterations:", L"");
     morphological_iterations = _ttoi(data_);
 
-    data_ = vector_get_parameters[6];
-    data_.Replace(L"Min_Area:", L"");
-    min_area = _ttoi(data_);
-
-    data_ = vector_get_parameters[7];
-    data_.Replace(L"Max_Area:", L"");
-    max_area = _ttoi(data_);
-
-    data_ = vector_get_parameters[8];
-    data_.Replace(L"Min_Width:", L"");
-    min_width = _ttoi(data_);
-
-    data_ = vector_get_parameters[9];
-    data_.Replace(L"Max_Width:", L"");
-    max_width = _ttoi(data_);
-
-    data_ = vector_get_parameters[10];
-    data_.Replace(L"Min_Height:", L"");
-    min_height = _ttoi(data_);
-
-    data_ = vector_get_parameters[11];
-    data_.Replace(L"Max_Height:", L"");
-    max_height = _ttoi(data_);
-
-    data_ = vector_get_parameters[12];
+    data_ = vector_get_parameters[17];
     data_.Replace(L"Line_Position:", L"");
     line_position = _ttoi(data_);
 
-    data_ = vector_get_parameters[13];
-    data_.Replace(L"Segment_To_Binary_Method:", L"");
-    segment_binary_method = data_;
-    CString data_BSG = vector_get_parameters[14];
-    data_BSG.Replace(L"Background_Subtraction_Method:", L"");
-    bgs_method = data_BSG;
+    data_ = vector_get_parameters[18];
+    data_.Replace(L"Distance_Threshold:", L"");
+    distance_threshold = _ttof(data_);
+    data_ = vector_get_parameters[19];
+    data_.Replace(L"Min_Hits:", L"");
+    min_hits = _ttoi(data_);
+    data_ = vector_get_parameters[20];
+    data_.Replace(L"Max_Age:", L"");
+    max_age = _ttoi(data_);
 
-    data_BSG = vector_get_parameters[15];
-    data_BSG.Replace(L"Background_Subtraction_Shadow:", L"");
-    bgs_shadows = data_BSG;
+    data_ = vector_get_parameters[21];
+    data_.Replace(L"Min_Area:", L"");
+    min_area = _ttoi(data_);
+    data_ = vector_get_parameters[22];
+    data_.Replace(L"Max_Area:", L"");
+    max_area = _ttoi(data_);
 
-    data_BSG = vector_get_parameters[16];
-    data_BSG.Replace(L"Background_Subtraction_Threshold:", L"");
-    bgs_threshold = _ttof(data_BSG);
+    data_ = vector_get_parameters[23];
+    data_.Replace(L"Min_Width:", L"");
+    min_width = _ttoi(data_);
+    data_ = vector_get_parameters[24];
+    data_.Replace(L"Max_Width:", L"");
+    max_width = _ttoi(data_);
 
-    data_BSG = vector_get_parameters[17];
-    data_BSG.Replace(L"Background_Subtraction_History:", L"");
-    bgs_history = _ttoi(data_BSG);
-
-    data_BSG = vector_get_parameters[18];
-    data_BSG.Replace(L"Background_Subtraction_Learning_Rate:", L"");
-    bsg_learning_rate = _ttof(data_BSG);
-
-    CString data_AT = vector_get_parameters[19];
-    data_AT.Replace(L"Adaptive_Threshod_Method:", L"");
-    adaptiveThreshold_method = data_AT;
-
-    data_AT = vector_get_parameters[20];
-    data_AT.Replace(L"KSize:", L"");
-    adaptiveThreshold_KSize = _ttoi(data_AT);
-
-    data_AT = vector_get_parameters[21];
-    data_AT.Replace(L"C:", L"");
-    adaptiveThreshold_C = _ttoi(data_AT);
-
-
-    CString data_SORT = vector_get_parameters[22];
-    data_SORT.Replace(L"Distance_Threshold:", L"");
-    distance_threshold = _ttof(data_SORT);
-
-    data_SORT = vector_get_parameters[23];
-    data_SORT.Replace(L"Min_Hits:", L"");
-    min_hits = _ttoi(data_SORT);
-
-    data_SORT = vector_get_parameters[24];
-    data_SORT.Replace(L"Max_Age:", L"");
-    max_age = _ttoi(data_SORT);
-
-    CString data_flip_image;
-    data_flip_image = vector_get_parameters[25];
-    data_flip_image.Replace(L"Flip_Image:", L"");
-    flip_image = data_flip_image;
-
-    CString ROI_data;
-    ROI_data = vector_get_parameters[26];
-    ROI_data.Replace(L"ROI_Point_Left_Above:", L"");
-    ROI_Point_Left_Above = ROI_data;
-    ROI_data = vector_get_parameters[27];
-    ROI_data.Replace(L"ROI_Point_Left_Below:", L"");
-    ROI_Point_Left_Below = ROI_data;
-    ROI_data = vector_get_parameters[28];
-    ROI_data.Replace(L"ROI_Point_Right_Above:", L"");
-    ROI_Point_Right_Above = ROI_data;
-    ROI_data = vector_get_parameters[29];
-    ROI_data.Replace(L"ROI_Point_Right_Below:", L"");
-    ROI_Point_Right_Below = ROI_data;
-
-    CString Image_data;
-    Image_data = vector_get_parameters[30];
-    Image_data.Replace(L"Image_Frame_Rate:", L"");
-    image_frame_rate = _ttof(Image_data);
-    Image_data = vector_get_parameters[31];
-    Image_data.Replace(L"Image_Gain:", L"");
-    image_gain = _ttof(Image_data);
-    Image_data = vector_get_parameters[32];
-    Image_data.Replace(L"Image_Exposure_Time:", L"");
-    image_exposure_time = _ttof(Image_data);
+    data_ = vector_get_parameters[25];
+    data_.Replace(L"Min_Height:", L"");
+    min_height = _ttoi(data_);
+    data_ = vector_get_parameters[26];
+    data_.Replace(L"Max_Height:", L"");
+    max_height = _ttoi(data_);
 
     return TRUE;
 }

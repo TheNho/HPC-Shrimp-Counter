@@ -158,6 +158,7 @@ private:
     // Opencv variables
     Mat Mat_src;
     Mat dst; // dst is a binary image
+    Mat Mat_display; // display image
     Mat mo_kernel;
     Ptr<BackgroundSubtractor> pBackSub;
     // ROI

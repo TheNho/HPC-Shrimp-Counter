@@ -61,9 +61,10 @@ BOOL LogHistory::OnInitDialog() {
 	m_listCtrl.InsertColumn(1, L"Date", LVCFMT_CENTER, 150);
 	m_listCtrl.InsertColumn(2, L"Time", LVCFMT_CENTER, 150);
 	m_listCtrl.InsertColumn(3, L"Number", LVCFMT_CENTER, 150); // LVCFMT_LEFT
+	m_listCtrl.InsertColumn(4, L"Avg Size", LVCFMT_CENTER, 150); // LVCFMT_LEFT
 
 	// Load and read data from txt file in each line
-	// Date  || Time || Number
+	// Date  || Time || Number || Avg Size
 	vector<CString> vectorResult_line_data;
 	CStdioFile Log_StdFile;
 	CFileException Log_ex;
@@ -107,7 +108,7 @@ BOOL LogHistory::OnInitDialog() {
 		nItem = m_listCtrl.InsertItem(0, rid); // column 0 -> index
 		CString sToken; // content
 		int icols = 0; // substring index to extract
-		int max_cols = 3;// max columns
+		int max_cols = 4;// max columns
 		while (AfxExtractSubString(sToken, data_, icols, ' ') && icols < max_cols) {
 			m_listCtrl.SetItemText(nItem, // row
 								   icols+1, // column
