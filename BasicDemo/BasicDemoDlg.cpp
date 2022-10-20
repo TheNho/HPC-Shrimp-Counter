@@ -667,7 +667,7 @@ int CBasicDemoDlg::GrabThreadProcess() {
     return MV_OK;
 }
 
-//en:Click Find Device button:Enumeration
+// Click Find Device button:Enumeration
 // Check camera driver
 void CBasicDemoDlg::OnBnClickedEnumButton() {
     // Check if camera driver installed
