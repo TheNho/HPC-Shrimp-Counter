@@ -145,8 +145,8 @@ void Setting_Window::OnBnClickedOk() {
 	if (ret) {
 		// TODO: Add your control notification handler code here
 		//bool ret = UpdateData(TRUE);
-		if (svm_trainned==true)
-			svm->save("SVM.xml");
+		//if (svm_trainned==true)
+			//svm->save("SVM.xml");
 		UpdateData(TRUE); // update wintext to variables
 		update_setting = true;
 		//close window
@@ -168,7 +168,7 @@ void Setting_Window::OnBnClickedCancel()
 }
 
 bool Setting_Window::CheckParameters() { // Check parameters in current window
-	// Check flip image
+	// Flip image
 	vector<CString> cflip_image = { L"None", L"X", L"Y" };
 	CString get_flip_image;
 	GetDlgItem(ID_FLIP_IMAGE)->GetWindowTextW(get_flip_image);
@@ -176,7 +176,54 @@ bool Setting_Window::CheckParameters() { // Check parameters in current window
 		AfxMessageBox(L"Flip Image Method Error!");
 		return false;
 	}
-	// Check image processing parameters
+	//Camera Parameters
+	CString get_frame_rate, get_gian, get_exposure_time;
+	GetDlgItem(IDC_EDIT_IMAGE_FRAME_RATE)->GetWindowTextW(get_frame_rate);
+	GetDlgItem(IDC_EDIT_IMAGE_GIAN)->GetWindowTextW(get_gian);
+	GetDlgItem(IDC_EDIT_IMAGE_EXPOSURE_TIME)->GetWindowTextW(get_exposure_time);
+	if (CheckFloat(get_frame_rate) == true) {
+		if (_ttof(get_frame_rate) < 0 || _ttof(get_frame_rate) > 815) {
+			AfxMessageBox(L"Frame Rate Error!");
+			return false;
+		}
+	}
+	else {
+		AfxMessageBox(L"Frame Rate Error!");
+		return false;
+	}
+	if (CheckFloat(get_gian) == true) {
+		if (_ttof(get_gian) < 0 || _ttof(get_gian) > 15) {
+			AfxMessageBox(L"Gain Error!");
+			return false;
+		}
+	}
+	else {
+		AfxMessageBox(L"Gain Error!");
+		return false;
+	}
+	if (CheckFloat(get_exposure_time) == true) {
+		if (_ttof(get_exposure_time) < 0) {
+			AfxMessageBox(L"Exposure Time Error!");
+			return false;
+		}
+	}
+	else {
+		AfxMessageBox(L"Gian Time Error!");
+		return false;
+	}
+	// Enhance Image
+	CString get_anpha, get_beta;
+	GetDlgItem(ID_SETTING_ANPHA)->GetWindowTextW(get_anpha);
+	GetDlgItem(ID_SETTING_BETA)->GetWindowTextW(get_beta);
+	if (CheckFloat(get_anpha) == false) {
+		AfxMessageBox(L"anhpa must be Float!");
+		return false;
+	}
+	if (CheckFloat(get_beta) == false) {
+		AfxMessageBox(L"beta must be Float!");
+		return false;
+	}
+	// Check blur image
 	vector<CString> cblur_method = { L"AVG", L"GAUSS" };
 	vector<CString> cblur_kernel = { L"1", L"3", L"5", L"7", L"9" };
 	vector<CString> cmorpho_method = { L"Dilate", L"Erode", L"Open", L"Close" };
@@ -385,41 +432,6 @@ bool Setting_Window::CheckParameters() { // Check parameters in current window
 		return false;
 	}
 	
-	// Check Image
-	CString get_frame_rate, get_gian, get_exposure_time;
-	GetDlgItem(IDC_EDIT_IMAGE_FRAME_RATE)->GetWindowTextW(get_frame_rate);
-	GetDlgItem(IDC_EDIT_IMAGE_GIAN)->GetWindowTextW(get_gian);
-	GetDlgItem(IDC_EDIT_IMAGE_EXPOSURE_TIME)->GetWindowTextW(get_exposure_time);
-	if (CheckFloat(get_frame_rate) == true) {
-		if (_ttof(get_frame_rate) < 0 || _ttof(get_frame_rate) > 815) {
-			AfxMessageBox(L"Frame Rate Error!");
-			return false;
-		}
-	}
-	else {
-		AfxMessageBox(L"Frame Rate Error!");
-		return false;
-	}
-	if (CheckFloat(get_gian) == true) {
-		if (_ttof(get_gian) < 0 || _ttof(get_gian) > 15) {
-			AfxMessageBox(L"Gain Error!");
-			return false;
-		}
-	}
-	else {
-		AfxMessageBox(L"Gain Error!");
-		return false;
-	}
-	if (CheckFloat(get_exposure_time) == true) {
-		if (_ttof(get_exposure_time) < 0) {
-			AfxMessageBox(L"Exposure Time Error!");
-			return false;
-		}
-	}
-	else {
-		AfxMessageBox(L"Gian Time Error!");
-		return false;
-	}
 	// all check done!
 	return true;
 }

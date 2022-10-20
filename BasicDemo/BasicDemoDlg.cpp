@@ -223,7 +223,7 @@ void CBasicDemoDlg::SettingInitial() {
         //backfround_ratio;
 
         morphological_method = L"Open"; //Open;Close;Erode;Dilate
-        morphological_kernel = 5; //1;3;5;7;9
+        morphological_kernel = 3; //1;3;5;7;9
         morphological_iterations = 2;
 
         line_position = 400;
@@ -636,7 +636,7 @@ int CBasicDemoDlg::GrabThreadProcess() {
                 m_pcMyCamera->FreeImageBuffer(&stImageInfo);
                 continue;
             }
-            // Convert data to cvMat, drop roi and flip image
+            // Convert data to cvMat save in Mat_src and flip image
             bool retm = Convert2Mat(&stImageInfo.stFrameInfo, stImageInfo.pBufAddr);
             if (retm == false || Mat_src.empty()) {
                 AfxMessageBox(L"Error while convert data to cv Mat!");
@@ -821,7 +821,10 @@ void CBasicDemoDlg::OnBnClickedOpenButton() {
 
     m_bOpenDevice = TRUE;
     EnableControls(TRUE);
-    //GetImageParameters(); //en:Get Parameter
+    // Set camera default parameters
+    SetImageParameters(image_frame_rate, image_gain, image_exposure_time);
+    // Return real parameters
+    GetImageParameters(); //en:Get Parameter
 }
 
 //en:Click Close button: Close Device
@@ -845,7 +848,7 @@ void CBasicDemoDlg::OnBnClickedContinusModeRadio() {
 
 //en:Click Trigger Mode button / SDK function
 void CBasicDemoDlg::OnBnClickedTriggerModeRadio() {
-    UpdateData(TRUE);
+    UpdateData(TRUE); // update data from variables to window
     ((CButton *)GetDlgItem(IDC_CONTINUS_MODE_RADIO))->SetCheck(FALSE);
     ((CButton *)GetDlgItem(IDC_TRIGGER_MODE_RADIO))->SetCheck(TRUE);
     ((CButton *)GetDlgItem(IDC_SOFTWARE_TRIGGER_CHECK))->EnableWindow(TRUE);
@@ -879,16 +882,15 @@ void CBasicDemoDlg::DisplayThread() {
     MV_DISPLAY_FRAME_INFO stDisplayInfo = { 0 };
 
     while (m_bThreadState) {
-      
+  
+        // copy Mat_src and draw
+        Mat_display = Mat_src.clone();
+
         // wait until Mat_display not NULL
         if (Mat_display.empty()) {
             Sleep(5);
             continue;
         }
-
-        // copy Mat_src and draw
-        //Mat_display = dst.clone();
-        //Mat_display = Mat_src.clone(); 
         // Access are in conflict between 2 theads
         // -> fixed by waiting the first thread started
         putText(Mat_display, "FPS: "+ to_string(real_fps), Point(5, 25), FONT_HERSHEY_COMPLEX, 1, 128, 1, 8);
@@ -914,8 +916,6 @@ void CBasicDemoDlg::DisplayThread() {
 
 //en:Click Start button
 void CBasicDemoDlg::OnBnClickedStartGrabbingButton() {
-    // Set camera
-    SetImageParameters(image_frame_rate, image_gain, image_exposure_time);
 
     if (FALSE == m_bOpenDevice || TRUE == m_bStartGrabbing || NULL == m_pcMyCamera) {
         return;

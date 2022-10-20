@@ -13,7 +13,7 @@ Background_Subtraction_Shadow:False
 Background_Subtraction_History:500
 Background_Subtraction_Learning_Rate:-1.000000
 Mopho_Method:Open
-Morpho_Kernel:5
+Morpho_Kernel:3
 Morpho_iterations:2
 Line_Position:400
 Distance_Threshold:50.000000

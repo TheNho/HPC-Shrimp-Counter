@@ -114,7 +114,6 @@
 #define ID_SETTING_ANPHA                1052
 #define ID_BSG_THRESHOLD2               1053
 #define ID_ADAPTIVETHRESHOLD_KSIZE      1053
-#define ID_MIN_AREA3                    1053
 #define ID_SETTING_BETA                 1053
 #define ID_BSG_THRESHOLD3               1054
 #define ID_ADAPTIVETHRESHOLD_C          1054
@@ -142,6 +141,7 @@
 #define IDC_EDIT_IMAGE_GIAN             1073
 #define IDC_EDIT_IMAGE_FRAME_RATE       1074
 #define IDC_EDIT_IMAGE_EXPOSURE_TIME    1075
+#define IDC_MFCBUTTON1                  1076
 
 // Next default values for new objects
 // 
@@ -149,7 +149,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        147
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1076
+#define _APS_NEXT_CONTROL_VALUE         1077
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
