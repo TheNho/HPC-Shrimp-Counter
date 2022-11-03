@@ -97,6 +97,7 @@
 #define ID_MAX_DISTANCE                 1044
 #define IDC_F4_EDIT                     1044
 #define ID_BSG_HISTORY3                 1044
+#define ID_BSG_BACKGROUND_RATIO         1044
 #define IDC_EDIT13                      1045
 #define ID_MIN_AREA                     1045
 #define IDC_EDIT14                      1046
@@ -141,7 +142,6 @@
 #define IDC_EDIT_IMAGE_GIAN             1073
 #define IDC_EDIT_IMAGE_FRAME_RATE       1074
 #define IDC_EDIT_IMAGE_EXPOSURE_TIME    1075
-#define IDC_MFCBUTTON1                  1076
 
 // Next default values for new objects
 // 

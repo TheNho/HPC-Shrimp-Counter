@@ -11,44 +11,7 @@
 
 // Parameters Setting 
 // Using global variables to load current parameters to Setting window
-extern CString flip_image;
-extern double image_frame_rate;
-extern double image_gain;
-extern double image_exposure_time;
-
-extern CString blur_method;
-extern int blur_kernel;
-
-extern double anpha;
-extern double beta;
-
-extern CString bgs_method;
-extern float bgs_threshold;
-extern CString bgs_shadows;
-extern int bgs_history;
-extern float bsg_learning_rate;
-extern float background_ratio;
-
-
-extern CString morphological_method;
-extern int morphological_kernel;
-extern int morphological_iterations;
-
-extern int line_position;
-
-extern float distance_threshold;
-extern int min_hits;
-extern int max_age;
-
-extern double min_area;
-extern double max_area;
-extern int min_width;
-extern int min_height;
-extern int max_width;
-extern int max_height;
-
-//Global filename, used in all windows
-extern CString global_filename;
+extern Global_Parameters paras;
 
 //CAboutDlg dialog used for App About
 class CAboutDlg : public CDialog {
@@ -204,65 +167,56 @@ void CBasicDemoDlg::SettingInitial() {
     // Load Default settings
     BOOL ret1 = get_parameters_from_file(L"DefaultSettings.parameters");
     if (ret1 == FALSE) { // Load Factory Settings
-        flip_image = L"Y"; // None;X;Y
-        image_frame_rate = 200;
-        image_gain = 10;
-        image_exposure_time = 2000;
+        paras.flip_image = L"Y"; // None;X;Y
+        paras.image_frame_rate = 200;
+        paras.image_gain = 10;
+        paras.image_exposure_time = 2000;
         
-        blur_method = L"AVG"; //AVG;GAUSS
-        blur_kernel = 3; //1;3;5;7;9
+        paras.blur_method = L"AVG"; //AVG;GAUSS
+        paras.blur_kernel = 3; //1;3;5;7;9
         
-        anpha = 2;
-        beta = -160;
+        paras.anpha = 2;
+        paras.beta = -160;
 
-        bgs_method = L"MOG2"; //MOG2
-        bgs_threshold = 25;
-        bgs_shadows = L"False"; //False;True
-        bgs_history = 500;
-        bsg_learning_rate = -1; // Negative for auto learning rate
-        //backfround_ratio;
+        paras.bgs_method = L"MOG2"; //MOG2
+        paras.bgs_threshold = 25;
+        paras.background_ratio = 0.7; //False;True
+        paras.bgs_history = 500;
+        paras.bsg_learning_rate = -1; // Negative for auto learning rate
 
-        morphological_method = L"Open"; //Open;Close;Erode;Dilate
-        morphological_kernel = 3; //1;3;5;7;9
-        morphological_iterations = 2;
+        paras.morphological_method = L"Open"; //Open;Close;Erode;Dilate
+        paras.morphological_kernel = 3; //1;3;5;7;9
+        paras.morphological_iterations = 2;
 
-        line_position = 400;
+        paras.line_position = 400;
 
-        distance_threshold = 50; // distance threshold between predict center and current center
-        min_hits = 3;
-        max_age = 10;
+        paras.distance_threshold = 50; // distance threshold between predict center and current center
+        paras.min_hits = 3;
+        paras.max_age = 10;
 
-        min_area = 10;
-        max_area = 1000;
-        min_width = 3;
-        min_height = 3;
-        max_width = 50;
-        max_height = 50;
+        paras.min_area = 10;
+        paras.max_area = 1000;
+        paras.min_width = 3;
+        paras.min_height = 3;
+        paras.max_width = 50;
+        paras.max_height = 50;
     }
     //SVM = ml::SVM::load(SVM_dir);
     
     // Initialize global directory to save result file
-    global_filename = nFilename;
+    paras.global_filename = nFilename;
 
     // First install Background Subtraction
-    if (bgs_method == L"MOG2") {
-        if (bgs_shadows == L"True") {
-            pBackSub = createBackgroundSubtractorMOG2(bgs_history, bgs_threshold, true);
-        }
-        else if (bgs_shadows == L"False") {
-            pBackSub = createBackgroundSubtractorMOG2(bgs_history, bgs_threshold, false);
-        }
-        else {
-            AfxMessageBox(L"Shadow Error!");
-            return;
-        }
+    if (paras.bgs_method == L"MOG2") {
+        pBackSub = createBackgroundSubtractorMOG2(paras.bgs_history, paras.bgs_threshold, false);
+        pBackSub->setBackgroundRatio(paras.background_ratio);
     }
     else {
         AfxMessageBox(L"Backgruond Subtraction Initail Error!");
         return;
     }
     // Morphological filter
-    mo_kernel = getStructuringElement(MORPH_RECT, Size(morphological_kernel, morphological_kernel));
+    mo_kernel = getStructuringElement(MORPH_RECT, Size(paras.morphological_kernel, paras.morphological_kernel));
 
     return;
 }
@@ -562,13 +516,13 @@ int CBasicDemoDlg::SaveImage(enum MV_SAVE_IAMGE_TYPE enSaveImageType) {
         return MV_E_SUPPORT;
     }
     Mat mSave = Mat(m_stImageInfo.nHeight, m_stImageInfo.nWidth, CV_8UC1, m_pSaveImageBuf);
-    if (flip_image == L"None") {
+    if (paras.flip_image == L"None") {
         // do nothing
     }
-    else if (flip_image == L"X") {
+    else if (paras.flip_image == L"X") {
         cv::flip(mSave, mSave, 1);
     }
-    else if (flip_image == L"Y") {
+    else if (paras.flip_image == L"Y") {
         cv::flip(mSave, mSave, 0);
     }
     stSaveFileParam.enImageType = enSaveImageType; // en:Image format to save
@@ -647,7 +601,7 @@ int CBasicDemoDlg::GrabThreadProcess() {
             /// Press start count?
             if (b_start_count==true) {
                 // SORT tracking and counting
-                SORT(max_age, min_hits, distance_threshold);
+                SORT(paras.max_age, paras.min_hits, paras.distance_threshold);
                 SORT_Counting();
             }
             
@@ -806,10 +760,10 @@ void CBasicDemoDlg::OnBnClickedOpenButton() {
         AfxMessageBox(L"Cannot set Initail Frame Rate!");
         return;
     }
-    m_pcMyCamera->SetFloatValue("AcquisitionFrameRate", image_frame_rate);
+    m_pcMyCamera->SetFloatValue("AcquisitionFrameRate", paras.image_frame_rate);
     // Gain
     m_pcMyCamera->SetEnumValue("GainAuto", 0);
-    m_pcMyCamera->SetFloatValue("Gain", image_gain);
+    m_pcMyCamera->SetFloatValue("Gain", paras.image_gain);
     // Expose time
     nRet = m_pcMyCamera->SetEnumValue("ExposureMode", MV_EXPOSURE_MODE_TIMED);
     if (MV_OK != nRet) {
@@ -817,12 +771,12 @@ void CBasicDemoDlg::OnBnClickedOpenButton() {
         return;
     }
     m_pcMyCamera->SetEnumValue("ExposureAuto", MV_EXPOSURE_AUTO_MODE_OFF);
-    m_pcMyCamera->SetFloatValue("ExposureTime", image_exposure_time);
+    m_pcMyCamera->SetFloatValue("ExposureTime", paras.image_exposure_time);
 
     m_bOpenDevice = TRUE;
     EnableControls(TRUE);
     // Set camera default parameters
-    SetImageParameters(image_frame_rate, image_gain, image_exposure_time);
+    SetImageParameters(paras.image_frame_rate, paras.image_gain, paras.image_exposure_time);
     // Return real parameters
     GetImageParameters(); //en:Get Parameter
 }
@@ -882,9 +836,9 @@ void CBasicDemoDlg::DisplayThread() {
     MV_DISPLAY_FRAME_INFO stDisplayInfo = { 0 };
 
     while (m_bThreadState) {
-  
-        // copy Mat_src and draw
-        Mat_display = Mat_src.clone();
+
+        // Mat_display is copied in image_processing
+        //Mat_display = Mat_src.clone();
 
         // wait until Mat_display not NULL
         if (Mat_display.empty()) {
@@ -908,7 +862,7 @@ void CBasicDemoDlg::DisplayThread() {
         UpdateData(FALSE); // update shrimp number and frame count to window
 
         // sleep 15ms/60fps
-        Sleep(5);
+        Sleep(15);
     }
     Mat_display.release();
     return;
@@ -916,13 +870,13 @@ void CBasicDemoDlg::DisplayThread() {
 
 //en:Click Start button
 void CBasicDemoDlg::OnBnClickedStartGrabbingButton() {
-
+    
     if (FALSE == m_bOpenDevice || TRUE == m_bStartGrabbing || NULL == m_pcMyCamera) {
         return;
     }
 
     std::memset(&m_stImageInfo, 0, sizeof(MV_FRAME_OUT_INFO_EX));
-
+    SetImageParameters(paras.image_frame_rate, paras.image_gain, paras.image_exposure_time);
     m_bThreadState = TRUE;
 
     // Start getting and processing image thread
@@ -1001,19 +955,19 @@ void CBasicDemoDlg::GetImageParameters() {
         ShowErrorMsg(TEXT("Get Trigger Mode Fail"), nRet);
     }
 
-    image_exposure_time = GetExposureTime();
+    paras.image_exposure_time = GetExposureTime();
     if (nRet != MV_OK)
     {
         ShowErrorMsg(TEXT("Get Exposure Time Fail"), nRet);
     }
 
-    image_gain = GetGain();
+    paras.image_gain = GetGain();
     if (nRet != MV_OK)
     {
         ShowErrorMsg(TEXT("Get Gain Fail"), nRet);
     }
 
-    image_frame_rate = GetFrameRate();
+    paras.image_frame_rate = GetFrameRate();
     if (nRet != MV_OK)
     {
         ShowErrorMsg(TEXT("Get Frame Rate Fail"), nRet);
@@ -1173,16 +1127,16 @@ void CBasicDemoDlg::OnBnClickedSettingButton() {
         //SVM = ml::SVM::load(SVM_dir);
         
         // get image processing paramerters from setting window
-        flip_image = open_setting_windown->setting_flip_image;
-        image_frame_rate = open_setting_windown->setting_image_frame_rate;
-        image_gain = open_setting_windown->setting_image_gain;
-        image_exposure_time = open_setting_windown->setting_image_exposure_time;
+        paras.flip_image = open_setting_windown->setting_flip_image;
+        paras.image_frame_rate = open_setting_windown->setting_image_frame_rate;
+        paras.image_gain = open_setting_windown->setting_image_gain;
+        paras.image_exposure_time = open_setting_windown->setting_image_exposure_time;
 
-        blur_method = open_setting_windown->setting_blur_method;
-        blur_kernel = open_setting_windown->setting_blur_kernel;
-        if (blur_kernel != 1) { // blur kernel = 1 dont use blur
-            if (blur_method == L"GAUSS" ||
-                blur_method == L"AVG") {
+        paras.blur_method = open_setting_windown->setting_blur_method;
+        paras.blur_kernel = open_setting_windown->setting_blur_kernel;
+        if (paras.blur_kernel != 1) { // blur kernel = 1 dont use blur
+            if (paras.blur_method == L"GAUSS" ||
+                paras.blur_method == L"AVG") {
                 // do nothing
             }
             else {
@@ -1192,27 +1146,18 @@ void CBasicDemoDlg::OnBnClickedSettingButton() {
             }
         }
 
-        anpha = open_setting_windown->setting_anpha;
-        beta = open_setting_windown->setting_beta;
+        paras.anpha = open_setting_windown->setting_anpha;
+        paras.beta = open_setting_windown->setting_beta;
 
-        bgs_method = open_setting_windown->setting_bsg_method;
-        bgs_threshold = open_setting_windown->setting_bsg_threshold;
-        bgs_shadows = open_setting_windown->setting_bsg_shadow;
-        bgs_history = open_setting_windown->setting_bsg_history;
-        bsg_learning_rate = open_setting_windown->setting_bsg_learning_rate;
+        paras.bgs_method = open_setting_windown->setting_bsg_method;
+        paras.bgs_threshold = open_setting_windown->setting_bsg_threshold;
+        paras.background_ratio = open_setting_windown->setting_bsg_background_ratio;
+        paras.bgs_history = open_setting_windown->setting_bsg_history;
+        paras.bsg_learning_rate = open_setting_windown->setting_bsg_learning_rate;
         //background_ratio
-        if (bgs_method == L"MOG2") {
-            if (bgs_shadows == L"True") {
-                pBackSub = createBackgroundSubtractorMOG2(bgs_history, bgs_threshold, true);
-            }
-            else if (bgs_shadows == L"False"){
-                pBackSub = createBackgroundSubtractorMOG2(bgs_history, bgs_threshold, false);
-            }
-            else {
-                AfxMessageBox(L"Backgruond Subtraction Shadows Setting Error!");
-                delete open_setting_windown;
-                return;
-            }
+        if (paras.bgs_method == L"MOG2") {
+            pBackSub = createBackgroundSubtractorMOG2(paras.bgs_history, paras.bgs_threshold, false);
+            pBackSub->setBackgroundRatio(paras.background_ratio);
         }
         else {
             // for debug
@@ -1221,15 +1166,15 @@ void CBasicDemoDlg::OnBnClickedSettingButton() {
             return;
         }
 
-        morphological_method = open_setting_windown->setting_morpho_type;
-        morphological_kernel = open_setting_windown->setting_morpho_kernel;
-        morphological_iterations = open_setting_windown->setting_morpho_iterations;
-        if (morphological_kernel != 1) { // = 1 dont use
-            mo_kernel = getStructuringElement(MORPH_RECT, Size(morphological_kernel, morphological_kernel));
-            if (morphological_method == L"Dilate" ||
-                morphological_method == L"Erode" ||
-                morphological_method == L"Open" ||
-                morphological_method == L"Close") {
+        paras.morphological_method = open_setting_windown->setting_morpho_type;
+        paras.morphological_kernel = open_setting_windown->setting_morpho_kernel;
+        paras.morphological_iterations = open_setting_windown->setting_morpho_iterations;
+        if (paras.morphological_kernel != 1) { // = 1 dont use
+            mo_kernel = getStructuringElement(MORPH_RECT, Size(paras.morphological_kernel, paras.morphological_kernel));
+            if (paras.morphological_method == L"Dilate" ||
+                paras.morphological_method == L"Erode" ||
+                paras.morphological_method == L"Open" ||
+                paras.morphological_method == L"Close") {
                 // do nothing
             }
             else {
@@ -1239,18 +1184,18 @@ void CBasicDemoDlg::OnBnClickedSettingButton() {
             }
         }
 
-        line_position = open_setting_windown->setting_line_position;
+        paras.line_position = open_setting_windown->setting_line_position;
 
-        distance_threshold = open_setting_windown->setting_distance_threshold;
-        min_hits = open_setting_windown->setting_min_hits;
-        max_age = open_setting_windown->setting_max_age;
+        paras.distance_threshold = open_setting_windown->setting_distance_threshold;
+        paras.min_hits = open_setting_windown->setting_min_hits;
+        paras.max_age = open_setting_windown->setting_max_age;
 
-        min_area = open_setting_windown->setting_min_area;
-        max_area = open_setting_windown->setting_max_area;
-        min_width = open_setting_windown->setting_min_width;
-        max_width = open_setting_windown->setting_max_width;
-        min_height = open_setting_windown->setting_min_height;
-        max_height = open_setting_windown->setting_max_height;
+        paras.min_area = open_setting_windown->setting_min_area;
+        paras.max_area = open_setting_windown->setting_max_area;
+        paras.min_width = open_setting_windown->setting_min_width;
+        paras.max_width = open_setting_windown->setting_max_width;
+        paras.min_height = open_setting_windown->setting_min_height;
+        paras.max_height = open_setting_windown->setting_max_height;
 
         // All successed!
         AfxMessageBox(L"Updated All Parameters Success!");
@@ -1268,20 +1213,17 @@ void CBasicDemoDlg::OnBnClickedSettingButton() {
 //OpenCV convert data to cvMat and flip image
 bool CBasicDemoDlg::Convert2Mat(MV_FRAME_OUT_INFO_EX* pstImageInfo, unsigned char* pData) {
     if (pstImageInfo->enPixelType == PixelType_Gvsp_Mono8) {
-        Mat MatsrcImage = Mat(pstImageInfo->nHeight, pstImageInfo->nWidth, CV_8UC1, pData);
+        Mat_src = Mat(pstImageInfo->nHeight, pstImageInfo->nWidth, CV_8UC1, pData);
         // Flip image
-        if (flip_image == L"None") {
+        if (paras.flip_image == L"None") {
             // do nothing
         }
-        else if (flip_image == L"X") {
-            cv::flip(MatsrcImage, MatsrcImage, 1);
+        else if (paras.flip_image == L"X") {
+            cv::flip(Mat_src, Mat_src, 1);
         }
-        else if (flip_image == L"Y") {
-            cv::flip(MatsrcImage, MatsrcImage, 0);
+        else if (paras.flip_image == L"Y") {
+            cv::flip(Mat_src, Mat_src, 0);
         }
-
-        Mat_src = MatsrcImage.clone();
-        MatsrcImage.release();
     }
     else {
         printf("unsupported pixel format\n");
@@ -1302,33 +1244,32 @@ void CBasicDemoDlg::ImageProcessing() {
     if (Mat_src.empty()) return;
 
     frame_count++;
-    
-    Mat src_processing = Mat_src.clone();
-
+    src_processing = Mat_src.clone();
     //Blur image
-    if (blur_kernel != 1) { // kernel == 1 dont apply
-        if (blur_method == L"AVG")
-            blur(src_processing, src_processing, Size(blur_kernel, blur_kernel));
-        else if (blur_method == L"GAUSS")
-            GaussianBlur(src_processing, src_processing, Size(blur_kernel, blur_kernel), float(blur_kernel / 5.0));
+    if (paras.blur_kernel != 1) { // kernel == 1 dont apply
+        if (paras.blur_method == L"AVG")
+            blur(src_processing, src_processing, Size(paras.blur_kernel, paras.blur_kernel));
+        else if (paras.blur_method == L"GAUSS")
+            GaussianBlur(src_processing, src_processing, Size(paras.blur_kernel, paras.blur_kernel), float(paras.blur_kernel / 5.0));
     }
-
     // Image Enhanced
-    src_processing.convertTo(src_processing, -1, anpha, beta);
+    src_processing.convertTo(src_processing, -1, paras.anpha, paras.beta);
+    // Copy to display thread
+    Mat_display = src_processing.clone();
 
     // Segmentation to binary image
-    pBackSub->apply(src_processing, dst, bsg_learning_rate);
+    pBackSub->apply(src_processing, dst, paras.bsg_learning_rate);
     
     // morphological filter
-    if (morphological_kernel != 1) {// kernel == 1 dont apply
-        if (morphological_method == L"Open")
-            morphologyEx(dst, dst, MORPH_OPEN, mo_kernel, Point(-1, -1), morphological_iterations);
-        else if (morphological_method == L"Close")
-            morphologyEx(dst, dst, MORPH_CLOSE, mo_kernel, Point(-1, -1), morphological_iterations);
-        else if (morphological_method == L"Dilate")
-            morphologyEx(dst, dst, MORPH_DILATE, mo_kernel, Point(-1, -1), morphological_iterations);
-        else if (morphological_method == L"Erode")
-            morphologyEx(dst, dst, MORPH_ERODE, mo_kernel, Point(-1, -1), morphological_iterations);
+    if (paras.morphological_kernel != 1) {// kernel == 1 dont apply
+        if (paras.morphological_method == L"Open")
+            morphologyEx(dst, dst, MORPH_OPEN, mo_kernel, Point(-1, -1), paras.morphological_iterations);
+        else if (paras.morphological_method == L"Close")
+            morphologyEx(dst, dst, MORPH_CLOSE, mo_kernel, Point(-1, -1), paras.morphological_iterations);
+        else if (paras.morphological_method == L"Dilate")
+            morphologyEx(dst, dst, MORPH_DILATE, mo_kernel, Point(-1, -1), paras.morphological_iterations);
+        else if (paras.morphological_method == L"Erode")
+            morphologyEx(dst, dst, MORPH_ERODE, mo_kernel, Point(-1, -1), paras.morphological_iterations);
         else {
             AfxMessageBox(L"Image Processing Error Binary Segment Method!");
             return;
@@ -1345,7 +1286,7 @@ void CBasicDemoDlg::ImageProcessing() {
     int total_shrimp_in_frame = 0;
     for (size_t i = 0; i < contours.size(); i++) {
         double area = contourArea(contours[i]);
-        if (area < min_area || area > max_area) continue;
+        if (area < paras.min_area || area > paras.max_area) continue;
 
         Rect_<int> boundRect = boundingRect(contours[i]);
         // height is a larger number
@@ -1358,8 +1299,8 @@ void CBasicDemoDlg::ImageProcessing() {
             height_Rect = boundRect.height;
             width_Rect = boundRect.width;
         }
-        if ((width_Rect < min_width) || (width_Rect > max_width) || 
-            (height_Rect < min_height) || (height_Rect > max_height)) 
+        if ((width_Rect < paras.min_width) || (width_Rect > paras.max_width) ||
+            (height_Rect < paras.min_height) || (height_Rect > paras.max_height))
             continue;
         // get center point
         M = moments(contours[i]);
@@ -1555,12 +1496,12 @@ void CBasicDemoDlg::SORT_Counting() {
         return; // the first frame
 
     for (int i = 0; i < frameTrackingResult.size(); i++){
-        if (frameTrackingResult[i].center.y <= line_position) { // current point above line ->> pass
+        if (frameTrackingResult[i].center.y <= paras.line_position) { // current point above line ->> pass
             continue;
         } // current point bellow line this time
         for (int k = 0; k < previous_frameTrackingResult.size(); k++) {
             if (frameTrackingResult[i].id == previous_frameTrackingResult[k].id) {  //same id
-                if (previous_frameTrackingResult[k].center.y > line_position) { // previous point bellow line ->> pass
+                if (previous_frameTrackingResult[k].center.y > paras.line_position) { // previous point bellow line ->> pass
                     continue;
                 } // previous point above the line this time with the same id
                 else {
@@ -1611,13 +1552,13 @@ void CBasicDemoDlg::OnBnClickedStopCountButton() {
     // write result to file, open and save file mode write
     CStdioFile StdFile;
     CFileException ex;
-    if (!StdFile.Open(global_filename, CFile::modeNoTruncate | CFile::modeWrite, &ex)) {
+    if (!StdFile.Open(paras.global_filename, CFile::modeNoTruncate | CFile::modeWrite, &ex)) {
         CString error;
         error.Format(L"Error when open file to write result!\nCause = %d", ex.m_cause);
         AfxMessageBox(error);
-        int message = AfxMessageBox(L"Create new file " + global_filename + L"?", MB_YESNO);
+        int message = AfxMessageBox(L"Create new file " + paras.global_filename + L"?", MB_YESNO);
         if (message == IDYES)
-            StdFile.Open(global_filename, CFile::modeCreate | CFile::modeWrite, &ex);
+            StdFile.Open(paras.global_filename, CFile::modeCreate | CFile::modeWrite, &ex);
         else 
             return;
     }
@@ -1704,92 +1645,92 @@ BOOL CBasicDemoDlg::get_parameters_from_file(CString setting_filename) {
     // Get all parameters
     data_ = vector_get_parameters[1];
     data_.Replace(L"Flip_Image:", L"");
-    flip_image = data_;
+    paras.flip_image = data_;
 
     data_ = vector_get_parameters[2];
     data_.Replace(L"Image_Frame_Rate:", L"");
-    image_frame_rate = _ttof(data_);
+    paras.image_frame_rate = _ttof(data_);
     data_ = vector_get_parameters[3];
     data_.Replace(L"Image_Gain:", L"");
-    image_gain = _ttof(data_);
+    paras.image_gain = _ttof(data_);
     data_ = vector_get_parameters[4];
     data_.Replace(L"Image_Exposure_Time:", L"");
-    image_exposure_time = _ttof(data_);
+    paras.image_exposure_time = _ttof(data_);
 
     data_ = vector_get_parameters[5];
     data_.Replace(L"Blur_Method:", L"");
-    blur_method = data_;
+    paras.blur_method = data_;
     data_ = vector_get_parameters[6];
     data_.Replace(L"Blur_Kernel:", L"");
-    blur_kernel = _ttoi(data_);
+    paras.blur_kernel = _ttoi(data_);
 
     data_ = vector_get_parameters[7];
     data_.Replace(L"Image_Enhanced_anpha:", L"");
-    anpha = _ttof(data_);
+    paras.anpha = _ttof(data_);
     data_ = vector_get_parameters[8];
     data_.Replace(L"Image_Enhanced_beta:", L"");
-    beta = _ttof(data_);
+    paras.beta = _ttof(data_);
 
     data_ = vector_get_parameters[9];
     data_.Replace(L"Background_Subtraction_Method:", L"");
-    bgs_method = data_;
+    paras.bgs_method = data_;
     data_ = vector_get_parameters[11];
-    data_.Replace(L"Background_Subtraction_Shadow:", L"");
-    bgs_shadows = data_;
+    data_.Replace(L"Background_Subtraction_Ratio:", L"");
+    paras.background_ratio = _ttof(data_);
     data_ = vector_get_parameters[10];
     data_.Replace(L"Background_Subtraction_Threshold:", L"");
-    bgs_threshold = _ttof(data_);
+    paras.bgs_threshold = _ttof(data_);
     data_ = vector_get_parameters[12];
     data_.Replace(L"Background_Subtraction_History:", L"");
-    bgs_history = _ttoi(data_);
+    paras.bgs_history = _ttoi(data_);
     data_ = vector_get_parameters[13];
     data_.Replace(L"Background_Subtraction_Learning_Rate:", L"");
-    bsg_learning_rate = _ttof(data_);
+    paras.bsg_learning_rate = _ttof(data_);
 
     data_ = vector_get_parameters[14];
     data_.Replace(L"Mopho_Method:", L"");
-    morphological_method = data_;
+    paras.morphological_method = data_;
     data_ = vector_get_parameters[15];
     data_.Replace(L"Morpho_Kernel:", L"");
-    morphological_kernel = _ttoi(data_);
+    paras.morphological_kernel = _ttoi(data_);
     data_ = vector_get_parameters[16];
     data_.Replace(L"Morpho_iterations:", L"");
-    morphological_iterations = _ttoi(data_);
+    paras.morphological_iterations = _ttoi(data_);
 
     data_ = vector_get_parameters[17];
     data_.Replace(L"Line_Position:", L"");
-    line_position = _ttoi(data_);
+    paras.line_position = _ttoi(data_);
 
     data_ = vector_get_parameters[18];
     data_.Replace(L"Distance_Threshold:", L"");
-    distance_threshold = _ttof(data_);
+    paras.distance_threshold = _ttof(data_);
     data_ = vector_get_parameters[19];
     data_.Replace(L"Min_Hits:", L"");
-    min_hits = _ttoi(data_);
+    paras.min_hits = _ttoi(data_);
     data_ = vector_get_parameters[20];
     data_.Replace(L"Max_Age:", L"");
-    max_age = _ttoi(data_);
+    paras.max_age = _ttoi(data_);
 
     data_ = vector_get_parameters[21];
     data_.Replace(L"Min_Area:", L"");
-    min_area = _ttoi(data_);
+    paras.min_area = _ttoi(data_);
     data_ = vector_get_parameters[22];
     data_.Replace(L"Max_Area:", L"");
-    max_area = _ttoi(data_);
+    paras.max_area = _ttoi(data_);
 
     data_ = vector_get_parameters[23];
     data_.Replace(L"Min_Width:", L"");
-    min_width = _ttoi(data_);
+    paras.min_width = _ttoi(data_);
     data_ = vector_get_parameters[24];
     data_.Replace(L"Max_Width:", L"");
-    max_width = _ttoi(data_);
+    paras.max_width = _ttoi(data_);
 
     data_ = vector_get_parameters[25];
     data_.Replace(L"Min_Height:", L"");
-    min_height = _ttoi(data_);
+    paras.min_height = _ttoi(data_);
     data_ = vector_get_parameters[26];
     data_.Replace(L"Max_Height:", L"");
-    max_height = _ttoi(data_);
+    paras.max_height = _ttoi(data_);
 
     return TRUE;
 }

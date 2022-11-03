@@ -141,8 +141,6 @@ public:
     void DisplayThread();
     void SettingInitial();
     afx_msg void OnBnClickedSettingButton();
-    bool IsLeft(Point2f A, Point2f B, Point2f Check);
-    void Get_ROI_Mask();
     BOOL get_parameters_from_file(CString setting_filename);
 private:
     int real_fps = 0;
@@ -158,13 +156,10 @@ private:
     // Opencv variables
     Mat Mat_src;
     Mat dst; // dst is a binary image
+    Mat src_processing;
     Mat Mat_display; // display image
     Mat mo_kernel;
-    Ptr<BackgroundSubtractor> pBackSub;
-    // ROI
-    Mat Mask_ROI = Mat::zeros(Image_Height, Image_Width, CV_8UC1);
-    // Detection
-    Mat huMat = Mat::zeros(1, 7, CV_32F);
+    Ptr<BackgroundSubtractorMOG2> pBackSub;
     Moments M;
     Point2f center_point;
     Ptr<ml::SVM> SVM;

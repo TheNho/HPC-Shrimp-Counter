@@ -10,72 +10,38 @@
 // Setting_Window dialog
 IMPLEMENT_DYNAMIC(Setting_Window, CDialogEx)
 
-// Global variables getting current parameters on the first initial window
-extern CString flip_image;
-extern double image_frame_rate;
-extern double image_gain;
-extern double image_exposure_time;
-
-extern CString blur_method;
-extern int blur_kernel;
-
-extern double anpha;
-extern double beta;
-
-extern CString bgs_method;
-extern float bgs_threshold;
-extern CString bgs_shadows;
-extern int bgs_history;
-extern float bsg_learning_rate;
-extern float background_ratio;
-
-extern CString morphological_method;
-extern int morphological_kernel;
-extern int morphological_iterations;
-
-extern int line_position;
-
-extern float  distance_threshold;
-extern int min_hits;
-extern int max_age;
-
-extern double min_area;
-extern double max_area;
-extern int min_width;
-extern int min_height;
-extern int max_width;
-extern int max_height;
-
-Setting_Window::Setting_Window(CWnd* pParent /*=nullptr*/)
+// To initial display parameters
+extern Global_Parameters paras;
+Setting_Window::Setting_Window(CWnd* pParent )
 	: CDialogEx(IDD_Setting_DIALOG, pParent)
 	// Initial the firts display
-	, setting_blur_method(blur_method)
-	, setting_blur_kernel(blur_kernel)
-	, setting_morpho_type(morphological_method)
-	, setting_morpho_kernel(morphological_kernel)
-	, setting_morpho_iterations(morphological_iterations)
-	, setting_bsg_method(bgs_method)
-	, setting_bsg_threshold(bgs_threshold)
-	, setting_bsg_shadow(bgs_shadows)
-	, setting_bsg_history(bgs_history)
-	, setting_bsg_learning_rate(bsg_learning_rate)
-	, setting_distance_threshold(distance_threshold)
-	, setting_min_hits(min_hits)
-	, setting_max_age(max_age)
-	, setting_line_position(line_position)
-	, setting_min_area(min_area)
-	, setting_max_area(max_area)
-	, setting_min_width(min_width)
-	, setting_min_height(min_height)
-	, setting_max_width(max_width)
-	, setting_max_height(max_height)
-	, setting_flip_image(flip_image)
+	, setting_blur_method(paras.blur_method)
+	, setting_blur_kernel(paras.blur_kernel)
+	, setting_morpho_type(paras.morphological_method)
+	, setting_morpho_kernel(paras.morphological_kernel)
+	, setting_morpho_iterations(paras.morphological_iterations)
+	, setting_bsg_method(paras.bgs_method)
+	, setting_bsg_threshold(paras.bgs_threshold)
+	, setting_bsg_history(paras.bgs_history)
+	, setting_bsg_learning_rate(paras.bsg_learning_rate)
+	, setting_distance_threshold(paras.distance_threshold)
+	, setting_min_hits(paras.min_hits)
+	, setting_max_age(paras.max_age)
+	, setting_line_position(paras.line_position)
+	, setting_min_area(paras.min_area)
+	, setting_max_area(paras.max_area)
+	, setting_min_width(paras.min_width)
+	, setting_min_height(paras.min_height)
+	, setting_max_width(paras.max_width)
+	, setting_max_height(paras.max_height)
+	, setting_flip_image(paras.flip_image)
 	, setting_dir_data_train_svm(_T(""))
-	, setting_image_gain(image_gain)
-	, setting_image_frame_rate(image_frame_rate)
-	, setting_image_exposure_time(image_exposure_time)
-	, setting_anpha(anpha)
-	, setting_beta(beta)
+	, setting_image_gain(paras.image_gain)
+	, setting_image_frame_rate(paras.image_frame_rate)
+	, setting_image_exposure_time(paras.image_exposure_time)
+	, setting_anpha(paras.anpha)
+	, setting_beta(paras.beta)
+	, setting_bsg_background_ratio(paras.background_ratio)
 {
 		
 }
@@ -85,15 +51,16 @@ Setting_Window::~Setting_Window()
 	update_setting = false;
 }
 
+// Mapping parrameters
 void Setting_Window::DoDataExchange(CDataExchange* pDX) {
 	CDialogEx::DoDataExchange(pDX);
 	DDX_CBString(pDX, ID_BLUR_MEDTHOD, setting_blur_method);
 	DDX_Text(pDX, ID_BLUR_KERNEL, setting_blur_kernel);
 	DDX_CBString(pDX, ID_MORPHO_METHOD, setting_morpho_type);
 	DDX_Text(pDX, ID_MORPHO_KERNEL, setting_morpho_kernel);
+	DDX_Text(pDX, IDC_MORPHO_ITERATIONS, setting_morpho_iterations);
 	DDX_CBString(pDX, ID_BSG_METHOD, setting_bsg_method);
 	DDX_Text(pDX, ID_BSG_THRESHOLD, setting_bsg_threshold);
-	DDX_CBString(pDX, ID_BSG_SHADOW, setting_bsg_shadow);
 	DDX_Text(pDX, ID_BSG_HISTORY, setting_bsg_history);
 	DDX_Text(pDX, ID_DISTANCE_THRESHOLD, setting_distance_threshold);
 	DDX_Text(pDX, ID_MIN_HITS, setting_min_hits);
@@ -103,7 +70,6 @@ void Setting_Window::DoDataExchange(CDataExchange* pDX) {
 	DDX_Text(pDX, ID_MIN_WIDTH, setting_min_width);
 	DDX_Text(pDX, ID_MIN_HEIGHT, setting_min_height);
 	DDX_Text(pDX, ID_MAX_AREA, setting_max_area);
-	DDX_Text(pDX, IDC_MORPHO_ITERATIONS, setting_morpho_iterations);
 	DDX_Text(pDX, ID_MAX_WIDTH, setting_max_width);
 	DDX_Text(pDX, ID_MAX_HEIGHT, setting_max_height);
 	DDX_CBString(pDX, ID_FLIP_IMAGE, setting_flip_image);
@@ -114,6 +80,7 @@ void Setting_Window::DoDataExchange(CDataExchange* pDX) {
 	DDX_Text(pDX, IDC_EDIT_IMAGE_EXPOSURE_TIME, setting_image_exposure_time);
 	DDX_Text(pDX, ID_SETTING_ANPHA, setting_anpha);
 	DDX_Text(pDX, ID_SETTING_BETA, setting_beta);
+	DDX_Text(pDX, ID_BSG_BACKGROUND_RATIO, setting_bsg_background_ratio);
 }
 
 // initial window
@@ -123,10 +90,8 @@ BOOL Setting_Window::OnInitDialog() {
 	HICON hIconS = AfxGetApp()->LoadIcon(IDI_SETTING_ICON);
 	SetIcon(hIconS, TRUE);
 	SetIcon(hIconS, FALSE);
-
 	//UpdateData(TRUE); // update data from window to variables
 	UpdateData(FALSE); // update data from variables to window
-	
 	return TRUE;
 }
 BEGIN_MESSAGE_MAP(Setting_Window, CDialogEx)
@@ -140,27 +105,22 @@ BEGIN_MESSAGE_MAP(Setting_Window, CDialogEx)
 END_MESSAGE_MAP()
 
 void Setting_Window::OnBnClickedOk() {
-	bool ret = CheckParameters();
-	// Check input setting, if failse axfmessage(), return
+	bool ret = CheckParameters(); // check wintext
 	if (ret) {
 		// TODO: Add your control notification handler code here
-		//bool ret = UpdateData(TRUE);
-		//if (svm_trainned==true)
-			//svm->save("SVM.xml");
+		if (svm_trainned==true)
+			svm->save("SVM.xml");
 		UpdateData(TRUE); // update wintext to variables
 		update_setting = true;
-		//close window
-		this->SendMessage(WM_CLOSE);
+		this->SendMessage(WM_CLOSE); //close window
 		return;
 	}
 	else {
-		// AfxMessageBox(L"Error parameters!");
 		return;
 	}
 }
 
-void Setting_Window::OnBnClickedCancel()
-{
+void Setting_Window::OnBnClickedCancel(){
 	// TODO: Add your control notification handler code here
 	update_setting = false;
 	// close window
@@ -267,10 +227,9 @@ bool Setting_Window::CheckParameters() { // Check parameters in current window
 	}
 	// Check Background Subtraction Parameters
 	vector<CString> cbsg_method = { L"MOG2"};
-	vector<CString> cbsg_shadow = { L"True", L"False"};
-	CString get_bsg_method, get_bsg_shadow, get_bsg_threshold,  get_bsg_history, get_bsg_learning_rate;
+	CString get_bsg_method, get_bsg_background_ratio, get_bsg_threshold,  get_bsg_history, get_bsg_learning_rate;
 	GetDlgItem(ID_BSG_METHOD)->GetWindowTextW(get_bsg_method);
-	GetDlgItem(ID_BSG_SHADOW)->GetWindowTextW(get_bsg_shadow);
+	GetDlgItem(ID_BSG_BACKGROUND_RATIO)->GetWindowTextW(get_bsg_background_ratio);
 	GetDlgItem(ID_BSG_THRESHOLD)->GetWindowTextW(get_bsg_threshold);
 	GetDlgItem(ID_BSG_HISTORY)->GetWindowTextW(get_bsg_history);
 	GetDlgItem(ID_BSG_LEARNING_RATE)->GetWindowTextW(get_bsg_learning_rate);
@@ -279,9 +238,15 @@ bool Setting_Window::CheckParameters() { // Check parameters in current window
 		AfxMessageBox(L"Background Subtraction Method Error!");
 		return false;
 	}
-	//bsg shadow
-	if (find(cbsg_shadow.begin(), cbsg_shadow.end(), get_bsg_shadow) == cbsg_shadow.end()) {
-		AfxMessageBox(L"Background Subtraction Shadow Error!");
+	//bsg background ratio
+	if (CheckFloat(get_bsg_background_ratio) == true) {
+		if (_ttof(get_bsg_background_ratio) <= 0 || _ttof(get_bsg_background_ratio) >= 1) {
+			AfxMessageBox(L"Background Ratio must be (0,1)!");
+			return false;
+		}
+	}
+	else {
+		AfxMessageBox(L"Background Ratio must be Float!");
 		return false;
 	}
 	//bsg threshold
@@ -323,7 +288,7 @@ bool Setting_Window::CheckParameters() { // Check parameters in current window
 	GetDlgItem(ID_DISTANCE_THRESHOLD)->GetWindowTextW(get_distance_threshold);
 	GetDlgItem(ID_MIN_HITS)->GetWindowTextW(get_min_hits);
 	GetDlgItem(ID_MAX_AGE)->GetWindowTextW(get_max_age);
-	// Sort Distance threshold
+	// SORT Distance threshold
 	if (CheckFloat(get_distance_threshold) == true) {
 		if (_ttof(get_distance_threshold) <= 0) {
 			AfxMessageBox(L"Distance Threshold must be Positive!");
@@ -334,7 +299,7 @@ bool Setting_Window::CheckParameters() { // Check parameters in current window
 		AfxMessageBox(L"Distance Threshold must be Float!");
 		return false;
 	}
-	// Sort min hits
+	// SORT min hits
 	if (CheckInt(get_min_hits) == false) {
 		AfxMessageBox(L"Min Hits must be Int!");
 		return false;
@@ -343,7 +308,7 @@ bool Setting_Window::CheckParameters() { // Check parameters in current window
 		AfxMessageBox(L"Min Hits must be Positive!");
 		return false;
 	}
-	// sort max age
+	// SORT max age
 	if (CheckInt(get_max_age) == false) {
 		AfxMessageBox(L"Max Age must be Int!");
 		return false;
@@ -474,7 +439,8 @@ CString Setting_Window::get_parameters_from_window() {
 	data = data + L"Background_Subtraction_Method:" + setting_bsg_method + L"\n"; // line 9
 	temp_data.Format(L"%f", setting_bsg_threshold);
 	data = data + L"Background_Subtraction_Threshold:" + temp_data + L"\n"; // line 10
-	data = data + L"Background_Subtraction_Shadow:" + setting_bsg_shadow + L"\n"; // line 11
+	temp_data.Format(L"%f", setting_bsg_background_ratio);
+	data = data + L"Background_Subtraction_Ratio:" + temp_data + L"\n"; // line 11
 	temp_data.Format(L"%d", setting_bsg_history);
 	data = data + L"Background_Subtraction_History:" + temp_data + L"\n"; // line 12
 	temp_data.Format(L"%f", setting_bsg_learning_rate);
@@ -608,8 +574,8 @@ BOOL Setting_Window::get_parameters_from_file(CString setting_filename) {
 	data_.Replace(L"Background_Subtraction_Threshold:", L"");
 	setting_bsg_threshold = _ttof(data_);
 	data_ = vector_get_parameters[11];
-	data_.Replace(L"Background_Subtraction_Shadow:", L"");
-	setting_bsg_shadow = data_;
+	data_.Replace(L"Background_Subtraction_Ratio:", L"");
+	setting_bsg_background_ratio = _ttof(data_);
 	data_ = vector_get_parameters[12];
 	data_.Replace(L"Background_Subtraction_History:", L"");
 	setting_bsg_history = _ttoi(data_);
@@ -662,6 +628,7 @@ BOOL Setting_Window::get_parameters_from_file(CString setting_filename) {
 
 	return TRUE;
 }
+
 void Setting_Window::OnBnClickedLoad() {
 	
 	LPCTSTR pszFilter = _T("Parameters(*.parameters)|*.parameters||");
@@ -690,7 +657,6 @@ void Setting_Window::OnBnClickedLoad() {
 
 bool Setting_Window::load_data_to_train_SVM(CString direction) { // Tested -> OK
 	// format in file
-	// label hu[0] hu[1] hu[2] hu[3] hu[4] hu[5] hu[6] \n
 	svm->setType(ml::SVM::C_SVC);
 	svm->setKernel(ml::SVM::RBF);
 	svm->setTermCriteria(TermCriteria(TermCriteria::EPS + cv::TermCriteria::MAX_ITER,
@@ -717,15 +683,13 @@ bool Setting_Window::load_data_to_train_SVM(CString direction) { // Tested -> OK
 	return false;
 }
 
-void Setting_Window::OnBnClickedButtonTrainSvm()
-{
+void Setting_Window::OnBnClickedButtonTrainSvm(){
 	UpdateData(TRUE);
 	svm_trainned = load_data_to_train_SVM(setting_dir_data_train_svm);
 	// TODO: Add your control notification handler code here
 }
 
-void Setting_Window::OnBnClickedButtonLoadFileTrainSvm()
-{
+void Setting_Window::OnBnClickedButtonLoadFileTrainSvm(){
 	LPCTSTR pszFilter = _T("SVMDataFile(*.svm)|*.svm||");
 	CFileDialog parasFile(TRUE, _T("svm"), NULL, OFN_HIDEREADONLY | OFN_FILEMUSTEXIST, pszFilter);
 	if (IDOK == parasFile.DoModal()) {
@@ -736,8 +700,7 @@ void Setting_Window::OnBnClickedButtonLoadFileTrainSvm()
 	}
 }
 
-void Setting_Window::OnBnClickedButtonSetDefault()
-{
+void Setting_Window::OnBnClickedButtonSetDefault(){
 	// Save parameters to file DefaultSettings.parameters
 	bool ret = CheckParameters();
 	if (ret == false) {

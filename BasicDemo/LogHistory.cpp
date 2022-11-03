@@ -34,7 +34,7 @@ BEGIN_MESSAGE_MAP(LogHistory, CDialogEx)
 END_MESSAGE_MAP()
 
 // global filename
-extern CString global_filename;
+extern Global_Parameters paras;
 BOOL LogHistory::OnInitDialog() {
 	CDialogEx::OnInitDialog();
 
@@ -70,13 +70,13 @@ BOOL LogHistory::OnInitDialog() {
 	CFileException Log_ex;
 	CString lineText;
 	// open the source file for reading and save as vector
-	if (!Log_StdFile.Open(global_filename, CFile::modeNoTruncate | CFile::modeRead, &Log_ex)) {
+	if (!Log_StdFile.Open(paras.global_filename, CFile::modeNoTruncate | CFile::modeRead, &Log_ex)) {
 		CString error;
-		error.Format(L"Cannot open file " + global_filename + L"!\nCause = % d", Log_ex.m_cause);
+		error.Format(L"Cannot open file " + paras.global_filename + L"!\nCause = % d", Log_ex.m_cause);
 		AfxMessageBox(error);
-		int message = AfxMessageBox(L"Create new file " + global_filename + L"?", MB_YESNO);
+		int message = AfxMessageBox(L"Create new file " + paras.global_filename + L"?", MB_YESNO);
 		if (message == IDYES) {
-			Log_StdFile.Open(global_filename, CFile::modeCreate, &Log_ex);
+			Log_StdFile.Open(paras.global_filename, CFile::modeCreate, &Log_ex);
 			Log_StdFile.Close();
 		}
 		// close window
@@ -133,7 +133,7 @@ void LogHistory::OnBnClickedLogClearData() {
 	if (message_box == IDYES) {
 		CStdioFile Log_StdFile;
 		CFileException Log_ex;
-		if (!Log_StdFile.Open(global_filename, CFile::modeCreate , &Log_ex)) {
+		if (!Log_StdFile.Open(paras.global_filename, CFile::modeCreate , &Log_ex)) {
 			CString error;
 			error.Format(L"Cannot clear data file Result!\nCause = %d", Log_ex.m_cause);
 			AfxMessageBox(error);

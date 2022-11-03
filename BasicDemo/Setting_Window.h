@@ -27,6 +27,7 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	//CString setting_counting_method;
+	
 	bool update_setting = false;
 
 	CString setting_blur_method;
@@ -38,9 +39,9 @@ public:
 
 	CString setting_bsg_method;
 	float setting_bsg_threshold;
-	CString setting_bsg_shadow;
 	int setting_bsg_history;
 	float setting_bsg_learning_rate;
+	float setting_bsg_background_ratio;
 
 	float setting_distance_threshold;
 	int setting_min_hits;
@@ -56,7 +57,12 @@ public:
 	int setting_max_height;
 
 	CString setting_flip_image;
-
+	double setting_image_gain;
+	double setting_image_frame_rate;
+	double setting_image_exposure_time;
+	double setting_anpha;
+	double setting_beta;
+	
 	afx_msg void OnBnClickedOk();
 	afx_msg void OnBnClickedCancel();
 private:
@@ -79,9 +85,5 @@ public:
 	afx_msg void OnBnClickedButtonTrainSvm();
 	afx_msg void OnBnClickedButtonLoadFileTrainSvm();
 	afx_msg void OnBnClickedButtonSetDefault();
-	double setting_image_gain;
-	double setting_image_frame_rate;
-	double setting_image_exposure_time;
-	double setting_anpha;
-	double setting_beta;
+
 };
