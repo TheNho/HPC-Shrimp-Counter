@@ -1,0 +1,27 @@
+Hao Phuong - Parameters File
+Flip_Image:Y
+Image_Frame_Rate:814.000000
+Image_Gain:0.000000
+Image_Exposure_Time:2000.000000
+Blur_Method:AVG
+Blur_Kernel:3
+Image_Enhanced_anpha:1.000000
+Image_Enhanced_beta:0.000000
+Background_Subtraction_Method:MOG2
+Background_Subtraction_Threshold:9.000000
+Background_Subtraction_Ratio:0.700000
+Background_Subtraction_History:500
+Background_Subtraction_Learning_Rate:-1.000000
+Mopho_Method:Open
+Morpho_Kernel:3
+Morpho_iterations:1
+Line_Position:400
+Distance_Threshold:50.000000
+Min_Hits:3
+Max_Age:10
+Min_Area:25.000000
+Max_Area:4000.000000
+Min_Width:7
+Max_Width:100
+Min_Height:15
+Max_Height:100
