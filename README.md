@@ -1,5 +1,5 @@
 # HaoPhuongShrimpCounting
-Camera Hikrobot SDK + Back gruond subtraction + SVM  + SORT to count passing shrimps
+Camera Hikrobot SDK + Back gruond subtraction + SVM  + SORT to count passing shrimps \
 python``
 import tensorrt
 readme
