@@ -19,7 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectName>Shrimp Counting</ProjectName>
+    <ProjectName>Shrimp Counter</ProjectName>
     <ProjectGuid>{96B023D7-3943-460A-B18D-4BFAF9C60F39}</ProjectGuid>
     <RootNamespace>BasicDemo</RootNamespace>
     <Keyword>MFCProj</Keyword>

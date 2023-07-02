@@ -2,7 +2,7 @@
 // This code is implemented by The Nho 2022
 // Interfacing with Camera HikRobot
 // SORT Tracking
-// Passing line counting
+// Passed line counting
 // BasicDemoDlg.cpp : Implementation file
 
 #include "stdafx.h"
