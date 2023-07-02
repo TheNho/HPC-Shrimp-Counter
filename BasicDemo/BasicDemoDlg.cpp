@@ -659,7 +659,7 @@ int CBasicDemoDlg::GrabThreadProcess() {
         }
     }////*/
     ///Work with video
-    String dir_video_file = "C:/Users/Admin/MVS/Data/CHP (00C41021506)/Video_20221118142044104.avi";
+    String dir_video_file = "C:/Users/Admin/MVS/Data/CHP (00C41021506)/Video_20221118142637026.avi";
     VideoCapture cap(dir_video_file);
     while (m_bThreadState) {
         cap >> Mat_src;
@@ -1090,7 +1090,6 @@ void CBasicDemoDlg::OnBnClickedSoftwareOnceButton() {
     {
         return;
     }
-
     m_pcMyCamera->CommandExecute("TriggerSoftware");
 }
 
@@ -1366,22 +1365,36 @@ void CBasicDemoDlg::ImageProcessing() {
         // Get center
         M = moments(contours[i]);
         center_point = Point2f((M.m10 / M.m00), (M.m01 / M.m00));
-        /*// humoments + area
+        if (center_point.y < 10 || center_point.y > Image_Height-10) continue; // denoise contours
+        /// humoments + area
         vector<double> hus;
         cv::HuMoments(M, hus);
         // Log scale hu moments 
-        for (int i = 0; i < hus.size(); i++) {
-            hus[i] = -1 * copysign(1.0, hus[i]) * log10(abs(hus[i]));
+        for (int ih = 0; ih < hus.size(); ih++) {
+            hus[ih] = -1 * copysign(1.0, hus[ih]) * log10(abs(hus[ih]));
         }
-        // append area to the right
-        hus.push_back(area / max_area);//*/
-
-        // SVM filter
+        hus.push_back(area / 100);// append area to the right //*/
+        /// Histogram with factory of 4
+        vector<float> his_con; // size = 58
+        for (int ihh = 0; ihh < 58; i++) 
+            his_con.push_back(0); // initialize vector with 0
+        for (int ii= boundRect.x; ii<= boundRect.x + boundRect.width;ii++)
+            for (int jj = boundRect.y; jj <= boundRect.y + boundRect.height; jj++) {
+                Point P_test = Point(ii, jj);
+                if (pointPolygonTest(contours[i], P_test, false) > 0) { //inside contours
+                    int Pos_c = int(Mat_src.at<uchar>(P_test) / 4);
+                    if (Pos_c > 57) Pos_c = 57;
+                    his_con[Pos_c] += 1;
+                }
+            }
+        for (int ihh = 0; ihh < 58; ihh++) 
+            his_con[ihh] = his_con[ihh] / area; // normalize to 0-1 //*/
+        /// Crop ROI
         mask_img = Mat::zeros(Size(Image_Width, Image_Height), CV_8UC1);
         drawContours(mask_img, contours, i, 255, -1);
         bitwise_and(Mat_src, mask_img, svm_processing);
-        Mat sample = svm_processing(boundRect).clone(); //Crop ROI
-        // Padding to size 64x64 if size < 64x64
+        Mat sample = svm_processing(boundRect).clone(); //*/
+        /*// Padding to size 64x64 if size < 64x64
         if (sample.size().height < sample_size && sample.size().width < sample_size) {
             int top = (sample_size - sample.size().height) / 2;
             int botton = sample_size - sample.size().height - top;
@@ -1389,7 +1402,6 @@ void CBasicDemoDlg::ImageProcessing() {
             int right = sample_size - sample.size().width - left;
             copyMakeBorder(sample, sample, top, botton, left, right, BORDER_CONSTANT, 0);
         }
-        // Resize and padding if height > 64
         if (sample.size().height >= sample_size) {
             int new_width = floor(sample_size / float(sample.size().height) * sample.size().width);
             resize(sample, sample, Size(new_width, sample_size), INTER_NEAREST);
@@ -1411,30 +1423,58 @@ void CBasicDemoDlg::ImageProcessing() {
                 int right = 0;
                 copyMakeBorder(sample, sample, top, botton, left, right, BORDER_CONSTANT, 0);
             }
-        }
+        }//*/
+        /*// Flatten image
+        sample = sample.reshape(1, 1); //(number of channels, number of rows), flatten
+        sample.convertTo(sample, CV_32F, 1.0 / 255.0, 0); // Note that CV_32F type for input sample //*/
+        //int svm_predict = SVM->predict(sample); //too slow with RBF kernel, fast with LINEAR kernel, INTER
+        // for debug show value
+        //putText(src_processing, to_string(svm_predict), center_point, FONT_HERSHEY_COMPLEX_SMALL, 0.7, 0, 1, 8);//*/
         // Sample have a size 64x64 this time
         /*// Write and save sample
         String sample_file_name = "data_64x64 (Video_20221118142637026)/" + to_string(frame_count) + "_" + to_string(i) + ".jpg";
         imwrite(sample_file_name, sample); //*/
-        /*// Write to data train
+        /// Write to data train
         if (frame_count % 10 == 0 && frame_count>=0) {
             Mat show_data = Mat_src.clone();
             drawContours(show_data, contours, i, 0, 1);
-            M = moments(contours[i]);
-            center_point = Point2f((M.m10 / M.m00), (M.m01 / M.m00));
             imshow("Get Data", show_data);
             int c = waitKey(); // stop to view image
             if (c == 9) // Press Tab
                 break; // next image
             else if (c>=48 && c<=52) {
+                int press_key = c - 48;
                 while (true){
                     Mat m1 = show_data.clone();
-                    String sample_file_name = "NewDataSVM/" + to_string(c - 48) + "/" + to_string(frame_count) + "_" + to_string(rand()) + ".jpg";
                     putText(m1, to_string(c - 48), center_point, FONT_HERSHEY_COMPLEX_SMALL, 1, 255, 1, 8);
                     imshow("Get Data", m1);
+
+                    String sample_file = "C:/Users/Admin/Desktop/Hao Phuong Shrimp Counting CPU/Data SVM + report + code expample/Hu Data SVM image/"
+                                        + to_string(press_key) + "/"
+                                        + to_string(frame_count) + "_" 
+                                        + to_string(rand());
+                    String img_file_name = sample_file +".jpg";
+                    
                     c = waitKey(); // Pres Enter to confirm write image
                     if (c == 13) {
-                        imwrite(sample_file_name, sample);
+                        // Wrtie hu moments to file
+                        String hu_file_name = sample_file + ".txt";
+                        String hu_data = to_string(press_key);
+                        for (int ihu = 0; ihu < hus.size(); ihu++) {
+                            hu_data += " " + to_string(hus[ihu]);
+                        }
+                        for (int ihs = 0; ihs < his_con.size(); ihs++) {
+                            hu_data += " " + to_string(his_con[ihs]);
+                        }
+                        // Convert String to CString
+                        CString hu_fileCS(hu_file_name.c_str());
+                        hu_fileCS.Replace(L"/", L"\\");
+                        CString hu_CS_data(hu_data.c_str());
+                        CStdioFile hu_file(hu_fileCS, CFile::modeCreate | CFile::modeWrite | CFile::typeText);
+                        hu_file.WriteString(hu_CS_data);
+                        hu_file.Close();
+                        // Wrtie image
+                        imwrite(img_file_name, sample);
                         break;
                     }
                     if (c == 32) { // Press Space to cancel selection
@@ -1446,26 +1486,18 @@ void CBasicDemoDlg::ImageProcessing() {
             // Press anything to next contours
         } //*/
         /// Predict
-        sample = sample.reshape(1, 1); //(number of channels, number of rows), flatten
-        sample.convertTo(sample, CV_32F, 1.0 / 255.0, 0); // Note that CV_32F type for input sample
-        int svm_predict = SVM->predict(sample); //too slow with RBF kernel, fast with LINEAR kernel, INTER
-        if (svm_predict <= 0) continue;
-        
-        // for debug show value
-        putText(src_processing, to_string(svm_predict), center_point, FONT_HERSHEY_COMPLEX_SMALL, 0.7, 0, 1, 8);//*/
-
-        /// Get tracking center
+        //if (svm_predict <= 0) continue;
+        /*// Get tracking center
         TrackingCenter detect_center;
         detect_center.id = -1;
         detect_center.center = center_point;
         detect_center.contours_area = area;
         detect_center.svm_respone = 1;//svm_predict;
         detections.push_back(detect_center);//*/
-        /// Update number
+        /*// Update number
         number_shrimp_in_frame += svm_predict;
         number_ROI_in_frame += 1;//*/
     }
-
     /*// Show img processing
     imshow("Src processing", src_processing);
     int c = waitKey(1);

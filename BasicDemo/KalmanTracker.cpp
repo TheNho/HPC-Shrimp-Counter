@@ -19,16 +19,19 @@ void KalmanTracker::init_kf(StateType initial_center)
 		1, 0, 1, 0,
 		0, 1, 0, 1,
 		0, 0, 1, 0,
-		0, 0, 0, 1);
+		0, 0, 0, 1); // Ma trận chuyển đổi trạng thái A
 
-	setIdentity(kf.measurementMatrix);
+	setIdentity(kf.measurementMatrix); //measurement/observation matrix (H)
 	setIdentity(kf.processNoiseCov, Scalar::all(1e-2));
-	setIdentity(kf.measurementNoiseCov, Scalar::all(1e-1));
+	setIdentity(kf.measurementNoiseCov, Scalar::all(1e-1)); //measurement noise covariance matrix (R)
 	setIdentity(kf.errorCovPost, Scalar::all(1));
 
 	//install the first point
 	kf.statePost.at<float>(0, 0) = initial_center.x;
 	kf.statePost.at<float>(1, 0) = initial_center.y;
+	//initial the first velocity
+	//kf.statePost.at<float>
+	//kf.statePost.at<float>
 }
 
 // Predict the estimated Center.
@@ -56,10 +59,10 @@ void KalmanTracker::updateWithMatchedDetection(TrackingCenter detection, int min
 		m_age = 0; //reset age=0 to avoid delete
 		confirmed_tracker = true;
 	}
-	// measurement is a cv::Mat
+	// measurement is a cv::Mat, update measurement
 	measurement.at<float>(0, 0) = detection.center.x;
 	measurement.at<float>(1, 0) = detection.center.y;
-	// update -- function of opencv
+	// corect measurement
 	kf.correct(measurement);
 }
 void KalmanTracker::updateWithPredictedCenter(StateType stateMat) {
